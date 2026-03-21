@@ -680,6 +680,8 @@ function openAdminDash(){
 }
 function closeAdmin(){
   document.getElementById('admin-overlay').classList.remove('open');
+  // Return to home page
+  if(typeof goBackHome === 'function') goBackHome();
 }
 
 // ══════════════════════════════════════════════════════

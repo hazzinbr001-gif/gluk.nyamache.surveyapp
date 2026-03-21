@@ -458,7 +458,42 @@ function homeGoSurvey(){
 }
 
 function homeGoAdmin(){
-  openAdminGate();
+  // Hide home page first, then open admin gate
+  const hp = document.getElementById('home-page');
+  if(hp){ hp.style.opacity='0'; setTimeout(()=>{ hp.style.display='none'; },350); }
+  // Small delay so home page fades before gate opens
+  setTimeout(()=>{
+    if(typeof openAdminGate === 'function'){
+      openAdminGate();
+    } else {
+      // Fallback: show gate directly
+      const gate = document.getElementById('admin-gate');
+      if(gate){ gate.classList.add('open'); }
+    }
+  }, 200);
+}
+
+function goBackHome(){
+  // Return to home page from survey
+  const hp = document.getElementById('home-page');
+  if(hp){
+    // Refresh stats
+    try{
+      const recs = JSON.parse(localStorage.getItem('chsa4')||'{}');
+      const keys = Object.keys(recs).filter(k=>!k.startsWith('_'));
+      const today = new Date().toISOString().split('T')[0];
+      const todayCount = keys.filter(k=>recs[k].interview_date===today).length;
+      const syncedCount = keys.filter(k=>recs[k]._synced).length;
+      const totalEl = document.getElementById('hp-stat-total');
+      const todayEl = document.getElementById('hp-stat-today');
+      const syncEl  = document.getElementById('hp-stat-synced');
+      if(totalEl) totalEl.textContent = keys.length;
+      if(todayEl) todayEl.textContent = todayCount;
+      if(syncEl)  syncEl.textContent  = syncedCount;
+    }catch(e){}
+    hp.style.display='flex';
+    requestAnimationFrame(()=>{ hp.style.opacity='1'; });
+  }
 }
 
 // ── COMPATIBILITY STUBS ────────────────────────────────
