@@ -665,7 +665,7 @@ function buildGroupReport(records){
       <td class="center" style="color:${_pct(_count(recs,'hiv_heard','Yes'),m)>=90?'#1a5c35':'#c0392b'};font-weight:700">${_pct(_count(recs,'hiv_heard','Yes'),m)}%</td>
       <td class="center" style="color:${_pct(_count(recs,'hiv_tested','Yes'),m)>=50?'#1a5c35':'#e67e22'};font-weight:700">${_pct(_count(recs,'hiv_tested','Yes'),m)}%</td>
       <td class="center" style="color:${recs.reduce((a,r)=>a+_flags(r).length,0)>0?'#c0392b':'#1a5c35'};font-weight:700">${recs.reduce((a,r)=>a+_flags(r).length,0)}</td>
-      <td style="font-size:7.5pt">${(()=>{const t=_illCount(recs);return t[0]?`${t[0][0]} (${t[0][1]})':'None';})()}</td>
+      <td style="font-size:7.5pt">${(()=>{const t=_illCount(recs);return t[0]?(t[0][0]+' ('+t[0][1]+')'):'None';})()}</td>
     </tr>`;
   }).join('');
 
