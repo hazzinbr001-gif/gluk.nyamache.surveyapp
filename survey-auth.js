@@ -431,13 +431,34 @@ function loaderBegin(){
   const ls = document.getElementById('loader-screen');
   if(ls){
     ls.classList.add('out');
-    setTimeout(()=>{ ls.classList.remove('open','out'); enterApp(); }, 560);
+    setTimeout(()=>{ ls.classList.remove('open','out'); showHomePage(); }, 560);
   }
 }
 
 function enterApp(){
+  // Hide welcome screen and go straight to survey (called from home page)
   const ws = document.getElementById('welcome-screen');
   if(ws){ ws.classList.add('hiding'); setTimeout(()=>{ ws.style.display='none'; }, 680); }
+}
+
+function showHomePage(){
+  // Hide welcome screen first
+  const ws = document.getElementById('welcome-screen');
+  if(ws){ ws.classList.add('hiding'); setTimeout(()=>{ ws.style.display='none'; }, 680); }
+  // Then show the home overlay
+  const hp = document.getElementById('home-page');
+  if(hp){
+    setTimeout(()=>{ hp.style.display='flex'; requestAnimationFrame(()=>{ hp.style.opacity='1'; }); }, 300);
+  }
+}
+
+function homeGoSurvey(){
+  const hp = document.getElementById('home-page');
+  if(hp){ hp.style.opacity='0'; setTimeout(()=>{ hp.style.display='none'; },350); }
+}
+
+function homeGoAdmin(){
+  openAdminGate();
 }
 
 // ── COMPATIBILITY STUBS ────────────────────────────────

@@ -226,6 +226,185 @@
 </style>
 
 
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  HOME PAGE                                          -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="home-page" style="
+  display:none; opacity:0;
+  position:fixed; inset:0; z-index:7000;
+  background:linear-gradient(160deg,#071510 0%,#0b1e14 50%,#071018 100%);
+  flex-direction:column; align-items:center; justify-content:space-between;
+  padding:0; overflow-y:auto;
+  transition:opacity .4s ease;
+  font-family:'Plus Jakarta Sans',sans-serif;
+">
+
+  <!-- Background mesh -->
+  <div style="position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(29,185,84,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(29,185,84,.03) 1px,transparent 1px);background-size:36px 36px;z-index:0"></div>
+  <!-- Glow orbs -->
+  <div style="position:fixed;width:340px;height:340px;border-radius:50%;background:rgba(26,92,53,.4);filter:blur(80px);top:-100px;right:-80px;pointer-events:none;z-index:0"></div>
+  <div style="position:fixed;width:260px;height:260px;border-radius:50%;background:rgba(26,64,96,.35);filter:blur(70px);bottom:-60px;left:-60px;pointer-events:none;z-index:0"></div>
+
+  <!-- Content -->
+  <div style="position:relative;z-index:1;width:100%;max-width:420px;padding:0 20px;display:flex;flex-direction:column;align-items:center;padding-top:env(safe-area-inset-top,16px);">
+
+    <!-- Header -->
+    <div style="text-align:center;padding:40px 0 28px;">
+      <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(145deg,rgba(26,92,53,.7),rgba(26,64,96,.6));border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px;box-shadow:0 0 0 1px rgba(29,185,84,.2),0 8px 32px rgba(0,0,0,.4);">🏥</div>
+      <div id="hp-greeting" style="color:rgba(255,255,255,.55);font-size:.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Welcome back</div>
+      <div id="hp-name" style="color:#ffffff;font-size:2rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.5);">—</div>
+      <div style="color:rgba(29,185,84,.7);font-size:.65rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-top:8px;">Great Lakes University · Nyamache</div>
+    </div>
+
+    <!-- Main action buttons -->
+    <div style="width:100%;display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+
+      <!-- START SURVEY — primary -->
+      <button onclick="homeGoSurvey()" style="
+        width:100%;padding:20px 22px;
+        background:linear-gradient(135deg,#1a5c35,#1a4060);
+        border:none;border-radius:18px;cursor:pointer;
+        display:flex;align-items:center;gap:16px;
+        box-shadow:0 6px 28px rgba(26,92,53,.45);
+        transition:transform .15s,box-shadow .15s;
+        text-align:left; font-family:inherit;
+      "
+      ontouchstart="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 12px rgba(26,92,53,.3)'"
+      ontouchend="this.style.transform='';this.style.boxShadow='0 6px 28px rgba(26,92,53,.45)'">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📋</div>
+        <div>
+          <div style="color:#fff;font-size:1.05rem;font-weight:800;letter-spacing:-.01em;">Start Survey</div>
+          <div style="color:rgba(255,255,255,.55);font-size:.72rem;margin-top:2px;">Conduct a household health interview</div>
+        </div>
+        <div style="margin-left:auto;color:rgba(255,255,255,.35);font-size:1.2rem;">›</div>
+      </button>
+
+      <!-- ADMIN DASHBOARD -->
+      <button onclick="homeGoAdmin()" style="
+        width:100%;padding:18px 22px;
+        background:rgba(255,255,255,.06);
+        border:1.5px solid rgba(255,255,255,.1);border-radius:18px;cursor:pointer;
+        display:flex;align-items:center;gap:16px;
+        transition:transform .15s,background .15s;
+        text-align:left; font-family:inherit;
+        backdrop-filter:blur(8px);
+      "
+      ontouchstart="this.style.transform='scale(0.97)';this.style.background='rgba(255,255,255,.1)'"
+      ontouchend="this.style.transform='';this.style.background='rgba(255,255,255,.06)'">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🔐</div>
+        <div>
+          <div style="color:#fff;font-size:1.05rem;font-weight:800;letter-spacing:-.01em;">Admin Dashboard</div>
+          <div style="color:rgba(255,255,255,.4);font-size:.72rem;margin-top:2px;">View records, insights &amp; reports</div>
+        </div>
+        <div style="margin-left:auto;color:rgba(255,255,255,.25);font-size:1.2rem;">›</div>
+      </button>
+
+      <!-- SAVED RECORDS -->
+      <button onclick="homeGoSurvey();setTimeout(openDrawer,500)" style="
+        width:100%;padding:18px 22px;
+        background:rgba(255,255,255,.04);
+        border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;
+        display:flex;align-items:center;gap:16px;
+        transition:transform .15s,background .15s;
+        text-align:left; font-family:inherit;
+      "
+      ontouchstart="this.style.transform='scale(0.97)'"
+      ontouchend="this.style.transform=''">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📁</div>
+        <div>
+          <div style="color:rgba(255,255,255,.8);font-size:1.05rem;font-weight:800;letter-spacing:-.01em;">Saved Records</div>
+          <div style="color:rgba(255,255,255,.35);font-size:.72rem;margin-top:2px;">Resume or review past interviews</div>
+        </div>
+        <div style="margin-left:auto;color:rgba(255,255,255,.2);font-size:1.2rem;">›</div>
+      </button>
+
+      <!-- SYNC -->
+      <button onclick="homeGoSurvey();setTimeout(openSyncModal,500)" style="
+        width:100%;padding:18px 22px;
+        background:rgba(255,255,255,.04);
+        border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;
+        display:flex;align-items:center;gap:16px;
+        transition:transform .15s,background .15s;
+        text-align:left; font-family:inherit;
+      "
+      ontouchstart="this.style.transform='scale(0.97)'"
+      ontouchend="this.style.transform=''">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">☁️</div>
+        <div>
+          <div style="color:rgba(255,255,255,.8);font-size:1.05rem;font-weight:800;letter-spacing:-.01em;">Sync Data</div>
+          <div style="color:rgba(255,255,255,.35);font-size:.72rem;margin-top:2px;">Upload records to the server</div>
+        </div>
+        <div style="margin-left:auto;color:rgba(255,255,255,.2);font-size:1.2rem;">›</div>
+      </button>
+
+    </div>
+
+    <!-- Stats row -->
+    <div id="hp-stats" style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:28px;">
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center;">
+        <div id="hp-stat-total" style="color:#fff;font-size:1.4rem;font-weight:800;line-height:1;">0</div>
+        <div style="color:rgba(255,255,255,.35);font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Records</div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center;">
+        <div id="hp-stat-today" style="color:#1DB954;font-size:1.4rem;font-weight:800;line-height:1;">0</div>
+        <div style="color:rgba(255,255,255,.35);font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Today</div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center;">
+        <div id="hp-stat-synced" style="color:rgba(255,255,255,.7);font-size:1.4rem;font-weight:800;line-height:1;">0</div>
+        <div style="color:rgba(255,255,255,.35);font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Synced</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="position:relative;z-index:1;width:100%;padding:12px 20px calc(16px + env(safe-area-inset-bottom));text-align:center;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05);">
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;">
+      <button onclick="forgetUser()" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px;">Switch Account</button>
+      <span style="color:rgba(255,255,255,.1);font-size:.7rem;">|</span>
+      <button onclick="showDonateModal()" style="background:none;border:none;color:rgba(29,185,84,.45);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px;">☕ Buy me a coffee</button>
+    </div>
+    <div style="color:rgba(255,255,255,.12);font-size:.58rem;">Built by HazzinBR · Community Health Survey v2.0 · Free</div>
+  </div>
+
+</div>
+
+<script>
+// ── Home page bootstrap ──
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Populate name + greeting when home page is shown
+  const observer = new MutationObserver(()=>{
+    const hp = document.getElementById('home-page');
+    if(hp && hp.style.display !== 'none'){
+      const name = getUserName() || 'Interviewer';
+      const h = new Date().getHours();
+      const greet = h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
+      const nameEl = document.getElementById('hp-name');
+      const greetEl = document.getElementById('hp-greeting');
+      if(nameEl) nameEl.textContent = name;
+      if(greetEl) greetEl.textContent = greet;
+      // Local record stats
+      try{
+        const recs = JSON.parse(localStorage.getItem('chsa4')||'{}');
+        const keys = Object.keys(recs).filter(k=>!k.startsWith('_'));
+        const today = new Date().toISOString().split('T')[0];
+        const todayCount = keys.filter(k=>recs[k].interview_date===today).length;
+        const syncedCount = keys.filter(k=>recs[k]._synced).length;
+        const totalEl = document.getElementById('hp-stat-total');
+        const todayEl = document.getElementById('hp-stat-today');
+        const syncEl  = document.getElementById('hp-stat-synced');
+        if(totalEl) totalEl.textContent = keys.length;
+        if(todayEl) todayEl.textContent = todayCount;
+        if(syncEl)  syncEl.textContent  = syncedCount;
+      }catch(e){}
+    }
+  });
+  const hp = document.getElementById('home-page');
+  if(hp) observer.observe(hp, {attributes:true, attributeFilter:['style']});
+});
+</script>
+
+
 <div class="topbar">
   <div class="tb-left">
     <div id="admin-trigger" style="display:flex;align-items:center;gap:10px;padding:8px 12px 8px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;">
