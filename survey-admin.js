@@ -55,7 +55,8 @@ function closeAdmin(){
 // ══════════════════════════════════════════════════════
 //  ADMIN DATA
 // ══════════════════════════════════════════════════════
-let _admRecs=[], _admFilter='all', _admDetail=null, _admDetailIdx=-1;
+// _admRecs declared globally in survey-sync.js
+_admRecs=[]; _admFilter='all'; _admDetail=null; _admDetailIdx=-1;
 const _admToday=new Date().toISOString().split('T')[0];
 const PIE_COLS=['#4CAF72','#1a4f6e','#f39c12','#c0392b','#8e44ad','#16a085','#d35400','#2980b9'];
 

@@ -223,3 +223,10 @@ window.addEventListener('online',  ()=>{ setSyncStatus('idle'); setTimeout(syncA
 window.addEventListener('offline', ()=>{ setSyncStatus('offline'); showToast('⚠ Gone offline — data saved locally', true); });
 
 // nextSec now syncs inline — no patch needed here
+
+// ── Shared globals (declared early so all scripts can reference safely) ──
+var _admRecs = [];
+var _admFilter = 'all';
+var _admDetail = null;
+var _admDetailIdx = -1;
+

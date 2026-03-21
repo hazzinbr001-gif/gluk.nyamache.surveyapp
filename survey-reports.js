@@ -849,7 +849,7 @@ function openInterviewerReport(interviewer){
 }
 
 function openAllInterviewerReports(){
-  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — tap Refresh first', true); return; }
+  if(typeof _admRecs==='undefined'||!_admRecs.length){ showToast('No records loaded — open Admin and tap Refresh first', true); return; }
   var ivNames = [...new Set(_admRecs.map(function(r){return r.interviewer||'Unknown';}))]
                 .filter(Boolean).sort();
 
@@ -908,7 +908,7 @@ function openAllInterviewerReports(){
 
 
 function openGroupReport(){
-  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — tap Refresh first', true); return; }
+  if(typeof _admRecs==='undefined'||!_admRecs.length){ showToast('No records loaded — open Admin and tap Refresh first', true); return; }
   var html = buildGroupReport(_admRecs);
   _openReportFrame(html, '👥 Class Group Report');
 }
