@@ -2164,4 +2164,24 @@ function init(){
 }
 document.addEventListener('DOMContentLoaded',init);
 
+// ── KEYBOARD-PROOF BOTTOM NAV ──
+// On Android, the soft keyboard triggers a window resize which can
+// briefly push position:fixed elements. This locks the nav to the
+// actual bottom of the screen regardless of keyboard state.
+(function lockBottomNav(){
+  const nav = document.querySelector('.bot-nav');
+  if(!nav) return;
+  const initialHeight = window.innerHeight;
+  window.addEventListener('resize', ()=>{
+    // When keyboard opens, innerHeight shrinks — hide nav so it
+    // doesn't float in the middle of the screen
+    const keyboardOpen = window.innerHeight < initialHeight * 0.75;
+    nav.style.transform = keyboardOpen ? 'translateY(200px)' : 'translateZ(0)';
+  });
+  // Also ensure it snaps back when any input loses focus
+  document.addEventListener('focusout', ()=>{
+    setTimeout(()=>{ nav.style.transform = 'translateZ(0)'; }, 100);
+  });
+})();
+
 // ══════════════════════════════════════════════════════

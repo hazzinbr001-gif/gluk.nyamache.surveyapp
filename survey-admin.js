@@ -3,44 +3,6 @@
    © 2026 HazzinBR
    ══════════════════════════════════════════════ */
 // ══════════════════════════════════════════════════════
-//  ADMIN GATE
-// ══════════════════════════════════════════════════════
-const ADMIN_PW = 'hazzin2025';
-let _tapCount=0,_tapTimer=null,_gateAttempts=0;
-
-function adminTap(){
-  _tapCount++;clearTimeout(_tapTimer);
-  if(_tapCount>=8){_tapCount=0;openAdminGate();}
-  else{_tapTimer=setTimeout(()=>_tapCount=0,3000);if(_tapCount>=5)showToast('Tap '+(8-_tapCount)+' more…');}
-}
-function openAdminGate(){
-  if(sessionStorage.getItem('adm_ok')==='1'){openAdminDash();return;}
-  document.getElementById('admin-gate').classList.add('open');
-  setTimeout(()=>document.getElementById('gate-pass')?.focus(),200);
-}
-function closeAdminGate(){
-  document.getElementById('admin-gate').classList.remove('open');
-  document.getElementById('gate-pass').value='';
-  document.getElementById('gate-err').textContent='';
-  _tapCount=0;
-}
-function checkGate(){
-  const entered=document.getElementById('gate-pass').value;
-  const pw=localStorage.getItem('chsa_admin_pass')||ADMIN_PW;
-  if(entered===pw){
-    _gateAttempts=0;sessionStorage.setItem('adm_ok','1');
-    closeAdminGate();openAdminDash();
-  }else{
-    _gateAttempts++;
-    document.getElementById('gate-err').textContent=_gateAttempts>=3?'⚠ Too many attempts':'Wrong password';
-    document.getElementById('gate-pass').value='';
-    if(_gateAttempts>=5){setTimeout(closeAdminGate,1000);_gateAttempts=0;}
-  }
-}
-function openAdminDash(){document.getElementById('admin-overlay').classList.add('open');admLoad();}
-function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');}
-
-// ══════════════════════════════════════════════════════
 //  TAB NAVIGATION
 // ══════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════
@@ -654,8 +616,8 @@ function adminTap(){
   clearTimeout(_tapTimer);
   if(_tapCount>=8){ _tapCount=0; openAdminGate(); }
   else {
-    _tapTimer=setTimeout(()=>_tapCount=0,3000);
-    if(_tapCount>=5) showToast('Tap '+( 8-_tapCount)+' more…');
+    _tapTimer=setTimeout(()=>{ _tapCount=0; },5000);
+    if(_tapCount>=3) showToast('Tap '+(8-_tapCount)+' more to open admin…');
   }
 }
 function openAdminGate(){
