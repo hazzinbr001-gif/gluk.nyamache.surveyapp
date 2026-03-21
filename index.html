@@ -18,67 +18,46 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════ -->
-<!--  HOME PAGE — shown after login, before survey       -->
-<!-- ═══════════════════════════════════════════════════ -->
+<!-- ══════════════════════════ HOME PAGE ══════════════════════════ -->
 <div id="home-page" style="display:none;opacity:0;position:fixed;inset:0;z-index:7000;background:linear-gradient(160deg,#071510 0%,#0b1e14 50%,#071018 100%);flex-direction:column;align-items:center;justify-content:space-between;overflow-y:auto;transition:opacity .4s ease;font-family:'Plus Jakarta Sans',sans-serif;">
-  <!-- BG -->
   <div style="position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(29,185,84,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(29,185,84,.03) 1px,transparent 1px);background-size:36px 36px;z-index:0"></div>
   <div style="position:fixed;width:340px;height:340px;border-radius:50%;background:rgba(26,92,53,.4);filter:blur(80px);top:-100px;right:-80px;pointer-events:none;z-index:0"></div>
   <div style="position:fixed;width:260px;height:260px;border-radius:50%;background:rgba(26,64,96,.35);filter:blur(70px);bottom:-60px;left:-60px;pointer-events:none;z-index:0"></div>
-  <!-- Content -->
   <div style="position:relative;z-index:1;width:100%;max-width:420px;padding:0 20px;display:flex;flex-direction:column;align-items:center;padding-top:max(env(safe-area-inset-top,16px),16px)">
-    <!-- Header -->
     <div style="text-align:center;padding:36px 0 24px">
       <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(145deg,rgba(26,92,53,.7),rgba(26,64,96,.6));border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px;box-shadow:0 0 0 1px rgba(29,185,84,.2),0 8px 32px rgba(0,0,0,.4)">🏥</div>
       <div id="hp-greeting" style="color:rgba(255,255,255,.5);font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Welcome back</div>
-      <div id="hp-name" style="color:#fff;font-size:2rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.5)">—</div>
+      <div id="hp-name" style="color:#fff;font-size:2rem;font-weight:800;letter-spacing:-.04em;line-height:1.1">—</div>
       <div style="color:rgba(29,185,84,.7);font-size:.63rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-top:8px">Great Lakes University · Nyamache</div>
     </div>
-    <!-- Buttons -->
     <div style="width:100%;display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
-      <!-- START SURVEY -->
-      <button onclick="homeGoSurvey()" style="width:100%;padding:18px 20px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 6px 28px rgba(26,92,53,.45);text-align:left;font-family:inherit;" ontouchstart="this.style.opacity='.8'" ontouchend="this.style.opacity='1'">
+      <button onclick="homeGoSurvey()" style="width:100%;padding:18px 20px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 6px 28px rgba(26,92,53,.45);text-align:left;font-family:inherit" ontouchstart="this.style.opacity='.85'" ontouchend="this.style.opacity='1'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📋</div>
         <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Start Survey</div><div style="color:rgba(255,255,255,.5);font-size:.7rem;margin-top:2px">Conduct a household health interview</div></div>
         <div style="color:rgba(255,255,255,.3);font-size:1.3rem">›</div>
       </button>
-      <!-- ADMIN -->
-      <button onclick="homeGoAdmin()" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit;backdrop-filter:blur(8px)" ontouchstart="this.style.background='rgba(255,255,255,.12)'" ontouchend="this.style.background='rgba(255,255,255,.06)'">
+      <button onclick="homeGoAdmin()" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.12)'" ontouchend="this.style.background='rgba(255,255,255,.06)'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🔐</div>
         <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Admin Dashboard</div><div style="color:rgba(255,255,255,.4);font-size:.7rem;margin-top:2px">View records, insights &amp; reports</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
-      <!-- SAVED RECORDS -->
       <button onclick="homeGoSurvey();setTimeout(openDrawer,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📁</div>
         <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Saved Records</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Resume or review past interviews</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
-      <!-- SYNC -->
       <button onclick="homeGoSurvey();setTimeout(openSyncModal,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">☁️</div>
         <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Sync Data</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Upload records to the server</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
     </div>
-    <!-- Stats -->
     <div style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:28px">
-      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center">
-        <div id="hp-stat-total" style="color:#fff;font-size:1.5rem;font-weight:800;line-height:1">0</div>
-        <div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Records</div>
-      </div>
-      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center">
-        <div id="hp-stat-today" style="color:#1DB954;font-size:1.5rem;font-weight:800;line-height:1">0</div>
-        <div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Today</div>
-      </div>
-      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center">
-        <div id="hp-stat-synced" style="color:rgba(255,255,255,.7);font-size:1.5rem;font-weight:800;line-height:1">0</div>
-        <div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Synced</div>
-      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center"><div id="hp-stat-total" style="color:#fff;font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Records</div></div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center"><div id="hp-stat-today" style="color:#1DB954;font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Today</div></div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center"><div id="hp-stat-synced" style="color:rgba(255,255,255,.7);font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Synced</div></div>
     </div>
   </div>
-  <!-- Footer -->
   <div style="position:relative;z-index:1;width:100%;padding:12px 20px calc(16px + env(safe-area-inset-bottom));text-align:center;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05)">
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:5px">
       <button onclick="forgetUser()" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">Switch Account</button>
@@ -88,7 +67,6 @@
     <div style="color:rgba(255,255,255,.1);font-size:.57rem">Built by HazzinBR · Community Health Survey v2.0 · Free</div>
   </div>
 </div>
-
 
 <!-- ═══════════════════════════════════════════════════ -->
 <!--  ENTRANCE SEQUENCE                                  -->
@@ -559,7 +537,6 @@
 <!--  ADMIN PANEL                                        -->
 <!-- ═══════════════════════════════════════════════════ -->
 
-
 <!-- Admin Gate -->
 <div id="admin-gate">
   <div class="gate-card">
@@ -581,37 +558,37 @@
       <div><div class="adm-title">Admin Dashboard</div><div class="adm-sub">Community Health Survey</div></div>
     </div>
     <div class="adm-right">
-      <div class="adm-conn">
-        <div class="adm-conn-dot" id="adm-conn-dot"></div>
-        <div class="adm-conn-txt" id="adm-conn-txt">Loading…</div>
-      </div>
+      <div class="adm-conn"><div class="adm-conn-dot" id="adm-conn-dot"></div><div class="adm-conn-txt" id="adm-conn-txt">Loading…</div></div>
       <button class="adm-close" onclick="closeAdmin()">✕ Close</button>
     </div>
   </div>
-  <div class="adm-body">
+
+  <!-- Tab navigation -->
+  <div class="adm-tabs">
+    <button class="adm-tab on" onclick="admTab('overview',this)">📊 Overview</button>
+    <button class="adm-tab" onclick="admTab('insights',this)">🔬 Insights</button>
+    <button class="adm-tab" onclick="admTab('records',this)">📋 Records</button>
+    <button class="adm-tab" onclick="admTab('bin',this)">🗑 Bin <span id="adm-bin-badge" style="display:none;background:#c0392b;color:#fff;border-radius:99px;padding:1px 6px;font-size:0.62rem;margin-left:3px"></span></button>
+    <button class="adm-tab" onclick="admTab('students',this)">👥 Students <span id="adm-students-badge" style="display:none;background:#f39c12;color:#fff;border-radius:99px;padding:1px 6px;font-size:0.62rem;margin-left:3px"></span></button>
+  </div>
+
+  <!-- TAB: Overview -->
+  <div class="adm-tab-panel on" id="adm-panel-overview">
     <div class="adm-stats">
-      <div class="adm-stat g"><div class="adm-stat-n" id="adm-stat-total">0</div><div class="adm-stat-l">Total</div></div>
+      <div class="adm-stat g"><div class="adm-stat-n" id="adm-stat-total">0</div><div class="adm-stat-l">Total Records</div></div>
       <div class="adm-stat n"><div class="adm-stat-n" id="adm-stat-today">0</div><div class="adm-stat-l">Today</div></div>
       <div class="adm-stat r"><div class="adm-stat-n" id="adm-stat-flags">0</div><div class="adm-stat-l">Red Flags</div></div>
       <div class="adm-stat a"><div class="adm-stat-n" id="adm-stat-iv">0</div><div class="adm-stat-l">Interviewers</div></div>
     </div>
     <div class="adm-toolbar">
-      <input class="adm-search" id="adm-search" type="text" placeholder="🔍 Search name, location..." oninput="admRenderTable()">
       <div class="adm-btns">
         <button class="adm-btn g" onclick="admLoad()">↻ Refresh</button>
         <button class="adm-btn n" onclick="admExportCSV()">⬇ CSV</button>
         <button class="adm-btn a" onclick="admExportJSON()">💾 JSON</button>
         <button class="adm-btn r" onclick="admForceSyncAll()">⬆ Force Sync</button>
         <button class="adm-btn o" onclick="openGroupReport()" style="border-color:#8e44ad;color:#8e44ad">👥 Group Report</button>
+        <button class="adm-btn o" onclick="openAllInterviewerReports()" style="border-color:#1a4f6e;color:#1a4f6e">📑 All Reports</button>
       </div>
-    </div>
-    <div class="adm-filters" id="adm-filters">
-      <div class="adm-chip on" onclick="admFilter('all',this)">All</div>
-      <div class="adm-chip" onclick="admFilter('flags',this)">🚨 Red Flags</div>
-      <div class="adm-chip" onclick="admFilter('no-latrine',this)">No Latrine</div>
-      <div class="adm-chip" onclick="admFilter('no-water',this)">Untreated Water</div>
-      <div class="adm-chip" onclick="admFilter('hiv-no',this)">HIV Unaware</div>
-      <div class="adm-chip" onclick="admFilter('today',this)">Today</div>
     </div>
     <div class="adm-flags" id="adm-flags-panel" style="display:none">
       <div class="adm-flags-hdr"><span class="adm-flags-title">🚨 Critical Red Flags</span><span id="adm-flags-count" style="font-size:.75rem;opacity:.85"></span></div>
@@ -619,17 +596,72 @@
     </div>
     <div class="adm-charts" id="adm-pies"></div>
     <div class="adm-charts" id="adm-bars"></div>
+  </div>
+
+  <!-- TAB: Insights -->
+  <div class="adm-tab-panel" id="adm-panel-insights">
+    <div id="adm-insights-body">
+      <div class="adm-empty"><div style="font-size:36px;margin-bottom:8px">🔬</div><div>Load records first</div></div>
+    </div>
+  </div>
+
+  <!-- TAB: Records -->
+  <div class="adm-tab-panel" id="adm-panel-records">
+    <div class="adm-toolbar">
+      <input class="adm-search" id="adm-search" type="text" placeholder="🔍 Search name, location..." oninput="admRenderTable()">
+      <div class="adm-btns">
+        <button class="adm-btn g" onclick="admLoad()">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="adm-filters">
+      <div class="adm-chip on" onclick="admFilter('all',this)">All</div>
+      <div class="adm-chip" onclick="admFilter('flags',this)">🚨 Red Flags</div>
+      <div class="adm-chip" onclick="admFilter('no-latrine',this)">No Latrine</div>
+      <div class="adm-chip" onclick="admFilter('no-water',this)">Untreated Water</div>
+      <div class="adm-chip" onclick="admFilter('hiv-no',this)">HIV Unaware</div>
+      <div class="adm-chip" onclick="admFilter('today',this)">Today</div>
+    </div>
     <div class="adm-tbl-wrap">
       <div class="adm-tbl-hdr"><span class="adm-tbl-title">All Records</span><span id="adm-tbl-count" style="font-size:.72rem;opacity:.8">Loading…</span></div>
       <div class="adm-tbl-scroll">
         <table class="adm-tbl">
-          <thead><tr><th>#</th><th>Interviewer</th><th>Date</th><th>Location</th><th>Respondent</th><th>House</th><th>Latrine</th><th>Water</th><th>HIV</th><th>Flags</th><th></th></tr></thead>
+          <thead><tr><th>#</th><th>Interviewer</th><th>Date</th><th>Location</th><th>Respondent</th><th>House</th><th>Latrine</th><th>Water</th><th>HIV</th><th>Flags</th><th>Report</th><th></th></tr></thead>
           <tbody id="adm-tbody"></tbody>
         </table>
       </div>
-      <div class="adm-empty" id="adm-empty" style="display:none"><div style="font-size:36px;margin-bottom:8px">📭</div><div style="font-weight:700">No records yet</div></div>
+      <div class="adm-empty" id="adm-empty" style="display:none"><div style="font-size:36px;margin-bottom:8px">📭</div><div style="font-weight:700">No records</div></div>
     </div>
   </div>
+
+  <!-- TAB: Recycle Bin -->
+  <div class="adm-tab-panel" id="adm-panel-bin">
+    <div style="background:#fff8e1;border:1.5px solid #ffcc80;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#e65100;line-height:1.5;">
+      ♻️ <strong>Recycle Bin</strong> — Records here are hidden from the main view but still exist. Restore to bring back, or permanently delete to remove forever.
+    </div>
+    <div id="adm-bin-list"><div class="adm-empty"><div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:700">Bin is empty</div></div></div>
+    <div id="adm-bin-empty-perma" style="display:none;margin-top:12px">
+      <button class="adm-btn r" style="width:100%;justify-content:center" onclick="admEmptyBin()">💀 Permanently Delete All in Bin</button>
+    </div>
+  </div>
+
+  <!-- TAB: Students -->
+  <div class="adm-tab-panel" id="adm-panel-students">
+    <div style="background:#e8f5ed;border:1.5px solid #cce0d4;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#1a5c35;line-height:1.5;">
+      👥 <strong>Access Control</strong> — Anyone who registers can use the app immediately. Remove a user here to block their access.
+    </div>
+    <div class="adm-toolbar" style="margin-bottom:12px">
+      <div class="adm-btns">
+        <button class="adm-btn g" onclick="admLoadStudents()">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="adm-students-list"></div>
+    <div id="adm-students-empty" class="adm-empty" style="display:none">
+      <div style="font-size:36px;margin-bottom:8px">👥</div>
+      <div style="font-weight:700">No users yet</div>
+      <div style="font-size:.78rem;margin-top:4px">Users appear here when they sign up on the app</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Detail Modal -->
@@ -641,19 +673,18 @@
     </div>
     <div class="adm-detail-body" id="adm-detail-body"></div>
     <div class="adm-detail-btns">
-      <button class="adm-btn r" onclick="admDeleteFromDetail()" style="flex:1;justify-content:center">🗑 Delete Record</button>
-      <button class="adm-btn g" onclick="admCloseDetail()" style="flex:1;justify-content:center">Close</button>
+      <button class="adm-btn r" onclick="admMoveTobin()" style="flex:1;justify-content:center">🗑 Move to Bin</button>
+      <button class="adm-btn o" onclick="admCloseDetail()" style="flex:1;justify-content:center">Close</button>
     </div>
   </div>
 </div>
 
 
 
+</body>
+</html>
 
 </body>
-<!-- ═══════════════════════════════════════════════ -->
-<!--  JAVASCRIPT — load order is important           -->
-<!-- ═══════════════════════════════════════════════ -->
 <script src="./survey-sync.js"></script>
 <script src="./survey-core.js"></script>
 <script src="./survey-reports.js"></script>

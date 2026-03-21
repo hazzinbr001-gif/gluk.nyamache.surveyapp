@@ -588,3 +588,295 @@ function exportJSON(){
   a.click();URL.revokeObjectURL(url);
   showToast('✓ JSON saved to Downloads');
 }
+
+// ══════════════════════════════════════════════
+//  5. SINGLE INTERVIEWER REPORT (from admin)
+//  IMRaD format — aggregates all their records
+// ══════════════════════════════════════════════
+function buildInterviewerReport(interviewer, records){
+  const n = records.length;
+  const now = new Date().toLocaleDateString('en-KE',{year:'numeric',month:'long',day:'numeric'});
+  const pct = (a,b) => b>0?Math.round(a/b*100):0;
+  const count = (field,val) => records.filter(r=>r[field]===val).length;
+
+  // Metrics
+  const latrine     = count('latrine','Yes');
+  const waterTx     = count('water_treated','Yes');
+  const hivHeard    = count('hiv_heard','Yes');
+  const hivTested   = count('hiv_tested','Yes');
+  const deathsHH    = count('deaths_5yr','Yes');
+  const totalDeaths = records.reduce((s,r)=>s+(parseInt(r.deaths_count)||0),0);
+  const permanent   = count('house_type','Permanent');
+  const male        = count('respondent_gender','Male');
+  const female      = count('respondent_gender','Female');
+  const avgAge      = Math.round(records.reduce((s,r)=>s+(parseInt(r.respondent_age)||0),0)/n)||0;
+  const dates       = records.map(r=>r.interview_date||'').filter(Boolean).sort();
+  const dateRange   = dates.length ? dates[0]+' to '+dates[dates.length-1] : now;
+  const locations   = [...new Set(records.map(r=>r.location||'').filter(Boolean))].join(', ') || 'Nyamache';
+
+  // Illness count
+  const illCount={};
+  records.forEach(r=>{(r.illnesses||'').split(',').forEach(x=>{const k=x.trim();if(k&&k!=='None')illCount[k]=(illCount[k]||0)+1;});});
+  const topIll = Object.entries(illCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const illMax = topIll[0]?.[1]||1;
+
+  // Red flags
+  const allFlags=[];
+  records.forEach(r=>{
+    if(r.latrine==='No') allFlags.push({rec:r,flag:'No pit latrine'});
+    if(r.water_treated==='No') allFlags.push({rec:r,flag:'Untreated drinking water'});
+    if(r.hiv_heard==='No') allFlags.push({rec:r,flag:'No HIV/AIDS awareness'});
+  });
+
+  // Recommendations
+  const recs2=[];
+  if(pct(latrine,n)<60) recs2.push({lvl:'critical',t:'Low Latrine Coverage',b:`Only ${pct(latrine,n)}% (${latrine}/${n}) of surveyed households have a pit latrine. This requires immediate CLTS follow-up.`});
+  if(pct(waterTx,n)<60) recs2.push({lvl:'critical',t:'Untreated Water',b:`${100-pct(waterTx,n)}% of households do not treat water. Distribute WaterGuard tablets and educate on boiling.`});
+  if(pct(hivHeard,n)<80) recs2.push({lvl:'warning',t:'HIV Awareness Gap',b:`${n-hivHeard} respondents (${pct(n-hivHeard,n)}%) have never heard of HIV/AIDS. Conduct health education outreach.`});
+  if(pct(hivTested,n)<50) recs2.push({lvl:'warning',t:'Low HIV Testing',b:`Only ${pct(hivTested,n)}% have been tested. Deploy mobile VCT services.`});
+  if(topIll.length&&topIll[0][1]>n*0.15) recs2.push({lvl:'warning',t:`High ${topIll[0][0]} Burden`,b:`${topIll[0][0]} affects ${topIll[0][1]} households (${pct(topIll[0][1],n)}%). Targeted prevention needed.`});
+  if(pct(latrine,n)>=70&&pct(waterTx,n)>=70) recs2.push({lvl:'good',t:'Good Basic Sanitation',b:`${pct(latrine,n)}% latrine coverage and ${pct(waterTx,n)}% water treatment are commendable results.`});
+
+  const bar=(v,max,col='#1e5c38')=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1;height:8px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="width:${pct(v,max)}%;height:100%;background:${col};border-radius:99px"></div></div><span style="font-size:.7rem;font-weight:700;color:${col};min-width:40px;text-align:right">${v}/${max} (${pct(v,max)}%)</span></div>`;
+
+  const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Merriweather:ital,wght@0,700;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f2f0;color:#1a2b22;font-size:13px;}
+.page{max-width:780px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.12);}
+h1{font-family:'Merriweather',serif;font-size:1.15rem;font-weight:700;color:#0f1f18;line-height:1.4;margin-bottom:8px;}
+h2{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#6b8a74;border-bottom:2px solid #e8f5ed;padding-bottom:5px;margin:22px 0 10px;}
+h3{font-size:.84rem;font-weight:700;color:#1a5c35;margin:12px 0 6px;}
+p{font-size:.83rem;line-height:1.75;color:#1a2b22;margin-bottom:9px;}
+.hdr{background:linear-gradient(135deg,#1a5c35,#1a4060);color:#fff;padding:26px 30px 22px;}
+.hdr-icon{font-size:30px;margin-bottom:8px;}
+.hdr-title{font-size:1.25rem;font-weight:800;margin-bottom:2px;}
+.hdr-sub{font-size:.74rem;opacity:.7;}
+.meta{background:#e8f5ed;padding:12px 30px;border-bottom:1px solid #cce0d4;display:flex;flex-wrap:wrap;gap:16px;}
+.mi{} .ml{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b8a74;margin-bottom:1px;}
+.mv{font-weight:700;color:#1a2b22;font-size:.8rem;}
+.body{padding:22px 30px 50px;}
+.abstract{background:linear-gradient(135deg,#e8f5ed,#edf4fb);border:1.5px solid #cce0d4;border-radius:12px;padding:14px 18px;margin-bottom:4px;}
+.abstract p{font-style:italic;font-size:.81rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.sc{text-align:center;background:#f9f7f4;border-radius:10px;padding:12px 6px;}
+.sc .n{font-size:1.5rem;font-weight:800;line-height:1;}
+.sc .l{font-size:.6rem;color:#6b8a74;font-weight:700;text-transform:uppercase;margin-top:3px;}
+.sc.ok .n{color:#1e5c38;} .sc.warn .n{color:#e65100;} .sc.bad .n{color:#c0392b;} .sc.blue .n{color:#1a4f6e;}
+.ill-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:.77rem;}
+.ill-row:last-child{border-bottom:none;}
+.flag-item{padding:8px 11px;border-radius:8px;font-size:.79rem;margin-bottom:5px;line-height:1.4;}
+.flag-red{background:#fdecea;color:#c0392b;border-left:3px solid #c0392b;}
+.flag-amber{background:#fff8e1;color:#e65100;border-left:3px solid #f39c12;}
+.flag-ok{background:#e8f5ed;color:#1e5c38;border-left:3px solid #4CAF72;}
+.rec-item{border-radius:10px;padding:11px 13px;margin-bottom:8px;border-left:4px solid;}
+.rec-item.critical{background:#fdecea;border-color:#c0392b;} .rec-item.warning{background:#fff8e1;border-color:#f39c12;} .rec-item.good{background:#e8f5ed;border-color:#4CAF72;}
+.rec-title{font-size:.81rem;font-weight:700;margin-bottom:3px;}
+.rec-item.critical .rec-title{color:#c0392b;} .rec-item.warning .rec-title{color:#e65100;} .rec-item.good .rec-title{color:#1e5c38;}
+.rec-body{font-size:.74rem;color:#1a2b22;line-height:1.55;}
+.sig{text-align:center;padding:18px 30px;color:#aaa;font-size:.67rem;border-top:1px solid #eee;margin-top:18px;}
+.no-print{position:fixed;bottom:20px;right:20px;}
+@media print{.no-print{display:none!important;}.page{box-shadow:none;}}`;
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Interviewer Report — ${interviewer}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${CSS}</style></head><body><div class="page">
+<div class="hdr"><div class="hdr-icon">📑</div><div class="hdr-title">Interviewer Performance Report</div><div class="hdr-sub">Great Lakes University · Nyamache Sub County Hospital · ${now}</div></div>
+<div class="meta">
+  <div class="mi"><div class="ml">Interviewer</div><div class="mv">${interviewer}</div></div>
+  <div class="mi"><div class="ml">Interviews</div><div class="mv">${n}</div></div>
+  <div class="mi"><div class="ml">Period</div><div class="mv">${dateRange}</div></div>
+  <div class="mi"><div class="ml">Locations</div><div class="mv">${locations}</div></div>
+</div>
+<div class="body">
+  <h1>Community Health Situation Analysis — Interviewer Report: ${interviewer}</h1>
+  <p style="font-size:.73rem;color:#6b8a74">Great Lakes University of Kisumu · Nyamache Sub County Hospital · Generated: ${now}</p>
+
+  <h2>Abstract</h2>
+  <div class="abstract"><p>This report summarises <strong>${n} household interview${n!==1?'s':''}</strong> conducted by <strong>${interviewer}</strong> across <strong>${locations}</strong> during the period ${dateRange}. Key findings: latrine coverage <strong>${pct(latrine,n)}%</strong>, water treatment <strong>${pct(waterTx,n)}%</strong>, HIV awareness <strong>${pct(hivHeard,n)}%</strong>. ${topIll.length?`Most prevalent illness: <strong>${topIll[0][0]}</strong> (${topIll[0][1]} cases).`:''} A total of <strong>${allFlags.length} red flag${allFlags.length!==1?'s':''}</strong> were identified across all interviews.</p></div>
+
+  <h2>1. Introduction</h2>
+  <p>This report presents aggregated findings from household health interviews conducted by ${interviewer} as part of the Great Lakes University community health situation analysis programme at Nyamache Sub County Hospital. The data covers ${n} household${n!==1?'s':''} across ${locations}, surveyed during ${dateRange}.</p>
+
+  <h2>2. Methods</h2>
+  <p>A 12-section structured questionnaire was administered face-to-face by the interviewer. Sections cover: Consent, Demography, Housing, Medical History, Maternal &amp; Child Health, Nutrition, HIV/AIDS, Sanitation, Environment &amp; Water, Cultural Practices, Health Problems, and Pests &amp; Vectors. Data was captured digitally on the Community Health Survey PWA and synced to Supabase.</p>
+
+  <h2>3. Results</h2>
+  <h3>3.1 Respondent Summary</h3>
+  <div class="grid3">
+    <div class="sc blue"><div class="n">${n}</div><div class="l">Interviews</div></div>
+    <div class="sc blue"><div class="n">${avgAge}</div><div class="l">Avg Age</div></div>
+    <div class="sc blue"><div class="n">${locations.split(',').length}</div><div class="l">Locations</div></div>
+    <div class="sc ok"><div class="n">${female}</div><div class="l">Female</div></div>
+    <div class="sc ok"><div class="n">${male}</div><div class="l">Male</div></div>
+    <div class="sc ${pct(permanent,n)>=50?'ok':'warn'}"><div class="n">${pct(permanent,n)}%</div><div class="l">Permanent HH</div></div>
+  </div>
+
+  <h3>3.2 Sanitation &amp; Water</h3>
+  <div style="background:#f9f7f4;border-radius:10px;padding:13px 15px;margin-bottom:8px">
+    <div style="font-size:.75rem;font-weight:600;margin-bottom:5px">Pit Latrine Coverage</div>
+    ${bar(latrine,n,'#16a085')}
+    <div style="font-size:.75rem;font-weight:600;margin:10px 0 5px">Water Treatment</div>
+    ${bar(waterTx,n,'#2980b9')}
+  </div>
+
+  <h3>3.3 HIV/AIDS</h3>
+  <div style="background:#f9f7f4;border-radius:10px;padding:13px 15px;margin-bottom:8px">
+    <div style="font-size:.75rem;font-weight:600;margin-bottom:5px">HIV Awareness</div>
+    ${bar(hivHeard,n,'#8e44ad')}
+    <div style="font-size:.75rem;font-weight:600;margin:10px 0 5px">Ever Tested for HIV</div>
+    ${bar(hivTested,n,'#c0392b')}
+  </div>
+
+  <h3>3.4 Disease Burden</h3>
+  ${topIll.length?`<div style="margin-bottom:8px">${topIll.map(([k,v])=>`<div class="ill-row"><span style="flex:1;font-weight:500">${k}</span><div style="width:90px;height:7px;background:#f0f0f0;border-radius:99px;overflow:hidden;flex-shrink:0"><div style="width:${Math.round(v/illMax*100)}%;height:100%;background:#c0392b;border-radius:99px"></div></div><span style="font-weight:700;color:#c0392b;min-width:28px;text-align:right">${v}</span></div>`).join('')}</div>`:'<p>No illness data recorded.</p>'}
+  ${totalDeaths>0?`<div class="flag-item flag-amber">⚠ ${totalDeaths} death${totalDeaths!==1?'s':''} reported across ${deathsHH} household${deathsHH!==1?'s':''} in the past 5 years.</div>`:''}
+
+  <h3>3.5 Red Flags Identified</h3>
+  ${allFlags.length?allFlags.slice(0,15).map(f=>`<div class="flag-item flag-red">🚨 <strong>${f.rec.interview_date||'?'}</strong> · ${f.rec.location||'?'} · ${f.flag}</div>`).join('')+(allFlags.length>15?`<div class="flag-item flag-amber">+ ${allFlags.length-15} more flags — see full records in admin panel</div>`:''):'<div class="flag-item flag-ok">✅ No critical red flags identified</div>'}
+
+  <h2>4. Discussion</h2>
+  <p>The ${n} interviews conducted by ${interviewer} cover ${locations}. ${pct(latrine,n)<60?`Latrine coverage of ${pct(latrine,n)}% is below the 60% minimum threshold and represents the most critical gap in this data set.`:pct(latrine,n)<80?`Latrine coverage of ${pct(latrine,n)}% is improving but remains below the 80% national target.`:`Latrine coverage of ${pct(latrine,n)}% meets the national target — a positive result.`} ${pct(waterTx,n)<60?`Only ${pct(waterTx,n)}% of households treat their water, representing a significant waterborne disease risk.`:`Water treatment compliance of ${pct(waterTx,n)}% is satisfactory.`} ${pct(hivHeard,n)<80?`HIV awareness at ${pct(hivHeard,n)}% falls short of the UNAIDS 90% target — health education outreach is recommended.`:`HIV awareness at ${pct(hivHeard,n)}% meets the 80% benchmark.`}</p>
+
+  <h2>5. Recommendations</h2>
+  ${recs2.length?recs2.map(r=>`<div class="rec-item ${r.lvl}"><div class="rec-title">${r.lvl==='critical'?'🚨':r.lvl==='warning'?'⚠️':'✅'} ${r.t}</div><div class="rec-body">${r.b}</div></div>`).join(''):'<div class="rec-item good"><div class="rec-title">✅ All indicators within acceptable range</div><div class="rec-body">Continue community engagement and routine surveillance.</div></div>'}
+
+</div>
+<div class="sig">© 2026 HazzinBR · Community Health Survey · Great Lakes University · Nyamache Sub County Hospital</div>
+</div>
+<button class="no-print" onclick="window.print()" style="background:#1e5c38;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.2)">🖨 Print / PDF</button>
+</body></html>`;
+}
+
+// ══════════════════════════════════════════════
+//  6. ALL INTERVIEWERS COMBINED REPORT (from admin)
+//  One document, one section per interviewer + group summary
+// ══════════════════════════════════════════════
+function buildAllInterviewersReport(ivNames, ivRecords, allRecords){
+  const now = new Date().toLocaleDateString('en-KE',{year:'numeric',month:'long',day:'numeric'});
+  const n = allRecords.length;
+  const pct = (a,b)=>b>0?Math.round(a/b*100):0;
+  const count = (arr,field,val)=>arr.filter(r=>r[field]===val).length;
+
+  const illCount={};
+  allRecords.forEach(r=>{(r.illnesses||'').split(',').forEach(x=>{const k=x.trim();if(k&&k!=='None')illCount[k]=(illCount[k]||0)+1;});});
+  const topIll=Object.entries(illCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const illMax=topIll[0]?.[1]||1;
+
+  const bar=(v,max,col='#1e5c38',label='')=>`<div style="margin-bottom:5px">${label?`<div style="font-size:.7rem;font-weight:600;margin-bottom:3px">${label}</div>`:''}<div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:7px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="width:${pct(v,max)}%;height:100%;background:${col};border-radius:99px"></div></div><span style="font-size:.68rem;font-weight:700;color:${col};min-width:42px;text-align:right">${v}/${max} (${pct(v,max)}%)</span></div></div>`;
+
+  // Per-interviewer rows
+  const ivRows = ivNames.map((iv,idx)=>{
+    const recs = ivRecords[idx];
+    const m = recs.length;
+    const lp = pct(count(recs,'latrine','Yes'),m);
+    const wp = pct(count(recs,'water_treated','Yes'),m);
+    const hp2 = pct(count(recs,'hiv_heard','Yes'),m);
+    const flags = recs.filter(r=>r.latrine==='No'||r.water_treated==='No'||r.hiv_heard==='No').length;
+    const topD = (()=>{const c={};recs.forEach(r=>{(r.illnesses||'').split(',').forEach(x=>{const k=x.trim();if(k&&k!=='None')c[k]=(c[k]||0)+1;});});const e=Object.entries(c).sort((a,b)=>b[1]-a[1]);return e[0]?e[0][0]:'—';})();
+    const col = (p)=>p>=70?'#1e5c38':p>=50?'#e65100':'#c0392b';
+    return `<tr style="border-bottom:1px solid #f0f0f0">
+      <td style="padding:9px 10px;font-weight:700;color:#1e5c38;font-size:.8rem">${iv}</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700">${m}</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${col(lp)}">${lp}%</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${col(wp)}">${wp}%</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${col(hp2)}">${hp2}%</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:${flags>0?'#c0392b':'#1e5c38'}">${flags}</td>
+      <td style="padding:9px 10px;font-size:.75rem;color:#6b8a74">${topD}</td>
+    </tr>`;
+  }).join('');
+
+  const CSS=`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Merriweather:ital,wght@0,700;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f2f0;color:#1a2b22;font-size:13px;}
+.page{max-width:780px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.12);}
+h1{font-family:'Merriweather',serif;font-size:1.15rem;font-weight:700;color:#0f1f18;line-height:1.4;margin-bottom:8px;}
+h2{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#6b8a74;border-bottom:2px solid #e8f5ed;padding-bottom:5px;margin:22px 0 10px;}
+h3{font-size:.84rem;font-weight:700;color:#1a5c35;margin:12px 0 6px;}p{font-size:.83rem;line-height:1.75;color:#1a2b22;margin-bottom:9px;}
+.hdr{background:linear-gradient(135deg,#1a5c35,#1a4060);color:#fff;padding:26px 30px 22px;}
+.hdr-icon{font-size:30px;margin-bottom:8px;}.hdr-title{font-size:1.25rem;font-weight:800;margin-bottom:2px;}.hdr-sub{font-size:.74rem;opacity:.7;}
+.meta{background:#e8f5ed;padding:12px 30px;border-bottom:1px solid #cce0d4;display:flex;flex-wrap:wrap;gap:16px;}
+.mi{}.ml{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b8a74;margin-bottom:1px;}.mv{font-weight:700;color:#1a2b22;font-size:.8rem;}
+.body{padding:22px 30px 50px;}
+.abstract{background:linear-gradient(135deg,#e8f5ed,#edf4fb);border:1.5px solid #cce0d4;border-radius:12px;padding:14px 18px;margin-bottom:4px;}
+.abstract p{font-style:italic;font-size:.81rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.sc{text-align:center;background:#f9f7f4;border-radius:10px;padding:12px 6px;}
+.sc .n{font-size:1.5rem;font-weight:800;line-height:1;}.sc .l{font-size:.6rem;color:#6b8a74;font-weight:700;text-transform:uppercase;margin-top:3px;}
+.sc.ok .n{color:#1e5c38;}.sc.warn .n{color:#e65100;}.sc.bad .n{color:#c0392b;}.sc.blue .n{color:#1a4f6e;}
+.ill-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:.77rem;}.ill-row:last-child{border-bottom:none;}
+.tbl{width:100%;border-collapse:collapse;font-size:.76rem;}
+.tbl thead th{background:#1e5c38;color:#fff;padding:9px 10px;text-align:left;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.tbl thead th:not(:first-child){text-align:center;}
+.rec-item{border-radius:10px;padding:11px 13px;margin-bottom:8px;border-left:4px solid;}
+.rec-item.critical{background:#fdecea;border-color:#c0392b;}.rec-item.warning{background:#fff8e1;border-color:#f39c12;}.rec-item.good{background:#e8f5ed;border-color:#4CAF72;}
+.rec-title{font-size:.81rem;font-weight:700;margin-bottom:3px;}.rec-item.critical .rec-title{color:#c0392b;}.rec-item.warning .rec-title{color:#e65100;}.rec-item.good .rec-title{color:#1e5c38;}
+.rec-body{font-size:.74rem;color:#1a2b22;line-height:1.55;}
+.sig{text-align:center;padding:18px 30px;color:#aaa;font-size:.67rem;border-top:1px solid #eee;margin-top:18px;}
+.no-print{position:fixed;bottom:20px;right:20px;}@media print{.no-print{display:none!important;}.page{box-shadow:none;}}`;
+
+  const gLatrine=count(allRecords,'latrine','Yes');
+  const gWater=count(allRecords,'water_treated','Yes');
+  const gHIV=count(allRecords,'hiv_heard','Yes');
+  const gTested=count(allRecords,'hiv_tested','Yes');
+  const gPermanent=count(allRecords,'house_type','Permanent');
+  const gDeaths=allRecords.reduce((s,r)=>s+(parseInt(r.deaths_count)||0),0);
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>All Interviewers Report</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${CSS}</style></head><body><div class="page">
+<div class="hdr"><div class="hdr-icon">📊</div><div class="hdr-title">Community Health Survey — Class Report</div><div class="hdr-sub">Great Lakes University · Nyamache Sub County Hospital · ${now}</div></div>
+<div class="meta">
+  <div class="mi"><div class="ml">Total Records</div><div class="mv">${n}</div></div>
+  <div class="mi"><div class="ml">Interviewers</div><div class="mv">${ivNames.length}</div></div>
+  <div class="mi"><div class="ml">Report Date</div><div class="mv">${now}</div></div>
+</div>
+<div class="body">
+  <h1>Community Health Situation Analysis — Aggregated Class Report, Nyamache Sub County</h1>
+  <p style="font-size:.73rem;color:#6b8a74">Interviewers: <strong>${ivNames.join(', ')}</strong></p>
+
+  <h2>Abstract</h2>
+  <div class="abstract"><p>This report aggregates data from <strong>${n} household interviews</strong> conducted by <strong>${ivNames.length} student interviewer${ivNames.length!==1?'s':''}</strong> from Great Lakes University. Key indicators: latrine coverage <strong>${pct(gLatrine,n)}%</strong>, water treatment <strong>${pct(gWater,n)}%</strong>, HIV awareness <strong>${pct(gHIV,n)}%</strong>, HIV testing <strong>${pct(gTested,n)}%</strong>. ${topIll.length?`Leading illness: <strong>${topIll[0][0]}</strong> (${topIll[0][1]} cases, ${pct(topIll[0][1],n)}%).`:''} Total deaths reported in past 5 years: <strong>${gDeaths}</strong>.</p></div>
+
+  <h2>1. Introduction</h2>
+  <p>This survey was conducted by student health workers from Great Lakes University as part of the community health situation analysis practical module at Nyamache Sub County Hospital, Kisii County. The survey maps to Kenya Health Policy 2014–2030 and SDG 3 priorities.</p>
+
+  <h2>2. Methods</h2>
+  <p>A 12-section structured questionnaire was administered face-to-face by ${ivNames.length} trained student interviewers. Data was captured digitally on the Community Health Survey PWA and synchronised to a cloud database. This report analyses all ${n} completed, consented interviews.</p>
+
+  <h2>3. Results</h2>
+  <h3>3.1 Overall Indicators</h3>
+  <div class="grid3">
+    <div class="sc blue"><div class="n">${n}</div><div class="l">Interviews</div></div>
+    <div class="sc ${pct(gLatrine,n)>=70?'ok':pct(gLatrine,n)>=50?'warn':'bad'}"><div class="n">${pct(gLatrine,n)}%</div><div class="l">Latrine</div></div>
+    <div class="sc ${pct(gWater,n)>=70?'ok':pct(gWater,n)>=50?'warn':'bad'}"><div class="n">${pct(gWater,n)}%</div><div class="l">Treat Water</div></div>
+    <div class="sc ${pct(gHIV,n)>=80?'ok':pct(gHIV,n)>=60?'warn':'bad'}"><div class="n">${pct(gHIV,n)}%</div><div class="l">HIV Aware</div></div>
+    <div class="sc ${pct(gTested,n)>=70?'ok':pct(gTested,n)>=40?'warn':'bad'}"><div class="n">${pct(gTested,n)}%</div><div class="l">HIV Tested</div></div>
+    <div class="sc ${pct(gPermanent,n)>=50?'ok':'warn'}"><div class="n">${pct(gPermanent,n)}%</div><div class="l">Permanent HH</div></div>
+  </div>
+
+  <h3>3.2 Disease Burden</h3>
+  ${topIll.length?`<div style="margin-bottom:10px">${topIll.map(([k,v])=>`<div class="ill-row"><span style="flex:1;font-weight:500">${k}</span><div style="width:90px;height:7px;background:#f0f0f0;border-radius:99px;overflow:hidden;flex-shrink:0"><div style="width:${Math.round(v/illMax*100)}%;height:100%;background:#c0392b;border-radius:99px"></div></div><span style="font-weight:700;color:#c0392b;min-width:28px;text-align:right">${v}</span></div>`).join('')}</div>`:'<p>No illness data.</p>'}
+  ${gDeaths>0?`<div style="padding:9px 12px;background:#fff8e1;border-radius:8px;font-size:.78rem;color:#e65100;margin-bottom:8px">⚠ ${gDeaths} total deaths reported in past 5 years across surveyed households.</div>`:''}
+
+  <h3>3.3 Per-Interviewer Comparison</h3>
+  <div style="overflow-x:auto;margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid #e0e0e0">
+    <table class="tbl">
+      <thead><tr><th>Interviewer</th><th>Records</th><th>Latrine%</th><th>Water Tx%</th><th>HIV Aware%</th><th>Red Flags</th><th>Top Illness</th></tr></thead>
+      <tbody>${ivRows}</tbody>
+    </table>
+  </div>
+
+  <h2>4. Discussion</h2>
+  <p>The data from ${ivNames.length} interviewers reveals ${pct(gLatrine,n)<60?'critically low latrine coverage, representing the primary public health risk in the surveyed area.':pct(gLatrine,n)<80?'latrine coverage below the 80% national target, requiring continued community mobilisation.':'satisfactory latrine coverage above the national target.'} ${pct(gWater,n)<60?`Water treatment at ${pct(gWater,n)}% is inadequate — waterborne disease risk is high across surveyed households.`:`Water treatment compliance at ${pct(gWater,n)}% is ${pct(gWater,n)>=70?'above':'approaching'} the recommended threshold.`} Inter-interviewer variation in indicators reflects genuine community-level heterogeneity across different areas.</p>
+
+  <h2>5. Recommendations</h2>
+  ${pct(gLatrine,n)<60?'<div class="rec-item critical"><div class="rec-title">🚨 Critical: Latrine Programme</div><div class="rec-body">Initiate Community-Led Total Sanitation (CLTS) in areas with lowest coverage. Target households identified by interviewers with latrine=No for immediate follow-up.</div></div>':''}
+  ${pct(gWater,n)<60?'<div class="rec-item critical"><div class="rec-title">🚨 Critical: Water Safety Campaign</div><div class="rec-body">Mass distribution of WaterGuard chlorine solution. Conduct community demonstrations on water treatment and safe storage.</div></div>':''}
+  ${pct(gHIV,n)<80?'<div class="rec-item warning"><div class="rec-title">⚠️ HIV Education Outreach</div><div class="rec-body">Deploy community health workers for door-to-door HIV education. Establish VCT outreach days in low-awareness areas.</div></div>':''}
+  ${topIll.length&&topIll[0][1]>n*0.15?`<div class="rec-item warning"><div class="rec-title">⚠️ ${topIll[0][0]} Prevention</div><div class="rec-body">${topIll[0][0]==='Malaria'?'Promote ITN use, conduct indoor residual spraying, and drain stagnant water sources.':topIll[0][0].includes('Diarrh')?'Address root causes through water treatment and sanitation improvements.':'Targeted health education and treatment access campaign.'}</div></div>`:''}
+  <div class="rec-item good"><div class="rec-title">✅ Continue Surveillance</div><div class="rec-body">Repeat community health assessment in 6 months to measure progress on key indicators. Maintain interviewer deployment for ongoing data collection.</div></div>
+  <p style="font-size:.73rem;color:#6b8a74;margin-top:14px;background:#f4f6f8;padding:10px 12px;border-radius:8px;line-height:1.6">Generated ${now} · Great Lakes University · Nyamache Sub County Hospital · ${n} interviews by ${ivNames.length} interviewers.</p>
+
+</div>
+<div class="sig">© 2026 HazzinBR · Community Health Survey · Great Lakes University · Nyamache Sub County Hospital</div>
+</div>
+<button class="no-print" onclick="window.print()" style="background:#1e5c38;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.2)">🖨 Print / PDF</button>
+</body></html>`;
+}

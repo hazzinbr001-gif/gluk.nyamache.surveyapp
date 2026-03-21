@@ -276,9 +276,9 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 .gate-cancel{width:100%;padding:10px;background:transparent;color:#6b8a74;border:none;font-family:inherit;font-size:0.85rem;cursor:pointer;}
 .gate-attempts{font-size:0.72rem;color:#c0392b;margin-top:6px;min-height:16px;}
 
-#admin-overlay{display:none;position:fixed;inset:0;z-index:8000;background:#f4f6f8;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#admin-overlay{display:none;position:fixed;inset:0;z-index:8000;background:#f4f6f8;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scroll-behavior:auto;}
 #admin-overlay.open{display:block;}
-.adm-top{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#1e5c38,#1a4f6e);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+.adm-top{position:sticky;top:0;z-index:50;will-change:transform;background:linear-gradient(135deg,#1e5c38,#1a4f6e);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.25);}
 .adm-brand{display:flex;align-items:center;gap:10px;}
 .adm-brand-icon{font-size:24px;}
 .adm-title{color:#fff;font-weight:800;font-size:1rem;line-height:1.15;}
@@ -288,7 +288,7 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 .adm-conn-dot{width:8px;height:8px;border-radius:50%;background:#f39c12;flex-shrink:0;}
 .adm-conn-txt{color:rgba(255,255,255,.7);font-size:0.7rem;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .adm-close{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:9px;padding:8px 14px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;}
-.adm-tabs{display:flex;background:#fff;border-bottom:2px solid #dde8e2;position:sticky;top:56px;z-index:40;}
+.adm-tabs{display:flex;background:#fff;border-bottom:2px solid #dde8e2;position:sticky;top:56px;z-index:40;will-change:transform;}
 .adm-tab{flex:1;padding:12px 6px;border:none;background:none;font-family:inherit;font-size:0.72rem;font-weight:600;color:#6b8a74;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;text-align:center;}
 .adm-tab.on{color:#1e5c38;border-bottom-color:#1e5c38;}
 .adm-tab-panel{display:none;padding:12px 12px 40px;}

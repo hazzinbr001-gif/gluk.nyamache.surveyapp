@@ -1,8 +1,4 @@
-/* ══════════════════════════════════════════════
-   Community Health Survey — Core Logic
-   State · Validation · Navigation · Rules · Sections
-   © 2026 HazzinBR
-   ══════════════════════════════════════════════ */
+/* Community Health Survey — Core JS © 2026 HazzinBR */
 
 const SECS=[{label:'Consent Form'},{label:'A: Demography'},{label:'B: Housing'},{label:'C: Medical History'},{label:'D: Maternal & Child'},{label:'E: Nutrition'},{label:'F: HIV/AIDS'},{label:'G: Sanitation'},{label:'H: Environment & Water'},{label:'I: Cultural Practices'},{label:'J: Health Problems'},{label:'K: Pests & Vectors'}];
 
@@ -2168,16 +2164,14 @@ document.addEventListener('DOMContentLoaded',init);
 // ══════════════════════════════════════════════════════
 
 // ── KEYBOARD-PROOF BOTTOM NAV ──
-// Prevents Android soft keyboard from pushing position:fixed nav bar
 (function(){
-  const nav = document.querySelector('.bot-nav');
-  if(!nav) return;
-  const ih = window.innerHeight;
-  window.addEventListener('resize', ()=>{
-    nav.style.transform = window.innerHeight < ih * 0.75
-      ? 'translateY(200%)' : 'translateZ(0)';
+  var nav=document.querySelector('.bot-nav');
+  if(!nav)return;
+  var ih=window.innerHeight;
+  window.addEventListener('resize',function(){
+    nav.style.transform=window.innerHeight<ih*0.75?'translateY(200%)':'translateZ(0)';
   });
-  document.addEventListener('focusout', ()=>{
-    setTimeout(()=>{ nav.style.transform='translateZ(0)'; },150);
+  document.addEventListener('focusout',function(){
+    setTimeout(function(){nav.style.transform='translateZ(0)';},150);
   });
 })();

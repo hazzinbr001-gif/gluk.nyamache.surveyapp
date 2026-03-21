@@ -1,7 +1,4 @@
-/* ══════════════════════════════════════════════
-   Community Health Survey — Auth & Welcome + Home Page
-   © 2026 HazzinBR
-   ══════════════════════════════════════════════ */
+/* Community Health Survey — Auth + Home Page © 2026 HazzinBR */
 //  WELCOME SCREEN LOGIC
 // ══════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════
@@ -435,70 +432,9 @@ function loaderBegin(){
   }
 }
 
-// enterApp: hides welcome screen, used by goHomeFromReport and direct calls
 function enterApp(){
   const ws = document.getElementById('welcome-screen');
   if(ws){ ws.classList.add('hiding'); setTimeout(()=>{ ws.style.display='none'; }, 680); }
-}
-
-// ── HOME PAGE ──────────────────────────────────────────
-function showHomePage(){
-  // Hide welcome screen
-  const ws = document.getElementById('welcome-screen');
-  if(ws){ ws.classList.add('hiding'); setTimeout(()=>{ ws.style.display='none'; }, 680); }
-  // Show home page
-  const hp = document.getElementById('home-page');
-  if(!hp) return;
-  hp.style.display = 'flex';
-  requestAnimationFrame(()=>{ hp.style.opacity = '1'; });
-  // Populate
-  const name = getUserName() || 'Interviewer';
-  const h = new Date().getHours();
-  const greet = h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
-  const nameEl  = document.getElementById('hp-name');
-  const greetEl = document.getElementById('hp-greeting');
-  if(nameEl)  nameEl.textContent  = name;
-  if(greetEl) greetEl.textContent = greet;
-  _hpRefreshStats();
-}
-
-function _hpRefreshStats(){
-  try{
-    const recs = JSON.parse(localStorage.getItem('chsa4')||'{}');
-    const keys = Object.keys(recs).filter(k=>!k.startsWith('_'));
-    const today = new Date().toISOString().split('T')[0];
-    const todayCount  = keys.filter(k=>recs[k].interview_date===today).length;
-    const syncedCount = keys.filter(k=>recs[k]._synced).length;
-    const t = document.getElementById('hp-stat-total');
-    const d = document.getElementById('hp-stat-today');
-    const s = document.getElementById('hp-stat-synced');
-    if(t) t.textContent = keys.length;
-    if(d) d.textContent = todayCount;
-    if(s) s.textContent = syncedCount;
-  }catch(e){}
-}
-
-function goBackHome(){
-  _hpRefreshStats();
-  const hp = document.getElementById('home-page');
-  if(hp){ hp.style.display='flex'; requestAnimationFrame(()=>{ hp.style.opacity='1'; }); }
-}
-
-function homeGoSurvey(){
-  const hp = document.getElementById('home-page');
-  if(hp){ hp.style.opacity='0'; setTimeout(()=>{ hp.style.display='none'; },350); }
-}
-
-function homeGoAdmin(){
-  const hp = document.getElementById('home-page');
-  if(hp){ hp.style.opacity='0'; setTimeout(()=>{ hp.style.display='none'; },300); }
-  setTimeout(()=>{
-    if(typeof openAdminGate==='function') openAdminGate();
-    else {
-      const g = document.getElementById('admin-gate');
-      if(g) g.classList.add('open');
-    }
-  }, 320);
 }
 
 // ── COMPATIBILITY STUBS ────────────────────────────────
@@ -851,10 +787,7 @@ function authClearAndRetry(){
   document.getElementById('auth-tabs').style.display='';
 }
 
-function enterApp(){
-  const ws = document.getElementById('welcome-screen');
-  if(ws){ ws.classList.add('hiding'); setTimeout(()=>ws.style.display='none', 660); }
-}
+
 
 function showDonateModal(){
   document.getElementById('donateModal').style.display='flex';
@@ -1011,4 +944,56 @@ if (isIOS && !isStandalone) {
     const note = document.getElementById('installNote');
     if(note) note.innerHTML = '💡 Open in Safari → tap Share ⬆ → Add to Home Screen';
   }, 100);
+}
+
+// ══════════════════════════════════════════════════════
+//  HOME PAGE
+// ══════════════════════════════════════════════════════
+function showHomePage(){
+  var ws=document.getElementById('welcome-screen');
+  if(ws){ws.classList.add('hiding');setTimeout(function(){ws.style.display='none';},680);}
+  var hp=document.getElementById('home-page');
+  if(!hp)return;
+  hp.style.display='flex';
+  requestAnimationFrame(function(){hp.style.opacity='1';});
+  var name=getUserName()||'Interviewer';
+  var h=new Date().getHours();
+  var g=h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
+  var ne=document.getElementById('hp-name');
+  var ge=document.getElementById('hp-greeting');
+  if(ne)ne.textContent=name;
+  if(ge)ge.textContent=g;
+  _hpStats();
+}
+function _hpStats(){
+  try{
+    var recs=JSON.parse(localStorage.getItem('chsa4')||'{}');
+    var keys=Object.keys(recs).filter(function(k){return !k.startsWith('_');});
+    var today=new Date().toISOString().split('T')[0];
+    var t=keys.filter(function(k){return recs[k].interview_date===today;}).length;
+    var s=keys.filter(function(k){return recs[k]._synced;}).length;
+    var te=document.getElementById('hp-stat-total');
+    var td=document.getElementById('hp-stat-today');
+    var sy=document.getElementById('hp-stat-synced');
+    if(te)te.textContent=keys.length;
+    if(td)td.textContent=t;
+    if(sy)sy.textContent=s;
+  }catch(e){}
+}
+function goBackHome(){
+  _hpStats();
+  var hp=document.getElementById('home-page');
+  if(hp){hp.style.display='flex';requestAnimationFrame(function(){hp.style.opacity='1';});}
+}
+function homeGoSurvey(){
+  var hp=document.getElementById('home-page');
+  if(hp){hp.style.opacity='0';setTimeout(function(){hp.style.display='none';},350);}
+}
+function homeGoAdmin(){
+  var hp=document.getElementById('home-page');
+  if(hp){hp.style.opacity='0';setTimeout(function(){hp.style.display='none';},300);}
+  setTimeout(function(){
+    if(typeof openAdminGate==='function')openAdminGate();
+    else{var g=document.getElementById('admin-gate');if(g)g.classList.add('open');}
+  },320);
 }

@@ -1,7 +1,4 @@
-/* ══════════════════════════════════════════════
-   Community Health Survey — Admin Panel
-   © 2026 HazzinBR
-   ══════════════════════════════════════════════ */
+/* Community Health Survey — Admin Panel © 2026 HazzinBR */
 
 // ══════════════════════════════════════════════════════
 //  ADMIN GATE — 8 taps on logo
@@ -217,6 +214,9 @@ function admRenderTable(){
       <td><span class="adm-badge ${r.hiv_heard==='Yes'?'ok':'red'}">${r.hiv_heard||'—'}</span></td>
       <td>${fl.length?`<span class="adm-badge red">🚨 ${fl.length}</span>`:`<span class="adm-badge ok">✓</span>`}</td>
       <td style="white-space:nowrap">
+        <button class="adm-row-btn" onclick="event.stopPropagation();openInterviewerReport('${r.interviewer}')" style="background:#e8f0fd;color:#1a4f6e">📑</button>
+      </td>
+      <td style="white-space:nowrap">
         <button class="adm-row-btn view" onclick="event.stopPropagation();admOpenDetail(${idx})">View</button>
         <button class="adm-row-btn del" onclick="event.stopPropagation();admDelete(${idx})">🗑</button>
       </td>
@@ -312,94 +312,26 @@ function admForceSyncAll(){
   syncAll(true);
 }
 
-
-// ══════════════════════════════════════════════
-//  BIN, INSIGHTS & STUDENTS (extended features)
-// ══════════════════════════════════════════════
+// ── BIN / INSIGHTS / STUDENTS ──
 const BIN_KEY='chsa_recycle_bin';
-
-function admConfirmRemove(regNumber, name){
-  if(!confirm(`Remove access for ${name}?\n\nThey will not be able to sign in. You can restore them anytime.`)) return;
-  admSetStudentStatus(regNumber, 'removed');
+function admTab(name,el){
+  document.querySelectorAll('.adm-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.adm-tab-panel').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('adm-panel-'+name).classList.add('on');
+  if(name==='bin') admRenderBin();
+  if(name==='insights') admRenderInsights();
+  if(name==='students') admLoadStudents();
 }
-
-async function admEmptyBin(){
-  const bin=admGetBin();
-  if(!bin.length)return;
-  if(!confirm(`⚠ Permanently delete ALL ${bin.length} records in the bin?\n\nThis cannot be undone.`))return;
-  if(!navigator.onLine){showToast('📵 No internet',true);return;}
-  let ok=0,fail=0;
-  for(const r of bin){
-    try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-        method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Prefer:'return=minimal'}
-      });
-      if(res.ok||res.status===204)ok++;else fail++;
-    }catch{fail++;}
-  }
-  admSaveBin([]);admRenderBin();admUpdateBinBadge();
-  showToast(fail>0?`⚠ ${ok} deleted, ${fail} failed`:`💀 All ${ok} records permanently deleted`);
-}
-
 function admGetBin(){try{return JSON.parse(localStorage.getItem(BIN_KEY)||'[]');}catch{return[];}}
-
-async function admLoadStudents(){
-  const empty = document.getElementById('adm-students-empty');
-  if(empty) empty.style.display='none';
-  try{
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?order=requested_at.desc`,
-      {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
-    );
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    _admStudents = await res.json();
-    admRenderStudents();
-  }catch(e){
-    if(empty){ empty.style.display='block'; empty.querySelector('div:nth-child(2)').textContent='⚠ '+e.message; }
-  }
-}
-
-function admMoveToBinByIdx(idx){
-  const r=_admRecs[idx];
-  if(!r)return;
-  if(!confirm(`Move this record to the recycle bin?\n\n${r.interviewer||'?'} · ${r.interview_date||'?'} · ${r.location||'?'}\n\nYou can restore it later from the Bin tab.`))return;
+function admSaveBin(b){localStorage.setItem(BIN_KEY,JSON.stringify(b));}
+function admUpdateBinBadge(){
   const bin=admGetBin();
-  bin.push({...r, _binned_at: new Date().toISOString()});
-  admSaveBin(bin);
-  _admRecs.splice(idx,1);
-  admRenderAll();
-  admUpdateBinBadge();
-  showToast('Moved to recycle bin — restore anytime from 🗑 Bin tab');
+  const badge=document.getElementById('adm-bin-badge');
+  if(!badge)return;
+  if(bin.length>0){badge.style.display='inline';badge.textContent=bin.length;}
+  else badge.style.display='none';
 }
-
-function admMoveTobin(){
-  if(_admDetailIdx<0)return;
-  admCloseDetail();
-  admMoveToBinByIdx(_admDetailIdx);
-}
-
-async function admPermDelete(i){
-  const bin=admGetBin();
-  const r=bin[i];
-  if(!r)return;
-  if(!confirm(`⚠ PERMANENTLY delete this record?\n\n${r.interviewer||'?'} · ${r.interview_date||'?'}\n\nThis will remove it from the server and cannot be undone.`))return;
-  if(!navigator.onLine){showToast('📵 No internet — cannot delete from server',true);return;}
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-      method:'DELETE',
-      headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Prefer:'return=minimal'}
-    });
-    if(res.ok||res.status===204){
-      bin.splice(i,1);admSaveBin(bin);
-      admRenderBin();admUpdateBinBadge();
-      showToast('💀 Permanently deleted from server');
-    }else{
-      const err=await res.text();
-      showToast(`⚠ Server delete failed (${res.status}) — check Supabase RLS`,true);
-    }
-  }catch(e){showToast('⚠ Network error',true);}
-}
-
 function admRenderBin(){
   const bin=admGetBin();
   const list=document.getElementById('adm-bin-list');
@@ -423,7 +355,79 @@ function admRenderBin(){
       </div>
     </div>`).join('');
 }
-
+function admMoveToBinByIdx(idx){
+  const r=_admRecs[idx];
+  if(!r)return;
+  if(!confirm(`Move this record to the recycle bin?\n\n${r.interviewer||'?'} · ${r.interview_date||'?'} · ${r.location||'?'}\n\nYou can restore it later from the Bin tab.`))return;
+  const bin=admGetBin();
+  bin.push({...r, _binned_at: new Date().toISOString()});
+  admSaveBin(bin);
+  _admRecs.splice(idx,1);
+  admRenderAll();
+  admUpdateBinBadge();
+  showToast('Moved to recycle bin — restore anytime from 🗑 Bin tab');
+}
+function admMoveTobin(){
+  if(_admDetailIdx<0)return;
+  admCloseDetail();
+  admMoveToBinByIdx(_admDetailIdx);
+}
+function admRestoreFromBin(i){
+  const bin=admGetBin();
+  const r=bin[i];
+  if(!r)return;
+  // Remove _binned_at before restoring
+  const {_binned_at,...rec}=r;
+  _admRecs.unshift(rec);
+  bin.splice(i,1);
+  admSaveBin(bin);
+  admRenderAll();
+  admRenderBin();
+  admUpdateBinBadge();
+  showToast('✓ Record restored to main list');
+}
+async function admPermDelete(i){
+  const bin=admGetBin();
+  const r=bin[i];
+  if(!r)return;
+  if(!confirm(`⚠ PERMANENTLY delete this record?\n\n${r.interviewer||'?'} · ${r.interview_date||'?'}\n\nThis will remove it from the server and cannot be undone.`))return;
+  if(!navigator.onLine){showToast('📵 No internet — cannot delete from server',true);return;}
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
+      method:'DELETE',
+      headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Prefer:'return=minimal'}
+    });
+    if(res.ok||res.status===204){
+      bin.splice(i,1);admSaveBin(bin);
+      admRenderBin();admUpdateBinBadge();
+      showToast('💀 Permanently deleted from server');
+    }else{
+      const err=await res.text();
+      showToast(`⚠ Server delete failed (${res.status}) — check Supabase RLS`,true);
+    }
+  }catch(e){showToast('⚠ Network error',true);}
+}
+async function admEmptyBin(){
+  const bin=admGetBin();
+  if(!bin.length)return;
+  if(!confirm(`⚠ Permanently delete ALL ${bin.length} records in the bin?\n\nThis cannot be undone.`))return;
+  if(!navigator.onLine){showToast('📵 No internet',true);return;}
+  let ok=0,fail=0;
+  for(const r of bin){
+    try{
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
+        method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Prefer:'return=minimal'}
+      });
+      if(res.ok||res.status===204)ok++;else fail++;
+    }catch{fail++;}
+  }
+  admSaveBin([]);admRenderBin();admUpdateBinBadge();
+  showToast(fail>0?`⚠ ${ok} deleted, ${fail} failed`:`💀 All ${ok} records permanently deleted`);
+}
+function admConfirmRemove(regNumber, name){
+  if(!confirm(`Remove access for ${name}?\n\nThey will not be able to sign in. You can restore them anytime.`)) return;
+  admSetStudentStatus(regNumber, 'removed');
+}
 function admRenderInsights(){
   const n=_admRecs.length;
   if(!n){document.getElementById('adm-insights-body').innerHTML='<div class="adm-empty"><div style="font-size:36px;margin-bottom:8px">🔬</div><div>No records loaded yet</div></div>';return;}
@@ -571,7 +575,21 @@ function admRenderInsights(){
     const target=el.style.width;el.style.width='0';setTimeout(()=>el.style.width=target,50);
   }),100);
 }
-
+async function admLoadStudents(){
+  const empty = document.getElementById('adm-students-empty');
+  if(empty) empty.style.display='none';
+  try{
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?order=requested_at.desc`,
+      {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
+    );
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    _admStudents = await res.json();
+    admRenderStudents();
+  }catch(e){
+    if(empty){ empty.style.display='block'; empty.querySelector('div:nth-child(2)').textContent='⚠ '+e.message; }
+  }
+}
 function admRenderStudents(){
   const list  = document.getElementById('adm-students-list');
   const empty = document.getElementById('adm-students-empty');
@@ -620,38 +638,59 @@ function admRenderStudents(){
   }
   if(list) list.innerHTML = html;
 }
-
-function admUpdateBinBadge(){
-  const bin=admGetBin();
-  const badge=document.getElementById('adm-bin-badge');
-  if(!badge)return;
-  if(bin.length>0){badge.style.display='inline';badge.textContent=bin.length;}
-  else badge.style.display='none';
+async function admSetStudentStatus(regNumber, status){
+  try{
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?reg_number=eq.${encodeURIComponent(regNumber)}`,
+      {
+        method:'PATCH',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':SUPABASE_KEY,
+          'Authorization':'Bearer '+SUPABASE_KEY,
+          'Prefer':'return=minimal'
+        },
+        body:JSON.stringify({status, approved_at: status==='approved'?new Date().toISOString():null})
+      }
+    );
+    if(res.ok||res.status===204){
+      showToast(status==='removed'?'✗ User removed':'✓ User restored');
+      admLoadStudents();
+    } else {
+      showToast('⚠ Update failed — check Supabase RLS',true);
+    }
+  }catch(e){
+    showToast('⚠ Network error',true);
+  }
 }
 
-function admRestoreFromBin(i){
-  const bin=admGetBin();
-  const r=bin[i];
-  if(!r)return;
-  // Remove _binned_at before restoring
-  const {_binned_at,...rec}=r;
-  _admRecs.unshift(rec);
-  bin.splice(i,1);
-  admSaveBin(bin);
-  admRenderAll();
-  admRenderBin();
-  admUpdateBinBadge();
-  showToast('✓ Record restored to main list');
+// ── PER-INTERVIEWER REPORT FROM ADMIN ──
+function openInterviewerReport(interviewer){
+  var recs=_admRecs.filter(function(r){return r.interviewer===interviewer;});
+  if(!recs.length){showToast('No records for '+interviewer,true);return;}
+  var html=buildInterviewerReport(interviewer,recs);
+  var ov=document.getElementById('report-overlay');
+  var fr=document.getElementById('report-frame');
+  var ti=document.getElementById('report-title');
+  if(!ov||!fr)return;
+  var doc=fr.contentDocument||fr.contentWindow.document;
+  doc.open();doc.write(html);doc.close();
+  if(ti)ti.textContent='📑 '+interviewer+' — Report';
+  ov.classList.add('open');
 }
-
-function admTab(name,el){
-  document.querySelectorAll('.adm-tab').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.adm-tab-panel').forEach(p=>p.classList.remove('on'));
-  el.classList.add('on');
-  document.getElementById('adm-panel-'+name).classList.add('on');
-  if(name==='bin') admRenderBin();
-  if(name==='insights') admRenderInsights();
-  if(name==='students') admLoadStudents();
+function openAllInterviewerReports(){
+  if(!_admRecs.length){showToast('No records loaded',true);return;}
+  var ivs=[...new Set(_admRecs.map(function(r){return r.interviewer||'Unknown';}))];
+  var all=ivs.map(function(iv){
+    return _admRecs.filter(function(r){return r.interviewer===iv;});
+  });
+  var html=buildAllInterviewersReport(ivs,all,_admRecs);
+  var ov=document.getElementById('report-overlay');
+  var fr=document.getElementById('report-frame');
+  var ti=document.getElementById('report-title');
+  if(!ov||!fr)return;
+  var doc=fr.contentDocument||fr.contentWindow.document;
+  doc.open();doc.write(html);doc.close();
+  if(ti)ti.textContent='📑 All Interviewers Report';
+  ov.classList.add('open');
 }
-
-function admSaveBin(b){localStorage.setItem(BIN_KEY,JSON.stringify(b));}

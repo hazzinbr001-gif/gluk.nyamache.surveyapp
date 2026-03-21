@@ -1,7 +1,4 @@
-/* ══════════════════════════════════════════════
-   Community Health Survey — Sync Engine (Supabase)
-   © 2026 HazzinBR
-   ══════════════════════════════════════════════ */
+/* Community Health Survey — Sync Engine © 2026 HazzinBR */
 
 // ══════════════════════════════════════════════════════
 //  SUPABASE CONFIG
