@@ -664,33 +664,3 @@ async function admSetStudentStatus(regNumber, status){
   }
 }
 
-// ── PER-INTERVIEWER REPORT FROM ADMIN ──
-function openInterviewerReport(interviewer){
-  var recs=_admRecs.filter(function(r){return r.interviewer===interviewer;});
-  if(!recs.length){showToast('No records for '+interviewer,true);return;}
-  var html=buildInterviewerReport(interviewer,recs);
-  var ov=document.getElementById('report-overlay');
-  var fr=document.getElementById('report-frame');
-  var ti=document.getElementById('report-title');
-  if(!ov||!fr)return;
-  var doc=fr.contentDocument||fr.contentWindow.document;
-  doc.open();doc.write(html);doc.close();
-  if(ti)ti.textContent='📑 '+interviewer+' — Report';
-  ov.classList.add('open');
-}
-function openAllInterviewerReports(){
-  if(!_admRecs.length){showToast('No records loaded',true);return;}
-  var ivs=[...new Set(_admRecs.map(function(r){return r.interviewer||'Unknown';}))];
-  var all=ivs.map(function(iv){
-    return _admRecs.filter(function(r){return r.interviewer===iv;});
-  });
-  var html=buildAllInterviewersReport(ivs,all,_admRecs);
-  var ov=document.getElementById('report-overlay');
-  var fr=document.getElementById('report-frame');
-  var ti=document.getElementById('report-title');
-  if(!ov||!fr)return;
-  var doc=fr.contentDocument||fr.contentWindow.document;
-  doc.open();doc.write(html);doc.close();
-  if(ti)ti.textContent='📑 All Interviewers Report';
-  ov.classList.add('open');
-}
