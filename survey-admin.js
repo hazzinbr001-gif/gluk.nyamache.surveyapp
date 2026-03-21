@@ -606,20 +606,50 @@ function admTab(name,el){
   if(name==='students') admLoadStudents();
 }
 // ══════════════════════════════════════════════════════
-//  ADMIN GATE — 8 taps on logo
+//  ADMIN GATE — hold logo for 2 seconds
 // ══════════════════════════════════════════════════════
 const ADMIN_PW = 'hazzin2025';
-let _tapCount=0, _tapTimer=null, _gateAttempts=0;
+let _gateAttempts=0;
+let _holdTimer=null, _holdActive=false;
 
-function adminTap(){
-  _tapCount++;
-  clearTimeout(_tapTimer);
-  if(_tapCount>=8){ _tapCount=0; openAdminGate(); }
-  else {
-    _tapTimer=setTimeout(()=>{ _tapCount=0; },5000);
-    if(_tapCount>=3) showToast('Tap '+(8-_tapCount)+' more to open admin…');
-  }
+function adminHoldStart(){
+  _holdActive=false;
+  _holdTimer=setTimeout(()=>{
+    _holdActive=true;
+    if(navigator.vibrate) navigator.vibrate(60);
+    openAdminGate();
+  }, 2000);
 }
+function adminHoldEnd(){
+  clearTimeout(_holdTimer);
+  if(!_holdActive) showToast('Hold the 🏥 icon for 2 seconds to open admin');
+  _holdActive=false;
+}
+// Wire long-press to the large admin-trigger area
+document.addEventListener('DOMContentLoaded',()=>{
+  const el = document.getElementById('admin-trigger');
+  if(!el) return;
+  let _prog=null;
+  function start(e){
+    clearTimeout(_prog);
+    _holdActive=false;
+    _holdTimer=setTimeout(()=>{ _holdActive=true; if(navigator.vibrate)navigator.vibrate([40,30,80]); openAdminGate(); },2000);
+    _prog=setTimeout(()=>showToast('Keep holding…'),900);
+  }
+  function end(){
+    clearTimeout(_holdTimer);
+    clearTimeout(_prog);
+    _holdActive=false;
+  }
+  el.addEventListener('touchstart', start, {passive:true});
+  el.addEventListener('touchend',   end,   {passive:true});
+  el.addEventListener('touchmove',  end,   {passive:true});
+  el.addEventListener('mousedown',  start);
+  el.addEventListener('mouseup',    end);
+  el.addEventListener('mouseleave', end);
+});
+// adminTap kept as no-op (HTML still references it)
+function adminTap(){}
 function openAdminGate(){
   if(sessionStorage.getItem('adm_ok')==='1'){ openAdminDash(); return; }
   document.getElementById('admin-gate').classList.add('open');
@@ -629,8 +659,8 @@ function closeAdminGate(){
   document.getElementById('admin-gate').classList.remove('open');
   document.getElementById('gate-pass').value='';
   document.getElementById('gate-err').textContent='';
-  _tapCount=0;
 }
+
 function checkGate(){
   const entered=document.getElementById('gate-pass').value;
   const pw=localStorage.getItem('chsa_admin_pass')||ADMIN_PW;
