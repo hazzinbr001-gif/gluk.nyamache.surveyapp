@@ -849,33 +849,70 @@ function openInterviewerReport(interviewer){
 }
 
 function openAllInterviewerReports(){
-  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — refresh first', true); return; }
-  const ivNames = [...new Set(_admRecs.map(r=>r.interviewer||'Unknown'))].sort();
-  if(ivNames.length===1){
-    openInterviewerReport(ivNames[0]);
-    return;
-  }
-  // Ask which report to open
-  const menu = document.createElement('div');
-  menu.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;';
-  menu.innerHTML=`<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))">
-    <div style="font-weight:800;font-size:1rem;color:#1a5c35;margin-bottom:4px">Select Report</div>
-    <div style="font-size:.78rem;color:#6b8a74;margin-bottom:16px">Choose an interviewer or the full group report</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      ${ivNames.map(iv=>`<button onclick="document.body.removeChild(document.getElementById('rpt-menu'));openInterviewerReport('${iv.replace(/'/g,"\\'")}');" style="width:100%;padding:13px 16px;background:#f4f8f5;border:1.5px solid #cce0d4;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1a5c35;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center">📑 ${iv} <span style="font-size:.72rem;font-weight:400;color:#6b8a74">${_admRecs.filter(r=>r.interviewer===iv).length} record${_admRecs.filter(r=>r.interviewer===iv).length!==1?'s':''}</span></button>`).join('')}
-      <button onclick="document.body.removeChild(document.getElementById('rpt-menu'));openGroupReport();" style="width:100%;padding:13px 16px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center">👥 Full Class Group Report <span style="font-size:.72rem;font-weight:400;opacity:.7">${_admRecs.length} records</span></button>
-      <button onclick="document.body.removeChild(document.getElementById('rpt-menu'))" style="width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:12px;font-family:inherit;font-size:.88rem;cursor:pointer;color:#888">Cancel</button>
-    </div>
-  </div>`;
-  menu.id='rpt-menu';
+  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — tap Refresh first', true); return; }
+  var ivNames = [...new Set(_admRecs.map(function(r){return r.interviewer||'Unknown';}))]
+                .filter(Boolean).sort();
+
+  // Remove any existing menu
+  var existing = document.getElementById('rpt-menu');
+  if(existing) existing.remove();
+
+  // Build menu
+  var menu = document.createElement('div');
+  menu.id = 'rpt-menu';
+  menu.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;';
+
+  var btns = '';
+  ivNames.forEach(function(iv){
+    var cnt = _admRecs.filter(function(r){return r.interviewer===iv;}).length;
+    btns += '<button class="rpt-iv-btn" data-iv="'+encodeURIComponent(iv)+'" style="width:100%;padding:13px 16px;background:#f4f8f5;border:1.5px solid #cce0d4;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1a5c35;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;margin-bottom:0">'
+          + '📑 '+iv
+          + '<span style="font-size:.72rem;font-weight:400;color:#6b8a74">'+cnt+' record'+(cnt!==1?'s':'')+'</span>'
+          + '</button>';
+  });
+
+  menu.innerHTML = '<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))">'
+    + '<div style="font-weight:800;font-size:1rem;color:#1a5c35;margin-bottom:4px">📑 Select Report</div>'
+    + '<div style="font-size:.78rem;color:#6b8a74;margin-bottom:14px">Choose an interviewer or the full class group report</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px">'
+    + btns
+    + '<button id="rpt-group-btn" style="width:100%;padding:13px 16px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center">'
+    + '👥 Full Class Group Report'
+    + '<span style="font-size:.72rem;font-weight:400;opacity:.7">'+_admRecs.length+' total records</span>'
+    + '</button>'
+    + '<button id="rpt-cancel-btn" style="width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:12px;font-family:inherit;font-size:.88rem;cursor:pointer;color:#888">Cancel</button>'
+    + '</div></div>';
+
   document.body.appendChild(menu);
+
+  // Wire up events AFTER DOM insertion (avoids inline onclick escaping issues)
+  menu.querySelectorAll('.rpt-iv-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var iv = decodeURIComponent(btn.getAttribute('data-iv'));
+      menu.remove();
+      openInterviewerReport(iv);
+    });
+  });
+  document.getElementById('rpt-group-btn').addEventListener('click', function(){
+    menu.remove();
+    openGroupReport();
+  });
+  document.getElementById('rpt-cancel-btn').addEventListener('click', function(){
+    menu.remove();
+  });
+  // Tap backdrop to close
+  menu.addEventListener('click', function(e){
+    if(e.target === menu) menu.remove();
+  });
 }
 
+
 function openGroupReport(){
-  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — refresh first', true); return; }
-  const html = buildGroupReport(_admRecs);
+  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — tap Refresh first', true); return; }
+  var html = buildGroupReport(_admRecs);
   _openReportFrame(html, '👥 Class Group Report');
 }
+
 
 function _openReportFrame(html, title){
   const ov = document.getElementById('report-overlay');
