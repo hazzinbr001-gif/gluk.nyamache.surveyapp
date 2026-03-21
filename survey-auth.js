@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   Community Health Survey — Auth & Welcome Screen
+   Community Health Survey — Auth & Welcome + Home Page
    © 2026 HazzinBR
    ══════════════════════════════════════════════ */
 //  WELCOME SCREEN LOGIC
@@ -435,21 +435,53 @@ function loaderBegin(){
   }
 }
 
+// enterApp: hides welcome screen, used by goHomeFromReport and direct calls
 function enterApp(){
-  // Hide welcome screen and go straight to survey (called from home page)
   const ws = document.getElementById('welcome-screen');
   if(ws){ ws.classList.add('hiding'); setTimeout(()=>{ ws.style.display='none'; }, 680); }
 }
 
+// ── HOME PAGE ──────────────────────────────────────────
 function showHomePage(){
-  // Hide welcome screen first
+  // Hide welcome screen
   const ws = document.getElementById('welcome-screen');
   if(ws){ ws.classList.add('hiding'); setTimeout(()=>{ ws.style.display='none'; }, 680); }
-  // Then show the home overlay
+  // Show home page
   const hp = document.getElementById('home-page');
-  if(hp){
-    setTimeout(()=>{ hp.style.display='flex'; requestAnimationFrame(()=>{ hp.style.opacity='1'; }); }, 300);
-  }
+  if(!hp) return;
+  hp.style.display = 'flex';
+  requestAnimationFrame(()=>{ hp.style.opacity = '1'; });
+  // Populate
+  const name = getUserName() || 'Interviewer';
+  const h = new Date().getHours();
+  const greet = h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
+  const nameEl  = document.getElementById('hp-name');
+  const greetEl = document.getElementById('hp-greeting');
+  if(nameEl)  nameEl.textContent  = name;
+  if(greetEl) greetEl.textContent = greet;
+  _hpRefreshStats();
+}
+
+function _hpRefreshStats(){
+  try{
+    const recs = JSON.parse(localStorage.getItem('chsa4')||'{}');
+    const keys = Object.keys(recs).filter(k=>!k.startsWith('_'));
+    const today = new Date().toISOString().split('T')[0];
+    const todayCount  = keys.filter(k=>recs[k].interview_date===today).length;
+    const syncedCount = keys.filter(k=>recs[k]._synced).length;
+    const t = document.getElementById('hp-stat-total');
+    const d = document.getElementById('hp-stat-today');
+    const s = document.getElementById('hp-stat-synced');
+    if(t) t.textContent = keys.length;
+    if(d) d.textContent = todayCount;
+    if(s) s.textContent = syncedCount;
+  }catch(e){}
+}
+
+function goBackHome(){
+  _hpRefreshStats();
+  const hp = document.getElementById('home-page');
+  if(hp){ hp.style.display='flex'; requestAnimationFrame(()=>{ hp.style.opacity='1'; }); }
 }
 
 function homeGoSurvey(){
@@ -458,42 +490,15 @@ function homeGoSurvey(){
 }
 
 function homeGoAdmin(){
-  // Hide home page first, then open admin gate
   const hp = document.getElementById('home-page');
-  if(hp){ hp.style.opacity='0'; setTimeout(()=>{ hp.style.display='none'; },350); }
-  // Small delay so home page fades before gate opens
+  if(hp){ hp.style.opacity='0'; setTimeout(()=>{ hp.style.display='none'; },300); }
   setTimeout(()=>{
-    if(typeof openAdminGate === 'function'){
-      openAdminGate();
-    } else {
-      // Fallback: show gate directly
-      const gate = document.getElementById('admin-gate');
-      if(gate){ gate.classList.add('open'); }
+    if(typeof openAdminGate==='function') openAdminGate();
+    else {
+      const g = document.getElementById('admin-gate');
+      if(g) g.classList.add('open');
     }
-  }, 200);
-}
-
-function goBackHome(){
-  // Return to home page from survey
-  const hp = document.getElementById('home-page');
-  if(hp){
-    // Refresh stats
-    try{
-      const recs = JSON.parse(localStorage.getItem('chsa4')||'{}');
-      const keys = Object.keys(recs).filter(k=>!k.startsWith('_'));
-      const today = new Date().toISOString().split('T')[0];
-      const todayCount = keys.filter(k=>recs[k].interview_date===today).length;
-      const syncedCount = keys.filter(k=>recs[k]._synced).length;
-      const totalEl = document.getElementById('hp-stat-total');
-      const todayEl = document.getElementById('hp-stat-today');
-      const syncEl  = document.getElementById('hp-stat-synced');
-      if(totalEl) totalEl.textContent = keys.length;
-      if(todayEl) todayEl.textContent = todayCount;
-      if(syncEl)  syncEl.textContent  = syncedCount;
-    }catch(e){}
-    hp.style.display='flex';
-    requestAnimationFrame(()=>{ hp.style.opacity='1'; });
-  }
+  }, 320);
 }
 
 // ── COMPATIBILITY STUBS ────────────────────────────────
@@ -888,6 +893,8 @@ document.addEventListener('change', e=>{
 // ── Run welcome & auth ──
 spawnParticles();
 authInit();
+
+
 // Service worker loaded from ./sw.js
 
 if ('serviceWorker' in navigator) {

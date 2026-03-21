@@ -2,16 +2,661 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=./health_survey.html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Health Survey">
+<meta name="application-name" content="Health Survey">
+<meta name="theme-color" content="#1e5c38">
+<meta name="description" content="Community Health Situation Analysis — Offline Data Collection Tool">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <title>Community Health Survey</title>
-<style>
-  body { margin: 0; background: #080808; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
-  p { color: rgba(255,255,255,.5); font-size: 0.9rem; }
-  a { color: #1DB954; }
-</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="./survey-styles.css">
 </head>
 <body>
-  <p>Loading… <a href="./health_survey.html">tap here if not redirected</a></p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  HOME PAGE — shown after login, before survey       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="home-page" style="display:none;opacity:0;position:fixed;inset:0;z-index:7000;background:linear-gradient(160deg,#071510 0%,#0b1e14 50%,#071018 100%);flex-direction:column;align-items:center;justify-content:space-between;overflow-y:auto;transition:opacity .4s ease;font-family:'Plus Jakarta Sans',sans-serif;">
+  <!-- BG -->
+  <div style="position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(29,185,84,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(29,185,84,.03) 1px,transparent 1px);background-size:36px 36px;z-index:0"></div>
+  <div style="position:fixed;width:340px;height:340px;border-radius:50%;background:rgba(26,92,53,.4);filter:blur(80px);top:-100px;right:-80px;pointer-events:none;z-index:0"></div>
+  <div style="position:fixed;width:260px;height:260px;border-radius:50%;background:rgba(26,64,96,.35);filter:blur(70px);bottom:-60px;left:-60px;pointer-events:none;z-index:0"></div>
+  <!-- Content -->
+  <div style="position:relative;z-index:1;width:100%;max-width:420px;padding:0 20px;display:flex;flex-direction:column;align-items:center;padding-top:max(env(safe-area-inset-top,16px),16px)">
+    <!-- Header -->
+    <div style="text-align:center;padding:36px 0 24px">
+      <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(145deg,rgba(26,92,53,.7),rgba(26,64,96,.6));border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px;box-shadow:0 0 0 1px rgba(29,185,84,.2),0 8px 32px rgba(0,0,0,.4)">🏥</div>
+      <div id="hp-greeting" style="color:rgba(255,255,255,.5);font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Welcome back</div>
+      <div id="hp-name" style="color:#fff;font-size:2rem;font-weight:800;letter-spacing:-.04em;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.5)">—</div>
+      <div style="color:rgba(29,185,84,.7);font-size:.63rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-top:8px">Great Lakes University · Nyamache</div>
+    </div>
+    <!-- Buttons -->
+    <div style="width:100%;display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
+      <!-- START SURVEY -->
+      <button onclick="homeGoSurvey()" style="width:100%;padding:18px 20px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 6px 28px rgba(26,92,53,.45);text-align:left;font-family:inherit;" ontouchstart="this.style.opacity='.8'" ontouchend="this.style.opacity='1'">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📋</div>
+        <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Start Survey</div><div style="color:rgba(255,255,255,.5);font-size:.7rem;margin-top:2px">Conduct a household health interview</div></div>
+        <div style="color:rgba(255,255,255,.3);font-size:1.3rem">›</div>
+      </button>
+      <!-- ADMIN -->
+      <button onclick="homeGoAdmin()" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit;backdrop-filter:blur(8px)" ontouchstart="this.style.background='rgba(255,255,255,.12)'" ontouchend="this.style.background='rgba(255,255,255,.06)'">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🔐</div>
+        <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Admin Dashboard</div><div style="color:rgba(255,255,255,.4);font-size:.7rem;margin-top:2px">View records, insights &amp; reports</div></div>
+        <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
+      </button>
+      <!-- SAVED RECORDS -->
+      <button onclick="homeGoSurvey();setTimeout(openDrawer,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📁</div>
+        <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Saved Records</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Resume or review past interviews</div></div>
+        <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
+      </button>
+      <!-- SYNC -->
+      <button onclick="homeGoSurvey();setTimeout(openSyncModal,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">☁️</div>
+        <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Sync Data</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Upload records to the server</div></div>
+        <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
+      </button>
+    </div>
+    <!-- Stats -->
+    <div style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:28px">
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center">
+        <div id="hp-stat-total" style="color:#fff;font-size:1.5rem;font-weight:800;line-height:1">0</div>
+        <div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Records</div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center">
+        <div id="hp-stat-today" style="color:#1DB954;font-size:1.5rem;font-weight:800;line-height:1">0</div>
+        <div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Today</div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center">
+        <div id="hp-stat-synced" style="color:rgba(255,255,255,.7);font-size:1.5rem;font-weight:800;line-height:1">0</div>
+        <div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Synced</div>
+      </div>
+    </div>
+  </div>
+  <!-- Footer -->
+  <div style="position:relative;z-index:1;width:100%;padding:12px 20px calc(16px + env(safe-area-inset-bottom));text-align:center;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05)">
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:5px">
+      <button onclick="forgetUser()" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">Switch Account</button>
+      <span style="color:rgba(255,255,255,.1)">|</span>
+      <button onclick="showDonateModal()" style="background:none;border:none;color:rgba(29,185,84,.5);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">☕ Buy me a coffee</button>
+    </div>
+    <div style="color:rgba(255,255,255,.1);font-size:.57rem">Built by HazzinBR · Community Health Survey v2.0 · Free</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  ENTRANCE SEQUENCE                                  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="welcome-screen">
+
+  <!-- ══ PHASE 1: LAMP ROOM ══ -->
+  <div id="lamp-room">
+    <div id="lamp-glow"></div>
+    <div id="floor-glow"></div>
+    <div id="dust-container"></div>
+
+    <!-- Swinging lamp -->
+    <div id="lamp-wrap">
+      <div class="lamp-cord"></div>
+      <div class="lamp-shade">
+        <svg viewBox="0 0 120 76" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="60" cy="70" rx="57" ry="7" fill="rgba(0,0,0,.2)"/>
+          <path d="M10,67 Q20,8 60,4 Q100,8 110,67 Z" fill="url(#sg2)" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+          <path d="M18,63 Q26,14 60,10 Q94,14 102,63 Z" fill="url(#ig2)" id="shade-inner"/>
+          <ellipse cx="60" cy="67" rx="49" ry="5" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+          <ellipse cx="60" cy="5" rx="11" ry="4" fill="#777"/>
+          <defs>
+            <linearGradient id="sg2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#c0c0b8"/>
+              <stop offset="100%" stop-color="#eeeeea"/>
+            </linearGradient>
+            <radialGradient id="ig2" cx="50%" cy="80%" r="60%">
+              <stop offset="0%" stop-color="rgba(29,185,84,0)" id="glow-stop"/>
+              <stop offset="100%" stop-color="rgba(29,185,84,0)"/>
+            </radialGradient>
+          </defs>
+        </svg>
+        <div class="lamp-pull"></div>
+      </div>
+      <div class="lamp-base-pole"></div>
+      <div class="lamp-base"></div>
+    </div>
+
+    <div id="pull-text">
+      Scroll down to enter
+      <span id="pull-hint">or tap the lamp to switch on the light</span>
+    </div>
+
+    <div id="pull-btn" role="button" aria-label="Pull lamp to enter" tabindex="0"></div>
+  </div>
+
+  <!-- ══ PHASE 2: AUTH (overlays lamp, fades in) ══ -->
+  <div id="lamp-auth">
+    <div class="auth-hdr">
+      <div class="auth-hdr-logo">🏥</div>
+      <div class="auth-hdr-title">Community Health Survey</div>
+      <div class="auth-hdr-sub">Great Lakes University · Nyamache</div>
+    </div>
+
+    <!-- Sign In / Register card -->
+    <div id="auth-card-wrap" style="width:100%;max-width:360px;border-radius:20px;overflow:hidden;box-shadow:0 20px 70px rgba(0,0,0,.7);position:relative;background:#0e160f;">
+      <div id="auth-track" style="display:flex;width:200%;transition:transform .45s cubic-bezier(.77,0,.18,1);will-change:transform;">
+
+        <!-- SIGN IN -->
+        <div style="width:50%;flex-shrink:0;display:flex;min-height:380px;">
+          <div style="flex:1;padding:26px 20px;display:flex;flex-direction:column;justify-content:center;background:#0e160f;">
+            <div style="color:#fff;font-size:1.2rem;font-weight:800;margin-bottom:3px;letter-spacing:-.02em;">Sign In</div>
+            <div style="color:rgba(255,255,255,.28);font-size:.7rem;margin-bottom:20px;">Health Survey System</div>
+            <input id="auth-reg-login" type="text" placeholder="Staff / ID number"
+              style="width:100%;padding:0;background:transparent;border:none;border-bottom:1.5px solid rgba(255,255,255,.15);color:#fff;font-family:inherit;font-size:.88rem;outline:none;margin-bottom:18px;padding-bottom:10px;letter-spacing:.3px;transition:border-color .2s;"
+              oninput="this.value=this.value.toUpperCase()"
+              onfocus="this.style.borderBottomColor='#1DB954'"
+              onblur="this.style.borderBottomColor='rgba(255,255,255,.15)'"
+              onkeydown="if(event.key==='Enter')authLogin()">
+            <button onclick="authLogin()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1DB954,#0f7a35);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.9rem;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 18px rgba(29,185,84,.35);margin-bottom:14px;">
+              Sign In
+            </button>
+            <div style="text-align:center;font-size:.7rem;color:rgba(255,255,255,.3);">
+              New here? <span onclick="authShowTab('register')" style="color:#1DB954;font-weight:700;cursor:pointer;">Register</span>
+            </div>
+            <div id="auth-login-msg" style="margin-top:10px;font-size:.73rem;text-align:center;min-height:16px;"></div>
+          </div>
+          <div style="width:115px;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(160deg,#1a5c35 0%,#0d3320 60%,#0a1828 100%);">
+            <div style="position:absolute;inset:0;background:#0e160f;clip-path:polygon(0 0,42% 0,0% 100%);"></div>
+            <div style="position:relative;z-index:1;padding:22px 12px;display:flex;flex-direction:column;justify-content:center;height:100%;text-align:right;">
+              <div style="color:#fff;font-size:.92rem;font-weight:800;line-height:1.25;margin-bottom:8px;">WELCOME<br>BACK!</div>
+              <div style="color:rgba(255,255,255,.4);font-size:.62rem;line-height:1.55;">Sign in to continue your work.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REGISTER -->
+        <div style="width:50%;flex-shrink:0;display:flex;min-height:380px;">
+          <div style="width:115px;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(160deg,#0a1828 0%,#0d3320 40%,#1a5c35 100%);">
+            <div style="position:absolute;inset:0;background:#0e160f;clip-path:polygon(100% 0,58% 0,100% 100%);"></div>
+            <div style="position:relative;z-index:1;padding:22px 12px;display:flex;flex-direction:column;justify-content:center;height:100%;text-align:left;">
+              <div style="color:#fff;font-size:.92rem;font-weight:800;line-height:1.25;margin-bottom:8px;">JOIN<br>THE<br>TEAM!</div>
+              <div style="color:rgba(255,255,255,.4);font-size:.62rem;line-height:1.55;">Register to get started.</div>
+            </div>
+          </div>
+          <div style="flex:1;padding:22px 16px;display:flex;flex-direction:column;justify-content:center;background:#0e160f;">
+            <div style="color:#fff;font-size:1.1rem;font-weight:800;margin-bottom:3px;letter-spacing:-.02em;">Register</div>
+            <div style="color:rgba(255,255,255,.28);font-size:.68rem;margin-bottom:14px;">Get access immediately</div>
+            <input id="auth-reg-num" type="text" placeholder="Staff / ID number"
+              style="width:100%;padding:0;background:transparent;border:none;border-bottom:1.5px solid rgba(255,255,255,.15);color:#fff;font-family:inherit;font-size:.82rem;outline:none;margin-bottom:12px;padding-bottom:8px;transition:border-color .2s;"
+              oninput="this.value=this.value.toUpperCase()"
+              onfocus="this.style.borderBottomColor='#1DB954'"
+              onblur="this.style.borderBottomColor='rgba(255,255,255,.15)'">
+            <input id="auth-full-name" type="text" placeholder="Full name"
+              style="width:100%;padding:0;background:transparent;border:none;border-bottom:1.5px solid rgba(255,255,255,.15);color:#fff;font-family:inherit;font-size:.82rem;outline:none;margin-bottom:12px;padding-bottom:8px;transition:border-color .2s;"
+              onfocus="this.style.borderBottomColor='#1DB954'"
+              onblur="this.style.borderBottomColor='rgba(255,255,255,.15)'">
+            <input id="auth-email" type="email" placeholder="Email (optional)"
+              style="width:100%;padding:0;background:transparent;border:none;border-bottom:1.5px solid rgba(255,255,255,.15);color:#fff;font-family:inherit;font-size:.82rem;outline:none;margin-bottom:16px;padding-bottom:8px;transition:border-color .2s;"
+              onfocus="this.style.borderBottomColor='#1DB954'"
+              onblur="this.style.borderBottomColor='rgba(255,255,255,.15)'">
+            <button onclick="authRegister()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1DB954,#0f7a35);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.84rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(29,185,84,.3);margin-bottom:10px;">
+              Register &amp; Enter
+            </button>
+            <div style="text-align:center;font-size:.68rem;color:rgba(255,255,255,.3);">
+              Already registered? <span onclick="authShowTab('login')" style="color:#1DB954;font-weight:700;cursor:pointer;">Sign In</span>
+            </div>
+            <div id="auth-register-msg" style="margin-top:7px;font-size:.71rem;text-align:center;min-height:16px;"></div>
+          </div>
+        </div>
+
+      </div>
+      <div id="auth-tabs" style="display:flex;background:rgba(0,0,0,.4);">
+        <button onclick="authShowTab('login')" id="auth-tab-login"
+          style="flex:1;padding:10px;border:none;background:rgba(29,185,84,.1);color:#1DB954;font-family:inherit;font-size:.77rem;font-weight:700;cursor:pointer;border-top:2px solid #1DB954;transition:all .25s;">Sign In</button>
+        <button onclick="authShowTab('register')" id="auth-tab-register"
+          style="flex:1;padding:10px;border:none;background:transparent;color:rgba(255,255,255,.28);font-family:inherit;font-size:.77rem;font-weight:700;cursor:pointer;border-top:2px solid transparent;transition:all .25s;">Register</button>
+      </div>
+    </div>
+
+    <!-- Blocked panels -->
+    <div id="auth-panel-pending" style="display:none;width:100%;max-width:360px;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px 22px;">
+      <div style="font-size:40px;margin-bottom:10px;">🚫</div>
+      <div style="color:#fff;font-weight:800;margin-bottom:8px;">Access Removed</div>
+      <div style="color:rgba(255,255,255,.45);font-size:.78rem;line-height:1.6;margin-bottom:18px;">Contact the coordinator to be re-added.</div>
+      <button onclick="authClearAndRetry()" style="width:100%;padding:11px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.13);border-radius:10px;font-family:inherit;font-size:.84rem;font-weight:600;cursor:pointer;">← Try Different Account</button>
+    </div>
+    <div id="auth-panel-rejected" style="display:none;width:100%;max-width:360px;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px 22px;">
+      <div style="font-size:40px;margin-bottom:10px;">🚫</div>
+      <div style="color:#fff;font-weight:800;margin-bottom:8px;">Access Removed</div>
+      <div style="color:rgba(255,255,255,.45);font-size:.78rem;line-height:1.6;margin-bottom:18px;">Contact the coordinator to be re-added.</div>
+      <button onclick="authClearAndRetry()" style="width:100%;padding:11px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.13);border-radius:10px;font-family:inherit;font-size:.84rem;font-weight:600;cursor:pointer;">← Try Different Account</button>
+    </div>
+    <div id="auth-offline-note" style="display:none;margin-top:10px;width:100%;max-width:360px;padding:10px 14px;background:rgba(230,81,0,.18);border:1px solid rgba(230,81,0,.28);border-radius:12px;color:rgba(255,200,150,.9);font-size:.73rem;text-align:center;line-height:1.5;">
+      📵 Offline — sign in only works if previously approved on this device.
+    </div>
+
+    <!-- Footer -->
+    <div class="auth-footer">
+      <div class="auth-footer-built">Built by <strong>HazzinBR</strong> &nbsp;·&nbsp; <span style="opacity:.45">Community Health Survey v2.0</span></div>
+      <div class="auth-footer-tagline">Free · Offline-first · Great Lakes University · Nyamache Sub County Hospital</div>
+      <a class="auth-footer-donate" onclick="showDonateModal()" style="text-decoration:none">☕ Buy me a coffee</a>
+    </div>
+  </div>
+
+  <!-- ══ PHASE 3: LOADER (after sign-in) ══ -->
+  <div id="loader-screen">
+
+    <div class="ls-title">Medical Survey System</div>
+    <div class="ls-sub">Great Lakes University · Nyamache</div>
+
+    <div class="ls-ecg" id="ls-ecg-wrap">
+      <svg viewBox="0 0 300 80">
+        <path id="ls-ecg-path" class="running" d="M0 40 L20 40 L30 20 L40 60 L50 40 L70 40 L80 10 L90 70 L100 40 L130 40 L140 25 L150 55 L160 40 L300 40"/>
+      </svg>
+    </div>
+
+    <div class="ls-loading" id="ls-loading">Compiling questionnaire...</div>
+    <div id="ls-percent">0%</div>
+    <div class="ls-prog-wrap">
+      <div class="ls-prog-bar" id="ls-bar"></div>
+    </div>
+
+    <button id="ls-begin" onclick="loaderBegin()">Begin Survey</button>
+    <div id="ls-countdown"></div>
+
+    <div class="ls-footer">
+      <div class="ls-built">Built by <strong>HazzinBR</strong> &nbsp;·&nbsp; <span style="opacity:.45">Community Health Survey v2.0</span></div>
+      <div class="ls-tagline">Free · Offline-first · Great Lakes University · Nyamache Sub County Hospital</div>
+      <a class="ls-donate" onclick="showDonateModal()" style="text-decoration:none">☕ Buy me a coffee</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Floating Support FAB -->
+<button id="support-fab" onclick="showDonateModal()" title="Buy me a coffee ☕" style="
+  position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));right:16px;
+  z-index:140;width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,#1a5c35,#1a4060);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(0,0,0,.25),0 0 0 0 rgba(61,184,106,.4);
+  animation:fabPulse 3s ease infinite;
+  font-size:20px;
+  transition:transform .15s;
+">💚</button>
+<style>
+@keyframes fabPulse{
+  0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.25),0 0 0 0 rgba(61,184,106,0);}
+  50%{box-shadow:0 4px 18px rgba(0,0,0,.25),0 0 0 8px rgba(61,184,106,.15);}
+}
+#support-fab:active{transform:scale(0.9);}
+</style>
+
+
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-icon" onclick="adminTap()" style="cursor:pointer">🏥</div>
+    <div><div class="tb-title">Community Health Survey</div><div class="tb-sub">Situation Analysis — Offline</div></div>
+  </div>
+  <div style="display:flex;gap:7px;align-items:center">
+    <button onclick="goBackHome()" title="Home" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:8px 11px;font-size:1rem;cursor:pointer;font-family:inherit;line-height:1">🏠</button>
+    <button id="sync-btn" onclick="openSyncModal()" title="Sync to admin" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:0.72rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+      <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);flex-shrink:0;transition:background .4s;display:inline-block"></span>
+      <span id="sync-lbl">Sync</span>
+    </button>
+    <button class="tb-rec" onclick="showInstallGuide()" style="background:rgba(255,255,255,.15);padding:8px 10px" title="Install app">📲</button>
+    <button class="tb-rec" onclick="openDrawer()">☰ Records</button>
+  </div>
+</div>
+<div style="background:var(--green)">
+  <div class="prog-bar"><div class="prog-fill" id="pFill" style="width:0%"></div></div>
+  <div class="step-bar">
+    <span class="step-lbl" id="sLbl">Consent</span>
+    <span class="step-cnt" id="sCnt">1 / 12</span>
+  </div>
+</div>
+
+<div class="secs-wrap" id="secsWrap"></div>
+
+<div class="bot-nav">
+  <button class="btn-prev" id="bPrev" onclick="prevSec()">←</button>
+  <button class="btn-next" id="bNext" onclick="nextSec()">Next →</button>
+  <button class="btn-finish" id="bFin" style="display:none" onclick="showFinish()">✓ Finish &amp; Print</button>
+</div>
+
+<div class="ov" id="ov" onclick="closeDrw()"></div>
+<div class="drawer" id="drawer">
+  <div class="drw-handle"></div>
+  <div class="drw-head"><span class="drw-title">Saved Records</span><button class="drw-close" onclick="closeDrw()">✕</button></div>
+  <div class="drw-scroll" id="drwList"></div>
+  <button class="drw-new" onclick="newRec();closeDrw();">＋ Start New Interview</button>
+</div>
+
+<div class="modal-ov" id="finModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-icon">🎉</div>
+    <div class="modal-title">Interview Complete!</div>
+    <div class="modal-body">Choose how to export this record:</div>
+    <div class="modal-btns" id="fin-btns">
+      <button class="mbtn mbtn-p" onclick="openBriefReport()" style="background:#1e5c38">📋 Brief Report<span style="font-size:0.72rem;opacity:.75;display:block;font-weight:400;margin-top:1px">Summary · Key findings · Red flags</span></button>
+      <button class="mbtn mbtn-p" onclick="openFullReport()" style="background:#1a4f6e">📄 Full Report<span style="font-size:0.72rem;opacity:.75;display:block;font-weight:400;margin-top:1px">All answers — complete questionnaire</span></button>
+      <button class="mbtn mbtn-p" onclick="openIMRaDReport()" style="background:#4a235a">📑 IMRaD Report<span style="font-size:0.72rem;opacity:.75;display:block;font-weight:400;margin-top:1px">Academic format · Scored indicators</span></button>
+      <button class="mbtn mbtn-p" onclick="exportJSON()" style="background:#4d5a27">💾 Save to Database<span style="font-size:0.72rem;opacity:.75;display:block;font-weight:400;margin-top:1px">Export raw data as JSON file</span></button>
+      <button class="mbtn mbtn-s" onclick="closeFinish()">Later</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- In-page report overlay — uses iframe to preserve all report styles -->
+<div id="report-overlay">
+  <div id="report-toolbar">
+    <span id="report-title">Report</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <button class="report-tb-btn report-tb-print" onclick="printReport()">🖨 Print / Save PDF</button>
+      <button class="report-tb-btn" onclick="closeReportOverlay()">✕ Close</button>
+    </div>
+  </div>
+  <!-- iframe preserves all fonts and CSS from the report HTML -->
+  <iframe id="report-frame"
+    style="width:100%;flex:1;border:none;display:block;"
+    title="Report"></iframe>
+  <!-- Post-report action buttons -->
+  <div id="report-actions" style="
+    padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+    background:#f0f4f1;
+    border-top:1px solid #d4e6da;
+    display:flex;flex-direction:column;gap:10px;
+  ">
+    <div style="text-align:center;font-size:.78rem;color:#5c7a6a;font-weight:600;margin-bottom:2px;">What would you like to do next?</div>
+    <button onclick="startNewSurveyFromReport()" style="
+      width:100%;padding:15px;
+      background:linear-gradient(135deg,#1a5c35,#1a4060);
+      color:#fff;border:none;border-radius:14px;
+      font-family:inherit;font-size:.95rem;font-weight:800;
+      cursor:pointer;letter-spacing:.2px;
+      box-shadow:0 4px 16px rgba(26,92,53,.3);">
+      ＋ Start New Survey
+    </button>
+    <button onclick="goHomeFromReport()" style="
+      width:100%;padding:14px;
+      background:#fff;color:#1a5c35;
+      border:1.5px solid #d4e6da;border-radius:14px;
+      font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;">
+      🏠 Go to Home
+    </button>
+  </div>
+</div>
+
+
+<!-- DONATE MODAL -->
+<div id="donateModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:28px 22px calc(28px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.2);">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:48px;margin-bottom:10px">💚</div>
+      <div style="font-size:1.15rem;font-weight:800;color:#1a5c35;margin-bottom:6px;letter-spacing:-.02em">Can I get a coffee? ☕</div>
+      <div style="font-size:0.82rem;color:#6b8a74;line-height:1.6;max-width:300px;margin:0 auto">This little app works hard so you don't have to 😄 If it saved you even a minute, I wouldn't say no to a coffee! ☕</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#e8f5ed,#edf4fb);border:1.5px solid #cce0d4;border-radius:16px;padding:18px;text-align:center;margin-bottom:16px">
+      <div style="font-size:0.65rem;font-weight:800;color:#6b8a74;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">M-Pesa · Send Money</div>
+      <div style="font-size:2.2rem;font-weight:800;color:#1a5c35;letter-spacing:3px;font-variant-numeric:tabular-nums">0112973866</div>
+      <div style="font-size:0.75rem;color:#6b8a74;margin-top:5px">Even a sip is appreciated 😊 Karibu sana!</div>
+    </div>
+    <div style="background:#f7f8fa;border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:0.77rem;color:#1a2b22;line-height:1.7">
+      <strong>How to send:</strong> Open M-Pesa → Send Money → Enter <strong>0112973866</strong> → Any amount → Send
+    </div>
+    <div style="text-align:center;margin-bottom:14px;font-size:0.65rem;color:#aaa;letter-spacing:.3px">
+      © 2026 HazzinBR · Community Health Survey · Free to use
+    </div>
+    <button onclick="document.getElementById('donateModal').style.display='none'" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a5c35,#1a4060);color:#fff;border:none;border-radius:14px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(26,92,53,.2)">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+
+<!-- PWA INSTALL BANNER — shows on HTTPS/Chrome when installable -->
+<div id="pwa-banner" style="display:none;position:fixed;top:56px;left:0;right:0;z-index:190;background:#1a4f6e;color:#fff;padding:10px 14px;align-items:center;justify-content:space-between;gap:10px;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25);">
+  <span>📲 Install as app on your phone?</span>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="doInstall()" style="background:#fff;color:#1a4f6e;border:none;padding:8px 16px;border-radius:6px;font-weight:700;font-size:0.82rem;cursor:pointer;font-family:inherit">Install</button>
+    <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:8px 10px;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit">✕</button>
+  </div>
+</div>
+
+<!-- INSTALL GUIDE MODAL -->
+<div id="installModal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center;padding:0;">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto;">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:36px;margin-bottom:8px">📲</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#1e5c38">Install Health Survey App</div>
+      <div style="font-size:0.82rem;color:#6b8a74;margin-top:4px">Works offline — no internet needed after install</div>
+    </div>
+
+    <div id="installStepsAndroid" style="display:none">
+      <div style="font-weight:700;font-size:0.85rem;color:#1e5c38;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">Android / Chrome Steps</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Tap the ⋮ menu</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">Three dots in top-right corner of Chrome</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Tap "Add to Home screen"</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">Or "Install app" if shown</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Tap "Add"</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">App icon appears on your home screen</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="installStepsIOS" style="display:none">
+      <div style="font-weight:700;font-size:0.85rem;color:#1e5c38;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">iPhone / Safari Steps</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Open in Safari</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">This must be opened in Safari, not Chrome</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Tap the Share icon ⬆</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">Bottom centre of Safari browser</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Tap "Add to Home Screen"</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">Scroll down in the share sheet to find it</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:#f9f7f4;border-radius:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#1e5c38;color:#fff;font-weight:700;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+          <div><div style="font-weight:600;font-size:0.85rem">Tap "Add"</div><div style="font-size:0.78rem;color:#6b8a74;margin-top:2px">App icon appears on your home screen</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="installStepsChromebook" style="display:none">
+      <div style="font-weight:700;font-size:0.85rem;color:#1e5c38;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">Chrome Desktop Steps</div>
+      <div style="padding:10px;background:#f9f7f4;border-radius:10px;font-size:0.84rem">Look for the <strong>install icon ⊕</strong> in the address bar on the right side, then click "Install".</div>
+    </div>
+
+    <div id="installNote" style="margin-top:14px;padding:10px 12px;background:#e8f5ed;border-radius:8px;font-size:0.78rem;color:#2d5a3d;line-height:1.5"></div>
+
+    <button onclick="document.getElementById('installModal').style.display='none'" style="width:100%;margin-top:16px;padding:14px;background:#1e5c38;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer">Got it ✓</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SIGNATURE FOOTER                      -->
+<!-- ═══════════════════════════════════════ -->
+<div id="sig-footer" style="
+  position:fixed;bottom:0;left:0;right:0;z-index:140;
+  pointer-events:none;
+  padding:0 12px calc(80px + env(safe-area-inset-bottom)) 12px;
+  display:flex;justify-content:center;
+">
+  <!-- Footer visible on print only -->
+</div>
+
+<!-- Print-only signature -->
+<div class="print-sig" style="
+  display:none;
+  text-align:center;
+  padding:24px 16px 12px;
+  border-top:1px solid #cce0d4;
+  margin-top:28px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+">
+  <div style="font-size:0.78rem;color:#6b8a74;letter-spacing:.3px">
+    Built by <strong style="color:#1e5c38">HazzinBR</strong>
+    &nbsp;·&nbsp;
+    <span style="font-style:italic">Community Health Situation Analysis Tool</span>
+    &nbsp;·&nbsp;
+    Free to use — No copyright restrictions · © 2026 HazzinBR
+  </div>
+</div>
+
+<style>
+@media print {
+  .print-sig { display:block!important; }
+}
+</style>
+
+<!-- Sync is automatic — no modal needed for students -->
+
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  SYNC ENGINE                                        -->
+<!-- ═══════════════════════════════════════════════════ -->
+
+
+<!-- ── Sync Modal (force sync details) ── -->
+<div id="syncModal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom))">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:36px;margin-bottom:7px">☁️</div>
+      <div style="font-size:1.05rem;font-weight:800;color:#1e5c38;margin-bottom:4px">Sync Records</div>
+      <div style="font-size:0.78rem;color:#6b8a74;line-height:1.5" id="syncModalStatus">Checking records…</div>
+    </div>
+    <div style="background:#f0f4f8;border-radius:10px;padding:13px 15px;margin-bottom:14px;font-size:0.8rem;color:#1a2535;line-height:1.7" id="syncModalInfo">—</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button onclick="closeSyncModal();syncAll();" style="padding:13px;background:#1e5c38;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer">
+        ☁ Sync Unsynced Records
+      </button>
+      <button onclick="closeSyncModal();forceSyncAll();" style="padding:13px;background:#1a4f6e;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer">
+        🔄 Force Push ALL Records
+        <span style="display:block;font-size:0.7rem;font-weight:400;opacity:.75;margin-top:1px">Re-uploads everything — use if admin is missing data</span>
+      </button>
+      <button onclick="closeSyncModal()" style="padding:13px;background:#f0f4f8;color:#5d7a8a;border:1.5px solid #dde8f0;border-radius:10px;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  ADMIN PANEL                                        -->
+<!-- ═══════════════════════════════════════════════════ -->
+
+
+<!-- Admin Gate -->
+<div id="admin-gate">
+  <div class="gate-card">
+    <div class="gate-icon">🔐</div>
+    <div class="gate-title">Admin Access</div>
+    <div class="gate-sub">Enter password to continue.</div>
+    <input class="gate-input" type="password" id="gate-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkGate()">
+    <button class="gate-btn" onclick="checkGate()">Enter Dashboard →</button>
+    <button class="gate-cancel" onclick="closeAdminGate()">Cancel</button>
+    <div class="gate-attempts" id="gate-err"></div>
+  </div>
+</div>
+
+<!-- Admin Overlay -->
+<div id="admin-overlay">
+  <div class="adm-top">
+    <div class="adm-brand">
+      <div class="adm-brand-icon">🏥</div>
+      <div><div class="adm-title">Admin Dashboard</div><div class="adm-sub">Community Health Survey</div></div>
+    </div>
+    <div class="adm-right">
+      <div class="adm-conn">
+        <div class="adm-conn-dot" id="adm-conn-dot"></div>
+        <div class="adm-conn-txt" id="adm-conn-txt">Loading…</div>
+      </div>
+      <button class="adm-close" onclick="closeAdmin()">✕ Close</button>
+    </div>
+  </div>
+  <div class="adm-body">
+    <div class="adm-stats">
+      <div class="adm-stat g"><div class="adm-stat-n" id="adm-stat-total">0</div><div class="adm-stat-l">Total</div></div>
+      <div class="adm-stat n"><div class="adm-stat-n" id="adm-stat-today">0</div><div class="adm-stat-l">Today</div></div>
+      <div class="adm-stat r"><div class="adm-stat-n" id="adm-stat-flags">0</div><div class="adm-stat-l">Red Flags</div></div>
+      <div class="adm-stat a"><div class="adm-stat-n" id="adm-stat-iv">0</div><div class="adm-stat-l">Interviewers</div></div>
+    </div>
+    <div class="adm-toolbar">
+      <input class="adm-search" id="adm-search" type="text" placeholder="🔍 Search name, location..." oninput="admRenderTable()">
+      <div class="adm-btns">
+        <button class="adm-btn g" onclick="admLoad()">↻ Refresh</button>
+        <button class="adm-btn n" onclick="admExportCSV()">⬇ CSV</button>
+        <button class="adm-btn a" onclick="admExportJSON()">💾 JSON</button>
+        <button class="adm-btn r" onclick="admForceSyncAll()">⬆ Force Sync</button>
+        <button class="adm-btn o" onclick="openGroupReport()" style="border-color:#8e44ad;color:#8e44ad">👥 Group Report</button>
+      </div>
+    </div>
+    <div class="adm-filters" id="adm-filters">
+      <div class="adm-chip on" onclick="admFilter('all',this)">All</div>
+      <div class="adm-chip" onclick="admFilter('flags',this)">🚨 Red Flags</div>
+      <div class="adm-chip" onclick="admFilter('no-latrine',this)">No Latrine</div>
+      <div class="adm-chip" onclick="admFilter('no-water',this)">Untreated Water</div>
+      <div class="adm-chip" onclick="admFilter('hiv-no',this)">HIV Unaware</div>
+      <div class="adm-chip" onclick="admFilter('today',this)">Today</div>
+    </div>
+    <div class="adm-flags" id="adm-flags-panel" style="display:none">
+      <div class="adm-flags-hdr"><span class="adm-flags-title">🚨 Critical Red Flags</span><span id="adm-flags-count" style="font-size:.75rem;opacity:.85"></span></div>
+      <div id="adm-flags-list"></div>
+    </div>
+    <div class="adm-charts" id="adm-pies"></div>
+    <div class="adm-charts" id="adm-bars"></div>
+    <div class="adm-tbl-wrap">
+      <div class="adm-tbl-hdr"><span class="adm-tbl-title">All Records</span><span id="adm-tbl-count" style="font-size:.72rem;opacity:.8">Loading…</span></div>
+      <div class="adm-tbl-scroll">
+        <table class="adm-tbl">
+          <thead><tr><th>#</th><th>Interviewer</th><th>Date</th><th>Location</th><th>Respondent</th><th>House</th><th>Latrine</th><th>Water</th><th>HIV</th><th>Flags</th><th></th></tr></thead>
+          <tbody id="adm-tbody"></tbody>
+        </table>
+      </div>
+      <div class="adm-empty" id="adm-empty" style="display:none"><div style="font-size:36px;margin-bottom:8px">📭</div><div style="font-weight:700">No records yet</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="adm-detail-ov" id="adm-detail-ov">
+  <div class="adm-detail-modal">
+    <div class="adm-detail-hdr">
+      <span class="adm-detail-title" id="adm-detail-title">Record</span>
+      <button class="adm-detail-close" onclick="admCloseDetail()">✕ Close</button>
+    </div>
+    <div class="adm-detail-body" id="adm-detail-body"></div>
+    <div class="adm-detail-btns">
+      <button class="adm-btn r" onclick="admDeleteFromDetail()" style="flex:1;justify-content:center">🗑 Delete Record</button>
+      <button class="adm-btn g" onclick="admCloseDetail()" style="flex:1;justify-content:center">Close</button>
+    </div>
+  </div>
+</div>
+
+
+
+
 </body>
+<!-- ═══════════════════════════════════════════════ -->
+<!--  JAVASCRIPT — load order is important           -->
+<!-- ═══════════════════════════════════════════════ -->
+<script src="./survey-sync.js"></script>
+<script src="./survey-core.js"></script>
+<script src="./survey-reports.js"></script>
+<script src="./survey-auth.js"></script>
+<script src="./survey-admin.js"></script>
 </html>

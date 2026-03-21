@@ -3,6 +3,7 @@
    State · Validation · Navigation · Rules · Sections
    © 2026 HazzinBR
    ══════════════════════════════════════════════ */
+
 const SECS=[{label:'Consent Form'},{label:'A: Demography'},{label:'B: Housing'},{label:'C: Medical History'},{label:'D: Maternal & Child'},{label:'E: Nutrition'},{label:'F: HIV/AIDS'},{label:'G: Sanitation'},{label:'H: Environment & Water'},{label:'I: Cultural Practices'},{label:'J: Health Problems'},{label:'K: Pests & Vectors'}];
 
 // ══════════════════════════════════════════════════════
@@ -2164,24 +2165,19 @@ function init(){
 }
 document.addEventListener('DOMContentLoaded',init);
 
+// ══════════════════════════════════════════════════════
+
 // ── KEYBOARD-PROOF BOTTOM NAV ──
-// On Android, the soft keyboard triggers a window resize which can
-// briefly push position:fixed elements. This locks the nav to the
-// actual bottom of the screen regardless of keyboard state.
-(function lockBottomNav(){
+// Prevents Android soft keyboard from pushing position:fixed nav bar
+(function(){
   const nav = document.querySelector('.bot-nav');
   if(!nav) return;
-  const initialHeight = window.innerHeight;
+  const ih = window.innerHeight;
   window.addEventListener('resize', ()=>{
-    // When keyboard opens, innerHeight shrinks — hide nav so it
-    // doesn't float in the middle of the screen
-    const keyboardOpen = window.innerHeight < initialHeight * 0.75;
-    nav.style.transform = keyboardOpen ? 'translateY(200px)' : 'translateZ(0)';
+    nav.style.transform = window.innerHeight < ih * 0.75
+      ? 'translateY(200%)' : 'translateZ(0)';
   });
-  // Also ensure it snaps back when any input loses focus
   document.addEventListener('focusout', ()=>{
-    setTimeout(()=>{ nav.style.transform = 'translateZ(0)'; }, 100);
+    setTimeout(()=>{ nav.style.transform='translateZ(0)'; },150);
   });
 })();
-
-// ══════════════════════════════════════════════════════
