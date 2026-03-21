@@ -581,17 +581,15 @@
       <div class="adm-stat a"><div class="adm-stat-n" id="adm-stat-iv">0</div><div class="adm-stat-l">Interviewers</div></div>
     </div>
     <div class="adm-toolbar">
-      <!-- Row 1: data actions -->
-      <div class="adm-btns" style="flex-wrap:wrap">
+      <div class="adm-btns">
         <button class="adm-btn g" onclick="admLoad()">↻ Refresh</button>
         <button class="adm-btn n" onclick="admExportCSV()">⬇ CSV</button>
         <button class="adm-btn a" onclick="admExportJSON()">💾 JSON</button>
         <button class="adm-btn r" onclick="admForceSyncAll()">⬆ Force Sync</button>
       </div>
-      <!-- Row 2: reports — full width, clearly labelled -->
-      <div style="display:flex;gap:8px;margin-top:2px">
-        <button onclick="openAllInterviewerReports()" style="flex:1;padding:11px 10px;background:linear-gradient(135deg,#1a4060,#1a5c35);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">📑 Individual Reports</button>
-        <button onclick="openGroupReport()" style="flex:1;padding:11px 10px;background:linear-gradient(135deg,#4a235a,#1a4060);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">👥 Group Report</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="btn-ind-reports" class="adm-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#1a4060,#1a5c35);color:#fff;border:none;font-size:.82rem;padding:11px 8px">📑 Individual Reports</button>
+        <button id="btn-grp-report"  class="adm-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#4a235a,#1a4060);color:#fff;border:none;font-size:.82rem;padding:11px 8px">👥 Group Report</button>
       </div>
     </div>
     <div class="adm-flags" id="adm-flags-panel" style="display:none">

@@ -41,28 +41,12 @@ function checkGate(){
 }
 function openAdminDash(){
   document.getElementById('admin-overlay').classList.add('open');
-  // Inject report buttons into toolbar if not already there
-  _injectReportButtons();
+  // Wire report buttons (safe — runs after DOM is ready)
+  var b1 = document.getElementById('btn-ind-reports');
+  var b2 = document.getElementById('btn-grp-report');
+  if(b1) b1.onclick = function(){ openAllInterviewerReports(); };
+  if(b2) b2.onclick = function(){ openGroupReport(); };
   admLoad();
-}
-
-function _injectReportButtons(){
-  // Already injected?
-  if(document.getElementById('adm-report-row')) return;
-  // Find the toolbar in the overview panel
-  const toolbar = document.querySelector('#adm-panel-overview .adm-toolbar');
-  if(!toolbar) return;
-  const row = document.createElement('div');
-  row.id = 'adm-report-row';
-  row.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
-  row.innerHTML = `
-    <button onclick="openAllInterviewerReports()" style="flex:1;padding:12px 10px;background:linear-gradient(135deg,#1a4060,#1a5c35);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-      📑 Individual Reports
-    </button>
-    <button onclick="openGroupReport()" style="flex:1;padding:12px 10px;background:linear-gradient(135deg,#4a235a,#1a4060);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-      👥 Group Report
-    </button>`;
-  toolbar.appendChild(row);
 }
 function closeAdmin(){
   document.getElementById('admin-overlay').classList.remove('open');
