@@ -287,6 +287,25 @@ function spawnDust(){
 // ── PHASE 2: AUTH ──────────────────────────────────────
 async function authInit(){
   const session = authGetSession();
+
+  // ── Silently upgrade existing users who only have first name stored ──
+  // If session has full_name but chsa_user_name is only the first word, upgrade it
+  if(session && session.full_name){
+    const stored = localStorage.getItem('chsa_user_name')||'';
+    const full   = session.full_name.trim();
+    // stored is incomplete if it has no space (first name only) but full_name has multiple words
+    if(full.includes(' ') && !stored.includes(' ')){
+      localStorage.setItem('chsa_user_name', full);
+      // Also update the hidden interviewer field in the form immediately
+      const hn = document.getElementById('h_interviewer_name');
+      if(hn) hn.value = full;
+    }
+    // If stored is empty, always fill it
+    if(!stored){
+      localStorage.setItem('chsa_user_name', full);
+    }
+  }
+
   if(session && session.full_name){
     if(navigator.onLine){
       try{

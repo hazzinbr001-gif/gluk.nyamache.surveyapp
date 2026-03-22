@@ -76,6 +76,19 @@ async function admLoad(){
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     _admRecs=await res.json();
+    // ── Enrich interviewer names for old records that only have first name ──
+    // Cross-reference with _admStudents if available
+    if(Array.isArray(_admStudents) && _admStudents.length){
+      _admRecs.forEach(function(rec){
+        if(!rec.interviewer || rec.interviewer.includes(' ')) return; // already full name or empty
+        // Try to find matching student by first name
+        const fn = rec.interviewer.toLowerCase();
+        const match = _admStudents.find(function(s){
+          return s.full_name && s.full_name.trim().toLowerCase().startsWith(fn+' ');
+        });
+        if(match) rec.interviewer = match.full_name; // upgrade to full name in memory
+      });
+    }
     admSetConn('ok');
     admRenderAll();
   }catch(e){
@@ -591,6 +604,17 @@ async function admLoadStudents(){
     );
     if(!res.ok) throw new Error('HTTP '+res.status);
     _admStudents = await res.json();
+    // Re-enrich any loaded records now that we have student data
+    if(Array.isArray(_admRecs) && _admRecs.length){
+      _admRecs.forEach(function(rec){
+        if(!rec.interviewer || rec.interviewer.includes(' ')) return;
+        const fn = rec.interviewer.toLowerCase();
+        const match = _admStudents.find(function(s){
+          return s.full_name && s.full_name.trim().toLowerCase().startsWith(fn+' ');
+        });
+        if(match) rec.interviewer = match.full_name;
+      });
+    }
     admRenderStudents();
   }catch(e){
     if(empty){ empty.style.display='block'; empty.querySelector('div:nth-child(2)').textContent='⚠ '+e.message; }
