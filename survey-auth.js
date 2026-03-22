@@ -1,3 +1,20 @@
+
+// ── ADMISSION NUMBER VALIDATION ──
+// Valid formats:
+//   B11/GLUK/S53K/2022  →  /^B\d+\/[A-Z]+\/[A-Z0-9]+\/\d{4}$/
+//   B11/SO6/K/2021      →  /^B\d+\/[A-Z0-9]+\/[A-Z0-9]+\/\d{4}$/
+// Both collapse to: starts with B + digits, then 3 slash-separated segments, ends with 4-digit year
+const ADMIN_BYPASS_CODE = 'Admin72';
+const ADMISSION_REGEX   = /^B\d+\/[A-Z0-9]+\/[A-Z0-9]+\/\d{4}$/;
+
+function isValidAdmission(reg){
+  if(!reg) return false;
+  return ADMISSION_REGEX.test(reg.trim().toUpperCase());
+}
+function isAdminBypass(reg){
+  return reg.trim() === ADMIN_BYPASS_CODE;
+}
+
 /* Community Health Survey — Auth + Home Page © 2026 HazzinBR */
 //  WELCOME SCREEN LOGIC
 // ══════════════════════════════════════════════════════
@@ -73,6 +90,7 @@ function authSignOut(){
   if(!confirm('Sign out and return to the login screen?\n\nLocal records are kept safely.')) return;
   authClearSession();
   localStorage.removeItem('chsa_user_name');
+  localStorage.removeItem('chsa_is_admin_bypass');
   const ov = document.getElementById('change-name-overlay');
   if(ov) ov.remove();
   location.reload();
@@ -639,8 +657,25 @@ function authMsg(panel, msg, color='rgba(255,200,100,.9)'){
 }
 
 async function authLogin(){
-  const reg = document.getElementById('auth-reg-login').value.trim().toUpperCase();
-  if(!reg){ authMsg('login','⚠ Enter your ID'); return; }
+  const rawReg = document.getElementById('auth-reg-login').value.trim();
+  const reg = rawReg.toUpperCase();
+  if(!rawReg){ authMsg('login','⚠ Enter your admission number'); return; }
+
+  // ── Admin bypass ──
+  if(isAdminBypass(rawReg)){
+    authSaveSession({reg_number:'ADMIN', full_name:'Administrator', status:'admin'});
+    localStorage.setItem('chsa_user_name','Administrator');
+    localStorage.setItem('chsa_is_admin_bypass','1');
+    authEnterApp();
+    return;
+  }
+
+  // ── Format validation ──
+  if(!isValidAdmission(rawReg)){
+    authMsg('login','⚠ Invalid format. Use: B11/GLUK/S53K/2022');
+    return;
+  }
+
   if(!navigator.onLine){ authMsg('login','📵 No internet — register first when online.','rgba(255,200,100,.9)'); return; }
   authMsg('login','Signing in…','rgba(255,255,255,.5)');
   try{
@@ -766,10 +801,24 @@ async function authSubmitRegistration(reg, name, email, isGoogle=false){
 }
 
 async function authRegister(){
-  const reg   = document.getElementById('auth-reg-num').value.trim().toUpperCase();
-  const name  = document.getElementById('auth-full-name').value.trim();
-  const email = document.getElementById('auth-email').value.trim().toLowerCase();
-  if(!reg||!name){ authMsg('register','⚠ Fill in your ID and full name'); return; }
+  const rawReg = document.getElementById('auth-reg-num').value.trim();
+  const reg    = rawReg.toUpperCase();
+  const name   = document.getElementById('auth-full-name').value.trim();
+  const email  = document.getElementById('auth-email').value.trim().toLowerCase();
+  if(!rawReg||!name){ authMsg('register','⚠ Fill in your admission number and full name'); return; }
+
+  // ── Format validation ──
+  if(!isValidAdmission(rawReg)){
+    authMsg('register','⚠ Invalid admission number. Use format: B11/GLUK/S53K/2022');
+    return;
+  }
+
+  // ── Name must be at least two words ──
+  if(name.trim().split(/\s+/).length < 2){
+    authMsg('register','⚠ Enter your full name (first and last name)');
+    return;
+  }
+
   if(!navigator.onLine){ authMsg('register','📵 No internet connection'); return; }
   authMsg('register','Registering…','rgba(255,255,255,.5)');
   try{ await authSubmitRegistration(reg, name, email, false); }
@@ -988,6 +1037,12 @@ function goBackHome(){
   if(hp){hp.style.display='flex';requestAnimationFrame(function(){hp.style.opacity='1';});}
 }
 function homeGoSurvey(){
+  // Admin bypass users cannot conduct surveys — only access admin
+  if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    showToast('Admin account — please use Admin Dashboard', true);
+    homeGoAdmin();
+    return;
+  }
   // Cancel the loader auto-timer so it can't fire showHomePage() after we leave
   if(typeof _autoTimer !== 'undefined' && _autoTimer){
     clearInterval(_autoTimer); _autoTimer = null;
