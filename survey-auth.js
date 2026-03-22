@@ -691,7 +691,7 @@ async function authLogin(){
 
   // ── Format validation ──
   if(!isValidAdmission(rawReg)){
-    authMsg('login','⚠ Invalid format. Use: B11/GLUK/S53K/2022');
+    authMsg('login','⚠ Invalid admission number format');
     return;
   }
 
@@ -828,7 +828,7 @@ async function authRegister(){
 
   // ── Format validation ──
   if(!isValidAdmission(rawReg)){
-    authMsg('register','⚠ Invalid admission number. Use format: B11/GLUK/S53K/2022');
+    authMsg('register','⚠ Invalid admission number format');
     return;
   }
 
