@@ -7,6 +7,13 @@
 const ADMIN_BYPASS_CODE = 'ADMIN72';
 const ADMISSION_REGEX   = /^B\d+\/[A-Z0-9]+\/[A-Z0-9]+\/\d{4}$/;
 
+
+// ── Convert any name to Title Case ──
+// "JOHN DOE" → "John Doe", "john doe" → "John Doe"
+function toTitleCase(str){
+  return (str||'').trim().toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+}
+
 function isValidAdmission(reg){
   if(!reg) return false;
   return ADMISSION_REGEX.test(reg.trim().toUpperCase());
@@ -396,6 +403,20 @@ async function authInit(){
         if(data[0]?.status==='removed'){ authClearSession(); return; }
       }catch(e){ /* trust local session on error */ }
     }
+    // ── Check if returning user has no admission number ──
+    const hasReg = session.reg_number && session.reg_number !== '—' && session.reg_number.trim() !== '';
+    if(!hasReg){
+      // Hide welcome screen, show update overlay
+      const ws = document.getElementById('welcome-screen');
+      if(ws) ws.style.display='none';
+      localStorage.setItem('chsa_user_name', session.full_name);
+      fillInterviewerFields(session.full_name);
+      showUpdateAdmissionOverlay(function(){
+        const first = session.full_name.split(' ')[0];
+        showReturningGreeting(first);
+      });
+      return;
+    }
     // Returning student — show greeting then enter
     const first = session.full_name.split(' ')[0];
     localStorage.setItem('chsa_user_name', session.full_name);
@@ -415,6 +436,102 @@ function authShowAuthCard(){
   authShowTab('login');
 }
 
+
+// ── FORCE ADMISSION UPDATE for users who registered without one ──
+function showUpdateAdmissionOverlay(onSuccess){
+  var existing = document.getElementById('update-reg-overlay');
+  if(existing) existing.remove();
+
+  var ov = document.createElement('div');
+  ov.id = 'update-reg-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:24px;font-family:"Plus Jakarta Sans",sans-serif;';
+
+  ov.innerHTML = '<div style="background:linear-gradient(160deg,#0b1e14,#071018);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px 24px;width:100%;max-width:380px;text-align:center">'
+    +'<div style="font-size:2.2rem;margin-bottom:12px">📋</div>'
+    +'<div style="color:#fff;font-size:1rem;font-weight:800;margin-bottom:6px">Admission Number Required</div>'
+    +'<div style="color:rgba(255,255,255,.5);font-size:.78rem;line-height:1.6;margin-bottom:20px">Your account needs your admission number to continue. This is required for official reports and identification.</div>'
+    +'<input id="update-reg-input" type="text" autocapitalize="characters" placeholder="Your admission number" '
+    +'style="width:100%;padding:13px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:12px;color:#fff;font-family:inherit;font-size:.88rem;outline:none;margin-bottom:8px;letter-spacing:.5px;">'
+    +'<div id="update-reg-err" style="color:#ff8a8a;font-size:.72rem;min-height:18px;margin-bottom:10px;text-align:left;padding:0 2px"></div>'
+    +'<button onclick="submitUpdateAdmission()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:12px;color:#fff;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:8px">Save &amp; Continue →</button>'
+    +'<div style="color:rgba(255,255,255,.25);font-size:.68rem;margin-top:4px">Contact your course coordinator if you do not know your admission number</div>'
+    +'</div>';
+
+  document.body.appendChild(ov);
+
+  // Store the callback
+  window._updateRegCallback = onSuccess;
+
+  // Focus input
+  setTimeout(function(){
+    var inp = document.getElementById('update-reg-input');
+    if(inp) inp.focus();
+    // Enter key submits
+    if(inp) inp.addEventListener('keydown', function(e){
+      if(e.key==='Enter') submitUpdateAdmission();
+    });
+  }, 300);
+}
+
+async function submitUpdateAdmission(){
+  var inp = document.getElementById('update-reg-input');
+  var err = document.getElementById('update-reg-err');
+  if(!inp) return;
+
+  var rawReg = inp.value.trim();
+  var reg    = rawReg.toUpperCase();
+
+  if(!rawReg){
+    if(err) err.textContent = '⚠ Please enter your admission number';
+    inp.focus(); return;
+  }
+  if(!isValidAdmission(rawReg)){
+    if(err) err.textContent = '⚠ Invalid format — use e.g. B11/GLUK/S53K/2022';
+    inp.focus(); return;
+  }
+
+  if(err) err.textContent = '';
+  inp.disabled = true;
+
+  // Update session with reg_number
+  var session = authGetSession();
+  if(session){
+    session.reg_number = reg;
+    authSaveSession(session);
+  }
+
+  // Update Supabase record if online
+  if(navigator.onLine && session && session.full_name){
+    try{
+      await fetch(
+        SUPABASE_URL+'/rest/v1/'+STUDENTS_TABLE+'?full_name=eq.'+encodeURIComponent(session.full_name),
+        {
+          method:'PATCH',
+          headers:{
+            apikey:SUPABASE_KEY,
+            Authorization:'Bearer '+SUPABASE_KEY,
+            'Content-Type':'application/json',
+            Prefer:'return=minimal'
+          },
+          body:JSON.stringify({reg_number: reg})
+        }
+      );
+    }catch(e){ /* silent — local session already updated */ }
+  }
+
+  // Remove overlay and continue
+  var ov = document.getElementById('update-reg-overlay');
+  if(ov) ov.remove();
+
+  showToast('✓ Admission number saved');
+
+  // Run the callback (proceed to app)
+  if(typeof window._updateRegCallback==='function'){
+    window._updateRegCallback();
+    window._updateRegCallback = null;
+  }
+}
+
 function authEnterApp(){
   const s = authGetSession();
   const fullN = s?.full_name || getUserName();
@@ -432,6 +549,15 @@ function authEnterApp(){
   // Admin bypass — skip loader, open dashboard directly
   if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
     setTimeout(function(){ openAdminDash(); }, 600);
+    return;
+  }
+
+  // ── Check if user has no admission number — force update before continuing ──
+  const hasReg = s && s.reg_number && s.reg_number !== '—' && s.reg_number.trim() !== '';
+  if(!hasReg){
+    setTimeout(function(){
+      showUpdateAdmissionOverlay(function(){ setTimeout(showLoader, 300); });
+    }, 600);
     return;
   }
 
@@ -912,23 +1038,42 @@ async function authSubmitRegistration(reg, name, email, isGoogle=false){
 }
 
 async function authRegister(){
-  const rawReg = document.getElementById('auth-reg-num').value.trim();
-  const reg    = rawReg.toUpperCase();
-  const name   = document.getElementById('auth-full-name').value.trim();
-  const email  = document.getElementById('auth-email').value.trim().toLowerCase();
-  if(!rawReg||!name){ authMsg('register','⚠ Fill in your admission number and full name'); return; }
+  const rawReg  = document.getElementById('auth-reg-num').value.trim();
+  const reg     = rawReg.toUpperCase();
+  const rawName = document.getElementById('auth-full-name').value.trim();
+  const name    = toTitleCase(rawName); // always Title Case regardless of how they typed
+  const email   = document.getElementById('auth-email').value.trim().toLowerCase();
 
-  // ── Format validation ──
+  // ── Admission number is required ──
+  if(!rawReg){
+    authMsg('register','⚠ Admission number is required');
+    document.getElementById('auth-reg-num').focus();
+    return;
+  }
+
+  // ── Admission format validation ──
   if(!isValidAdmission(rawReg)){
     authMsg('register','⚠ Invalid admission number format');
+    document.getElementById('auth-reg-num').focus();
+    return;
+  }
+
+  // ── Full name is required ──
+  if(!rawName){
+    authMsg('register','⚠ Full name is required');
+    document.getElementById('auth-full-name').focus();
     return;
   }
 
   // ── Name must be at least two words ──
   if(name.trim().split(/\s+/).length < 2){
-    authMsg('register','⚠ Enter your full name (first and last name)');
+    authMsg('register','⚠ Enter your full name — first and last name');
+    document.getElementById('auth-full-name').focus();
     return;
   }
+
+  // ── Update the input to show the corrected Title Case ──
+  document.getElementById('auth-full-name').value = name;
 
   if(!navigator.onLine){ authMsg('register','📵 No internet connection'); return; }
   authMsg('register','Registering…','rgba(255,255,255,.5)');
@@ -995,42 +1140,47 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js', {scope: './'}).then(reg => {
     console.log('✓ SW registered:', reg.scope);
 
-    // If a new SW is already waiting, activate it now
+    // ── Force any waiting SW to activate immediately ──
+    // This handles old installed PWAs that have a new SW waiting
     if (reg.waiting) {
       reg.waiting.postMessage({type: 'SKIP_WAITING'});
     }
 
-    // When a new SW installs, force it to activate immediately
+    // When a new SW finishes installing, force it active immediately
     reg.addEventListener('updatefound', () => {
       const newWorker = reg.installing;
       if (!newWorker) return;
       newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        if (newWorker.state === 'installed') {
+          // Force activate — works even on old SWs that don't listen to messages
           newWorker.postMessage({type: 'SKIP_WAITING'});
         }
       });
     });
 
+    // ── Proactively check for updates every time app opens (online only) ──
+    // This is what catches old installed PWAs — browser checks sw.js on server
+    // If sw.js changed, it downloads new one and triggers updatefound above
+    if (navigator.onLine) {
+      reg.update().catch(() => {});
+    }
+
   }).catch(err => console.warn('SW failed:', err));
 
-  // When SW sends SW_UPDATED — only reload if we are ONLINE
-  // Offline users keep using their cache without any interruption
+  // ── SW_UPDATED message — only reload if online ──
   navigator.serviceWorker.addEventListener('message', event => {
     if (event.data && event.data.type === 'SW_UPDATED') {
       if (navigator.onLine) {
-        console.log('SW updated + online — reloading for fresh files');
         window.location.reload();
-      } else {
-        console.log('SW updated but offline — will reload next time online');
       }
     }
   });
 
-  // Controller changed (new SW took over) — reload only if online
-  let refreshing = false;
+  // ── Controller changed = new SW took over — reload if online ──
+  let _swRefreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing && navigator.onLine) {
-      refreshing = true;
+    if (!_swRefreshing && navigator.onLine) {
+      _swRefreshing = true;
       window.location.reload();
     }
   });

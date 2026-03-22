@@ -91,16 +91,26 @@ function admSetConn(s){
   }
 }
 
+function _toTitleCase(str){
+  return (str||'').trim().toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();});
+}
+
 function _admEnrich(recs){
-  // Upgrade first-name-only interviewer fields using student list
   if(!Array.isArray(_admStudents)||!_admStudents.length) return;
   recs.forEach(function(rec){
+    // Normalize interviewer name to Title Case in memory
+    if(rec.interviewer) rec.interviewer = _toTitleCase(rec.interviewer);
     if(!rec.interviewer||rec.interviewer.includes(' ')) return;
+    // Upgrade first-name-only to full name
     const fn=rec.interviewer.toLowerCase();
     const match=_admStudents.find(function(s){
       return s.full_name&&s.full_name.trim().toLowerCase().startsWith(fn+' ');
     });
-    if(match) rec.interviewer=match.full_name;
+    if(match) rec.interviewer=_toTitleCase(match.full_name);
+  });
+  // Also normalize student names
+  _admStudents.forEach(function(s){
+    if(s.full_name) s.full_name = _toTitleCase(s.full_name);
   });
 }
 
