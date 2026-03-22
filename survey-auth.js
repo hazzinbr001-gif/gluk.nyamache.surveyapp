@@ -994,7 +994,46 @@ authInit();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js', {scope: './'}).then(reg => {
     console.log('✓ SW registered:', reg.scope);
+
+    // If a new SW is already waiting, activate it now
+    if (reg.waiting) {
+      reg.waiting.postMessage({type: 'SKIP_WAITING'});
+    }
+
+    // When a new SW installs, force it to activate immediately
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.postMessage({type: 'SKIP_WAITING'});
+        }
+      });
+    });
+
   }).catch(err => console.warn('SW failed:', err));
+
+  // When SW sends SW_UPDATED — only reload if we are ONLINE
+  // Offline users keep using their cache without any interruption
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SW_UPDATED') {
+      if (navigator.onLine) {
+        console.log('SW updated + online — reloading for fresh files');
+        window.location.reload();
+      } else {
+        console.log('SW updated but offline — will reload next time online');
+      }
+    }
+  });
+
+  // Controller changed (new SW took over) — reload only if online
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing && navigator.onLine) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════════
