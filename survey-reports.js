@@ -33,21 +33,20 @@ body{
   line-height:1.5;
 }
 .page{
-  max-width:210mm;
+  width:210mm;
+  max-width:100%;
   margin:0 auto;
   background:#fff;
-  min-height:297mm;
-  box-shadow:0 0 40px rgba(0,0,0,.18);
-  position:relative;
+  box-shadow:0 0 30px rgba(0,0,0,.12);
 }
 
 /* ── COVER PAGE ── */
 .cover{
-  min-height:297mm;
+  width:100%;
+  min-height:277mm;
   display:flex;flex-direction:column;
   page-break-after:always;
-  position:relative;
-  overflow:hidden;
+  background:#fff;
 }
 .cover-band{
   background:linear-gradient(135deg,#0a3d1f 0%,#1a5c35 40%,#1a4060 100%);
@@ -55,8 +54,8 @@ body{
 }
 .cover-body{
   flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:40px 50px;
+  align-items:center;justify-content:flex-start;
+  padding:30px 40px 20px;
   text-align:center;
 }
 .cover-emblem{
@@ -107,17 +106,18 @@ body{
 }
 .cover-meta-row:last-child{border-bottom:none;}
 .cover-meta-label{color:#6b8a74;font-weight:700;}
-.cover-meta-value{color:#1a2b22;font-weight:600;text-align:right;max-width:60%;}
+.cover-meta-value{color:#1a2b22;font-weight:600;text-align:right;word-break:break-all;}
 .cover-footer{
   background:#f4f8f5;border-top:2px solid #1a5c35;
-  padding:14px 50px;display:flex;justify-content:space-between;
-  align-items:center;font-size:8pt;color:#6b8a74;
+  padding:10px 20px;display:flex;justify-content:space-between;
+  align-items:center;font-size:7pt;color:#6b8a74;
+  flex-shrink:0;margin-top:auto;
 }
 .cover-footer-logo{display:flex;align-items:center;gap:8px;}
 .cover-footer-logo span{font-weight:700;color:#1a5c35;}
 
 /* ── DOCUMENT BODY ── */
-.doc{padding:25mm 25mm 30mm;}
+.doc{padding:12mm 15mm 20mm;}
 .doc-header{
   display:flex;align-items:flex-start;justify-content:space-between;
   border-bottom:2px solid #1a5c35;padding-bottom:10px;margin-bottom:18px;
@@ -236,14 +236,8 @@ table.data-tbl tbody td.num{text-align:center;font-weight:700;}
 .sig-name{font-size:8pt;font-weight:700;color:#1a2b22;margin-top:2px;}
 
 /* ── FOOTER ON EACH PAGE ── */
-.doc-footer{
-  position:fixed;bottom:0;left:0;right:0;
-  background:#fff;
-  border-top:1px solid #cce0d4;
-  padding:6px 25mm;
-  display:flex;justify-content:space-between;
-  align-items:center;font-size:7.5pt;color:#999;
-}
+/* doc-footer removed — using cover-footer instead */
+
 
 /* ── PRINT BUTTON ── */
 .print-fab{
@@ -257,52 +251,50 @@ table.data-tbl tbody td.num{text-align:center;font-weight:700;}
   z-index:1000;
 }
 .print-fab:active{opacity:.85;}
+/* Screen helper */
+.page-break{page-break-before:always;}
+
+/* Force all colours to print */
+.cover-top-band,.cover-footer,h2.sec,.stat-box,.flag-critical,.flag-warning,.flag-ok,
+table.data-tbl thead th,table.data-tbl tbody tr:nth-child(even) td{
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-  body{background:#fff!important;margin:0!important;padding:0!important;}
-  .page{box-shadow:none!important;margin:0!important;max-width:100%!important;}
-  .print-fab{display:none!important;}
+  html,body{background:#fff!important;margin:0!important;padding:0!important;}
+  .page{box-shadow:none!important;width:100%!important;}
   .cover{page-break-after:always!important;}
   .page-break{page-break-before:always!important;}
-  h2.sec{page-break-after:avoid;}
-  h3.sub{page-break-after:avoid;}
-  tr{page-break-inside:avoid;}
-  .sig-section{page-break-inside:avoid;}
+  h2.sec{page-break-after:avoid!important;}
+  h3.sub{page-break-after:avoid!important;}
+  tr{page-break-inside:avoid!important;}
+  .sig-section{page-break-inside:avoid!important;}
+  .print-fab{display:none!important;}
 }
 @page{
   size:A4 portrait;
-  margin:15mm 18mm 20mm 18mm;
+  margin:12mm 15mm 15mm 15mm;
 }
 `;
 
-
-// ─────────────────────────────────────────────────────────────────
-//  STUDENT DETAILS LOOKUP — gets reg_number + email from Supabase
-// ─────────────────────────────────────────────────────────────────
+// ── Student details lookup (reg_number + email from Supabase) ──
 async function _getStudentDetails(fullName){
-  // 1. Try cached _admStudents list
-  if(typeof _admStudents !== 'undefined' && Array.isArray(_admStudents)){
-    const s = _admStudents.find(st => st.full_name &&
-      st.full_name.toLowerCase() === fullName.toLowerCase());
-    if(s) return s;
+  if(typeof _admStudents!=='undefined'&&Array.isArray(_admStudents)){
+    const s=_admStudents.find(st=>st.full_name&&st.full_name.toLowerCase()===fullName.toLowerCase());
+    if(s)return s;
   }
-  // 2. Try current session
   try{
-    const session = JSON.parse(localStorage.getItem('chsa_auth')||'null');
-    if(session && session.full_name &&
-       session.full_name.toLowerCase() === fullName.toLowerCase()){
-      return session;
-    }
+    const session=JSON.parse(localStorage.getItem('chsa_auth')||'null');
+    if(session&&session.full_name&&session.full_name.toLowerCase()===fullName.toLowerCase())return session;
   }catch(e){}
-  // 3. Fetch from Supabase students table
   try{
-    const res = await fetch(
-      SUPABASE_URL+'/rest/v1/chsa_students?full_name=eq.'+encodeURIComponent(fullName)+'&select=reg_number,full_name,email',
-      {headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
-    );
-    if(res.ok){ const d=await res.json(); if(d&&d.length) return d[0]; }
+    const res=await fetch(SUPABASE_URL+'/rest/v1/chsa_students?full_name=eq.'+encodeURIComponent(fullName)+'&select=reg_number,full_name,email',
+      {headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    if(res.ok){const d=await res.json();if(d&&d.length)return d[0];}
   }catch(e){}
-  return {full_name:fullName, reg_number:'—', email:'—'};
+  return {full_name:fullName,reg_number:'—',email:'—'};
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -400,7 +392,7 @@ function _coverPage(title, subtitle, metaRows, reportType){
 //            Recommendations · Signature
 // ─────────────────────────────────────────────────────────────────
 function buildInterviewerReport(interviewer, records, student){
-  student = student || {full_name:interviewer, reg_number:"—", email:"—"};
+  student=student||{full_name:interviewer,reg_number:"—",email:"—"};
   const n = records.length;
   if(!n) return '<html><body>No records for this interviewer.</body></html>';
 
@@ -500,7 +492,7 @@ ${_rptHeader(
 
 <!-- ═══ EXECUTIVE SUMMARY ═══ -->
 <h2 class="sec">Executive Summary</h2>
-<p class="body-text">This report presents findings from <strong>${n} household interview${n!==1?'s':''}</strong> conducted by <strong>${student.full_name||interviewer}</strong> (${student.reg_number||"—"}) in <strong>${locStr}</strong> during the period <strong>${dateRange}</strong>, as part of the Community Health Situation Analysis programme at <strong>Great Lakes University of Kisumu</strong> in partnership with <strong>Nyamache Sub County Hospital</strong>, Kisii County.</p>
+<p class="body-text">This report presents findings from <strong>${n} household interview${n!==1?'s':''}</strong> conducted by <strong>${student.full_name||interviewer}</strong> (Reg: ${student.reg_number||"—"}) in <strong>${locStr}</strong> during the period <strong>${dateRange}</strong>, as part of the Community Health Situation Analysis programme at <strong>Great Lakes University of Kisumu</strong> in partnership with <strong>Nyamache Sub County Hospital</strong>, Kisii County.</p>
 <p class="body-text">Key findings indicate that latrine coverage stands at <strong>${_pct(latrine,n)}%</strong> (${latrine}/${n} households), water treatment compliance at <strong>${_pct(waterTx,n)}%</strong>, and HIV/AIDS awareness at <strong>${_pct(hivHeard,n)}%</strong>. The most prevalent illness reported was <strong>${topIll[0]?topIll[0][0]:'none identified'}</strong>${topIll[0]?` affecting ${topIll[0][1]} households (${_pct(topIll[0][1],n)}%)`:''}.${deathsHH>0?` A total of <strong>${totalDeaths} death${totalDeaths!==1?'s':''}</strong> were reported across <strong>${deathsHH} household${deathsHH!==1?'s':''}</strong> in the past five years.`:''} A total of <strong>${allFlags.length} red flag${allFlags.length!==1?'s':''}</strong> were identified requiring follow-up. The primary concern identified is <strong>${lowestIndicator}</strong>, which represents the most significant health risk in the surveyed households.</p>
 <div class="stat-row">
   ${_statBox(n,'Households','blue')}
@@ -636,7 +628,7 @@ ${recs.map(r=>`<div class="flag-${r.lvl==='critical'?'critical':r.lvl==='warning
   <div class="sig-box">
     <div class="sig-line"></div>
     <div class="sig-name">${student.full_name||interviewer}</div>
-    <div class="sig-label">${student.reg_number||""} · ${student.email||""} · Great Lakes University</div>
+    <div class="sig-label">${student.reg_number||""} · ${student.email||""} · GLU Kisumu</div>
   </div>
   <div class="sig-box">
     <div class="sig-line"></div>
@@ -665,8 +657,8 @@ ${recs.map(r=>`<div class="flag-${r.lvl==='critical'?'critical':r.lvl==='warning
 //  Called from admin: openGroupReport()
 //  Full class report with individual comparison + aggregated analysis
 // ─────────────────────────────────────────────────────────────────
-function buildGroupReport(records, students){
-  students = students || {};
+function buildGroupReport(records,students){
+  students=students||{};
   const n = records.length;
   if(!n) return '<html><body>No records loaded.</body></html>';
 
@@ -696,7 +688,7 @@ function buildGroupReport(records, students){
   const ivRows = ivNames.map(iv=>{
     const recs = records.filter(r=>r.interviewer===iv);
     const m=recs.length;
-    const st=students[iv]||{reg_number:'—',email:'—'};
+    const st=students[iv]||{};
     return `<tr>
       <td class="label">${iv}<br><span style="font-size:7pt;color:#888;font-weight:400">${st.reg_number||'—'}</span></td>
       <td class="center">${m}</td>
@@ -883,12 +875,12 @@ ${grecs.map(r=>`<div class="flag-${r.lvl==='critical'?'critical':r.lvl==='warnin
 // ─────────────────────────────────────────────────────────────────
 async function openInterviewerReport(interviewer){
   if(typeof _admRecs==='undefined'||!_admRecs.length){showToast('No records loaded',true);return;}
-  const recs = _admRecs.filter(r=>r.interviewer===interviewer);
-  if(!recs.length){ showToast('No records for '+interviewer, true); return; }
+  const recs=_admRecs.filter(r=>r.interviewer===interviewer);
+  if(!recs.length){showToast('No records for '+interviewer,true);return;}
   showToast('Building report...');
-  const student = await _getStudentDetails(interviewer);
-  const html = buildInterviewerReport(interviewer, recs, student);
-  _openReportFrame(html, '📑 Report — '+interviewer);
+  const student=await _getStudentDetails(interviewer);
+  const html=buildInterviewerReport(interviewer,recs,student);
+  _openReportFrame(html,'📑 Report — '+interviewer);
 }
 
 function openAllInterviewerReports(){
@@ -919,7 +911,7 @@ async function openGroupReport(){
   showToast('Building group report...');
   const ivNames=[...new Set(_admRecs.map(r=>r.interviewer||'Unknown'))].sort();
   const students={};
-  for(const iv of ivNames){ students[iv]=await _getStudentDetails(iv); }
+  for(const iv of ivNames){students[iv]=await _getStudentDetails(iv);}
   const html=buildGroupReport(_admRecs,students);
   _openReportFrame(html,'👥 Class Group Report');
 }
