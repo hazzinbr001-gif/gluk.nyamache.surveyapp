@@ -1,3 +1,8 @@
+html{
+  zoom: 0.9;
+  -webkit-text-size-adjust: 100%;
+}
+
 /* ══════════════════════════════════════════════
    Community Health Survey — Styles
    Great Lakes University · Nyamache
@@ -238,7 +243,7 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 .ls-donate{display:inline-flex;align-items:center;gap:5px;background:rgba(29,185,84,.07);border:1px solid rgba(29,185,84,.18);border-radius:99px;padding:4px 13px;color:rgba(29,185,84,.65);font-size:.64rem;font-weight:600;cursor:pointer;text-decoration:none;}
 
 /* ── IN-PAGE REPORT OVERLAY ── */
-#report-overlay{display:none;position:fixed;inset:0;z-index:10000;background:#e8e8e8;flex-direction:column;-webkit-overflow-scrolling:touch;}
+#report-overlay{display:none;position:fixed;inset:0;z-index:7800;background:#e8e8e8;flex-direction:column;-webkit-overflow-scrolling:touch;}
 #report-overlay.open{display:flex;}
 #report-toolbar{flex-shrink:0;background:#1e5c38;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.25);}
 #report-toolbar span{font-weight:700;font-size:.9rem;letter-spacing:.2px;}
@@ -263,7 +268,7 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 }
 
 /* ══ ADMIN STYLES ══ */
-#admin-gate{display:none;position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#1e5c38,#1a4f6e);align-items:center;justify-content:center;padding:24px;}
+#admin-gate{display:none;position:fixed;inset:0;z-index:7500;background:linear-gradient(135deg,#1e5c38,#1a4f6e);align-items:center;justify-content:center;padding:24px;}
 #admin-gate.open{display:flex;}
 .gate-card{background:#fff;border-radius:20px;padding:32px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,.3);}
 .gate-icon{font-size:44px;margin-bottom:12px;}
@@ -276,7 +281,22 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 .gate-cancel{width:100%;padding:10px;background:transparent;color:#6b8a74;border:none;font-family:inherit;font-size:0.85rem;cursor:pointer;}
 .gate-attempts{font-size:0.72rem;color:#c0392b;margin-top:6px;min-height:16px;}
 
-#admin-overlay{display:none;position:fixed;inset:0;z-index:8000;background:#f4f6f8;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scroll-behavior:auto;}
+#admin-overlay{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  /* Cover PWA status bar and safe areas */
+  top:env(safe-area-inset-top,0px);
+  z-index:7600;
+  background:#f4f6f8;
+  overflow-y:scroll;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  /* Force GPU layer — prevents bleed-through on PWA */
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
+  will-change:transform;
+}
 #admin-overlay.open{display:block;}
 .adm-top{position:sticky;top:0;z-index:50;will-change:transform;background:linear-gradient(135deg,#1e5c38,#1a4f6e);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.25);}
 .adm-brand{display:flex;align-items:center;gap:10px;}
@@ -374,7 +394,7 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 .bin-item-name{font-weight:700;font-size:0.82rem;color:#1a2b22;}
 .bin-item-meta{font-size:0.7rem;color:#6b8a74;margin-top:2px;}
 .bin-item-btns{display:flex;gap:6px;flex-shrink:0;}
-.adm-detail-ov{display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center;}
+.adm-detail-ov{display:none;position:fixed;inset:0;z-index:7700;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center;}
 .adm-detail-ov.open{display:flex;}
 .adm-detail-modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
 .adm-detail-hdr{background:linear-gradient(135deg,#1e5c38,#1a4f6e);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
@@ -397,7 +417,7 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
   display:none;
   position:fixed;
   inset:0;
-  z-index:6500;
+  z-index:7900;
   background:rgba(10,15,12,.82);
   backdrop-filter:blur(3px);
   -webkit-backdrop-filter:blur(3px);
