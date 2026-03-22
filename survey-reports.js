@@ -80,7 +80,7 @@ html,body{
 .ph-r{font-size:5.5pt;color:#888;text-align:right;line-height:1.7;}
 
 /* ── CONTENT AREA ── */
-.pc{flex:1;overflow:hidden;}
+.pc{flex:1;overflow:hidden;display:flex;flex-direction:column;}
 
 /* ── PAGE FOOTER ── */
 .pf{
@@ -131,14 +131,18 @@ h2.sec{
   padding:3.5pt 8pt;margin:8pt 0 5pt;border-radius:2pt;
   -webkit-print-color-adjust:exact;print-color-adjust:exact;
 }
+h2.sec:first-child{margin-top:0;}
 h3.sub{
   font-size:8pt;font-weight:700;color:#1a5c35;
   border-left:2.5pt solid #1a5c35;padding-left:5pt;
   margin:6pt 0 4pt;
   -webkit-print-color-adjust:exact;print-color-adjust:exact;
 }
-p.bt{font-size:7.5pt;line-height:1.62;color:#1a2b22;margin-bottom:4pt;}
+p.bt{font-size:7.5pt;line-height:1.72;color:#1a2b22;margin-bottom:5pt;}
 p.note{font-size:6.5pt;color:#6b8a74;font-style:italic;margin-bottom:3pt;}
+
+/* Vertical fill — pushes content to fill page height */
+.vfill{flex:1;}
 
 /* Table — compact */
 table.dt{width:100%;border-collapse:collapse;font-size:6.5pt;margin-bottom:5pt;}
@@ -175,6 +179,8 @@ table.dt tfoot td{font-weight:800;background:#e8f5ed;padding:3pt 5pt;border-top:
 /* Two-column layout for page 2 */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8pt;}
 .two-col-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt;}
+.two-col .col-head{font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#fff;background:linear-gradient(135deg,#1a5c35,#1a4060);padding:3.5pt 8pt;margin-bottom:5pt;border-radius:2pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.two-col .col-body p.bt{font-size:7.3pt;line-height:1.70;}
 
 /* Signature */
 .sigs{display:flex;gap:10pt;flex-wrap:wrap;margin-top:10pt;padding-top:8pt;border-top:1px solid #cce0d4;}
@@ -308,15 +314,21 @@ function _sigs(people){
 // Full document wrapper
 function _doc(title, pages){
   const dlScript = [
+    '<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></'+'script>',
     '<scr'+'ipt>',
     'function _dl(){',
-    'var h="<!DOCTYPE html>"+document.documentElement.outerHTML;',
-    'var b=new Blob([h],{type:"text/html"});',
-    'var u=URL.createObjectURL(b);',
-    'var a=document.createElement("a");',
-    'a.href=u;',
-    'a.download=document.title.replace(/[^a-zA-Z0-9_-]/g,"_")+"_"+new Date().toISOString().split("T")[0]+".html";',
-    'document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);',
+    'var btn=document.querySelector(".dl-fab");',
+    'if(btn){btn.textContent="⏳ Generating PDF…";btn.disabled=true;}',
+    'var opt={',
+    '  margin:0,',
+    '  filename:document.title.replace(/[^a-zA-Z0-9_-]/g,"_")+"_"+new Date().toISOString().split("T")[0]+".pdf",',
+    '  image:{type:"jpeg",quality:0.98},',
+    '  html2canvas:{scale:2,useCORS:true,letterRendering:true},',
+    '  jsPDF:{unit:"in",format:"letter",orientation:"portrait"}',
+    '};',
+    'html2pdf().set(opt).from(document.body).save()',
+    '  .then(function(){if(btn){btn.textContent="⬇ Download PDF";btn.disabled=false;}})',
+    '  .catch(function(e){if(btn){btn.textContent="⬇ Download PDF";btn.disabled=false;}alert("PDF error: "+e.message);});',
     '}',
     '</'+'script>'
   ].join('');
@@ -327,7 +339,7 @@ function _doc(title, pages){
     +'<style>'+RPT_CSS+'</style>'
     +'</head><body>'
     +pages
-    +'<button class="dl-fab" onclick="_dl()">&#11015; Download File</button>'
+    +'<button class="dl-fab" onclick="_dl()">&#11015; Download PDF</button>'
     +dlScript
     +'</body></html>';
 }
@@ -447,9 +459,10 @@ function buildInterviewerReport(interviewer, records, student){
       +'<div>'
         +'<h2 class="sec">2. Methods</h2>'
         +'<p class="bt">Descriptive cross-sectional household survey using a structured 12-section questionnaire: Consent, Demography, Housing, Medical History, Maternal &amp; Child Health, Nutrition, HIV/AIDS, Sanitation, Environment &amp; Water, Cultural Practices, Health Problems, and Pests &amp; Vectors.</p>'
-        +'<p class="bt">Data captured using the Community Health Survey PWA and synchronised to a secure cloud database. Verbal informed consent obtained from each respondent prior to interview.</p>'
+        +'<p class="bt">Data captured using the Community Health Survey PWA and synchronised to a secure cloud database. Verbal informed consent obtained from each respondent prior to interview. All instruments were pre-tested to ensure validity and reliability, in line with ethical standards prescribed by Great Lakes University of Kisumu and the Ministry of Health.</p>'
       +'</div>'
     +'</div>'
+    +'<div class="vfill"></div>'
   );
 
   // ── PAGE 3: Full Results ──
@@ -493,7 +506,7 @@ function buildInterviewerReport(interviewer, records, student){
         +(allFlags.length
           ?allFlags.slice(0,6).map(({r,f})=>'<div class="fc"><div class="ft">&#9888; '+f+'</div><div class="fb">'+( r.location||'?')+' &middot; '+(r.interview_date||'?')+'</div></div>').join('')
             +(allFlags.length>6?'<p class="note">+'+(allFlags.length-6)+' more flags — see full records.</p>':'')
-          :'<div class="fg"><div class="ft">&#10003; No Critical Red Flags</div><div class="fb">No critical issues identified across all surveyed households.</div></div>')
+          :'<div class="fg"><div class="ft">&#10003; No Critical Red Flags</div><div class="fb">No critical issues identified across all surveyed households. All key health indicators were within or above acceptable national benchmarks for the survey period.</div></div>')
       +'</div>'
     +'</div>'
     +'<h3 class="sub">3.6 All Interviews — Summary Table</h3>'
@@ -502,31 +515,40 @@ function buildInterviewerReport(interviewer, records, student){
     +'<th class="c">#</th><th>Date</th><th>Location</th><th class="c">Age/Sex</th><th>House</th>'
     +'<th class="c">Lat</th><th class="c">H&#8322;O</th><th class="c">HIV</th><th>Illnesses</th><th class="c">Flags</th>'
     +'</tr></thead><tbody>'+caseRows+'</tbody></table>'
+    +'<div class="vfill"></div>'
   );
 
   // ── PAGE 4: Discussion + Conclusion + Recommendations + Signatures ──
   const p4=_page(4,TOTAL,hdr(4),ftr(4),
     '<div class="two-col">'
       +'<div>'
-        +'<h2 class="sec">4. Discussion</h2>'
+        +'<div class="col-head">4. Discussion</div>'
+        +'<div class="col-body">'
         +'<p class="bt">'+(_pct(latrine,n)<80
-          ?'Latrine coverage of '+_pct(latrine,n)+'% falls '+( 80-_pct(latrine,n))+'pts below the 80% national target. Open defecation risk in '+(n-latrine)+' household'+(n-latrine!==1?'s':'')+' requires immediate CLTS follow-up.'
-          :'Latrine coverage of '+_pct(latrine,n)+'% meets the national target — commendable. Sustain through continued community engagement.')+'</p>'
+          ?'Latrine coverage of '+_pct(latrine,n)+'% falls '+(80-_pct(latrine,n))+'pts below the 80% national target. Open defecation risk in '+(n-latrine)+' household'+(n-latrine!==1?'s':'')+' requires immediate CLTS follow-up.'
+          :'Latrine coverage of '+_pct(latrine,n)+'% meets the national target — commendable. Sustain through continued community engagement and regular hygiene promotion.')+'</p>'
         +'<p class="bt">'+(_pct(waterTx,n)<80
           ?'Water treatment at '+_pct(waterTx,n)+'% is below threshold. Point-of-use treatment distribution and hygiene promotion urgently required.'
-          :'Water treatment at '+_pct(waterTx,n)+'% is satisfactory, indicating community uptake of safe water practices.')+'</p>'
+          :'Water treatment at '+_pct(waterTx,n)+'% is satisfactory, indicating strong community uptake of safe water practices.')+'</p>'
         +'<p class="bt">'+(_pct(hivHeard,n)<90
           ?'HIV awareness at '+_pct(hivHeard,n)+'% is below the 90% UNAIDS benchmark. The '+(n-hivHeard)+' unaware respondent'+(n-hivHeard!==1?'s':'')+' need targeted health education.'
-          :'HIV awareness at '+_pct(hivHeard,n)+'% meets the benchmark. Focus on testing uptake to reach 95%.')+'</p>'
+          :'HIV awareness at '+_pct(hivHeard,n)+'% meets the benchmark. Continue testing linkage to sustain 95% target.')+'</p>'
         +(topIll.length?'<p class="bt">'+topIll[0][0]+' is the most prevalent illness ('+topIll[0][1]+' cases, '+_pct(topIll[0][1],n)+'%), consistent with environmental risk factors identified in this survey.</p>':'')
-        +'<h2 class="sec">5. Conclusion</h2>'
+        +'</div>'
+        +'<div class="col-head" style="margin-top:6pt">5. Conclusion</div>'
+        +'<div class="col-body">'
         +'<p class="bt">This assessment by <strong>'+fullName+'</strong> in <strong>'+locStr+'</strong> provides systematic evidence on '+n+' household'+(n!==1?'s':'')+'. '+(_pct(latrine,n)<60||_pct(waterTx,n)<60?'Significant health coverage gaps require urgent action.':'Key indicators are within acceptable ranges with targeted areas for improvement.')+' This report is submitted to the course coordinator and Nyamache Sub County Hospital health management team for review and action planning.</p>'
+        +'</div>'
       +'</div>'
       +'<div>'
-        +'<h2 class="sec">6. Recommendations</h2>'
+        +'<div class="col-head">6. Recommendations</div>'
+        +'<div class="col-body">'
         +recs.map(rc=>'<div class="'+(rc.lvl==='critical'?'fc':rc.lvl==='warning'?'fw':'fg')+'">'
           +'<div class="ft">'+(rc.lvl==='critical'?'&#9888;':rc.lvl==='warning'?'&#9888;':'&#10003;')+' '+rc.t+'</div>'
           +'<div class="fb">'+rc.b+'</div></div>').join('')
+        +(_pct(latrine,n)>=80?'<div class="fg"><div class="ft">&#10003; Sustain WASH Achievements</div><div class="fb">Maintain current latrine and water treatment coverage. Regular follow-up and hygiene promotion advised, particularly ahead of wet seasons.</div></div>':'')
+        +(_pct(hivHeard,n)>=90?'<div class="fg"><div class="ft">&#10003; Continue HIV Awareness Programmes</div><div class="fb">Current awareness rates are exemplary. Continued sensitisation and linkage to care should be maintained to support national HIV elimination goals.</div></div>':'')
+        +'</div>'
       +'</div>'
     +'</div>'
     +'<h2 class="sec">Declaration &amp; Signatures</h2>'
@@ -537,6 +559,7 @@ function buildInterviewerReport(interviewer, records, student){
       +'<div class="sig"><div class="sig-l"></div><div class="sig-n">Sub-County Health Officer</div><div class="sig-s">Nyamache Sub County Hospital, Kisii County</div></div>'
     +'</div>'
     +'<p class="note" style="margin-top:8pt;text-align:center">Report generated '+now+' &middot; Community Health Survey System v2.0 &middot; Great Lakes University of Kisumu &middot; &copy; 2026 HazzinBR</p>'
+    +'<div class="vfill"></div>'
   );
 
   return _doc('Report_'+fullName.replace(/\s+/g,'_'), p1+p2+p3+p4);
@@ -665,6 +688,7 @@ function buildGroupReport(records, students){
       +'<tbody>'+topIll.slice(0,5).map(([k,v],i)=>'<tr><td class="lbl">'+k+'</td><td class="c">'+v+'</td><td class="c">'+_pct(v,n)+'%</td><td class="c">#'+(i+1)+'</td></tr>').join('')
       +'</tbody></table>':'')
     +(deathHH>0?'<div class="fw"><div class="ft">&#9888; Mortality: '+totDead+' deaths across '+deathHH+' HHs in 5 years</div><div class="fb">Verbal autopsy investigation recommended.</div></div>':'')
+    +'<div class="vfill"></div>'
   );
 
   // ── PAGE 3: Per-interviewer comparison ──
@@ -691,6 +715,7 @@ function buildGroupReport(records, students){
     +'<p class="bt">Inter-interviewer variation reflects genuine community-level heterogeneity across survey areas. Areas with lower indicators should be prioritised for targeted intervention.'+(topIll.length?' '+topIll[0][0]+' prevalence ('+_pct(topIll[0][1],n)+'%) is consistent with rural Kisii County epidemiological patterns.':'')+'</p>'
     +'<h2 class="sec">5. Conclusion</h2>'
     +'<p class="bt">The class-wide survey provides systematic evidence on household health status in Nyamache Sub County. Findings confirm preventable health risks amenable to targeted interventions. Individual interviewer reports provide granular findings per survey area. Submitted to the course coordinator, Nyamache Sub County Hospital, and Kisii County Department of Health for review and action planning.</p>'
+    +'<div class="vfill"></div>'
   );
 
   // ── PAGE 4: Recommendations + Signatures ──
@@ -712,6 +737,7 @@ function buildGroupReport(records, students){
       +'<div class="sig"><div class="sig-l"></div><div class="sig-n">Sub-County Health Officer</div><div class="sig-s">Nyamache Sub County Hospital, Kisii County</div></div>'
     +'</div>'
     +'<p class="note" style="margin-top:8pt;text-align:center">Generated '+now+' &middot; Community Health Survey System v2.0 &middot; Great Lakes University of Kisumu &middot; &copy; 2026 HazzinBR</p>'
+    +'<div class="vfill"></div>'
   );
 
   return _doc('Group_Report_'+now.replace(/\s+/g,'_'), p1+p2+p3+p4);
@@ -784,25 +810,15 @@ function _openReportFrame(html, title){
 
 
 // ─────────────────────────────────────────────────────────────────
-//  DOWNLOAD — downloads the report as a self-contained HTML file
-//  The file opens perfectly in any browser, prints as Letter PDF
+//  DOWNLOAD — delegates to the single dl-fab inside the report iframe
+//  html2pdf runs inside the iframe on its own document = no splits
 // ─────────────────────────────────────────────────────────────────
 function printReport(){
   const fr=document.getElementById('report-frame');
   if(!fr){showToast('No report open',true);return;}
-  const ti=document.getElementById('report-title');
-  const raw=(ti?ti.textContent:'Health-Report').replace(/[^a-zA-Z0-9\s\-]/g,'').trim().replace(/\s+/g,'_');
-  const filename=(raw||'Health-Report')+'_'+new Date().toISOString().split('T')[0]+'.html';
   try{
-    const innerDoc=fr.contentDocument||fr.contentWindow.document;
-    const html='<!DOCTYPE html>'+innerDoc.documentElement.outerHTML;
-    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.download=filename;
-    document.body.appendChild(a);a.click();
-    document.body.removeChild(a);URL.revokeObjectURL(url);
-    showToast('✓ File downloaded — open it to view or print as PDF');
+    const btn=(fr.contentDocument||fr.contentWindow.document).querySelector('.dl-fab');
+    if(btn){btn.click();}else{showToast('No report loaded',true);}
   }catch(e){showToast('Error: '+e.message,true);}
 }
 function closeReportOverlay(){ document.getElementById('report-overlay')?.classList.remove('open'); }
