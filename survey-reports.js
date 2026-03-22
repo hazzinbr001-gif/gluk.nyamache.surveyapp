@@ -13,38 +13,58 @@
 async function _getStudentDetails(fullName){
   const name = (fullName||'').trim().toLowerCase();
 
-  // 1. Check already-loaded _admStudents cache (fastest)
+  // Helper: check if two names match (exact or one starts with the other)
+  function matches(a,b){
+    if(!a||!b) return false;
+    a=a.trim().toLowerCase(); b=b.trim().toLowerCase();
+    return a===b || a.startsWith(b+' ') || b.startsWith(a+' ') || a.split(' ')[0]===b || b.split(' ')[0]===a;
+  }
+
+  // 1. Check _admStudents cache
   if(typeof _admStudents!=='undefined' && Array.isArray(_admStudents)){
-    const hit = _admStudents.find(s=>
-      s.full_name && s.full_name.trim().toLowerCase()===name
-    );
+    // Try exact match first
+    let hit = _admStudents.find(s=>s.full_name && s.full_name.trim().toLowerCase()===name);
+    // Fall back to partial match
+    if(!hit) hit = _admStudents.find(s=>matches(s.full_name, fullName));
     if(hit) return hit;
   }
 
-  // 2. Check logged-in session
+  // 2. Check session
   try{
     const sess = JSON.parse(localStorage.getItem('chsa_auth')||'null');
-    if(sess && sess.full_name && sess.full_name.trim().toLowerCase()===name)
+    if(sess && sess.full_name && matches(sess.full_name, fullName))
       return sess;
   }catch(e){}
 
-  // 3. Live Supabase fetch
+  // 3. Live fetch — try full name first, then first-name-only
   try{
-    const url = SUPABASE_URL
-      +'/rest/v1/chsa_students?full_name=eq.'
-      +encodeURIComponent((fullName||'').trim())
-      +'&select=reg_number,full_name,email&limit=1';
-    const res = await fetch(url,{
-      headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
-    });
+    // Try exact full name match
+    let url = SUPABASE_URL+'/rest/v1/chsa_students?full_name=eq.'
+      +encodeURIComponent((fullName||'').trim())+'&select=reg_number,full_name,email&limit=1';
+    let res = await fetch(url,{headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     if(res.ok){
       const d = await res.json();
       if(d && d.length) return d[0];
+    }
+    // Try ilike (case-insensitive, partial)
+    const firstName = (fullName||'').trim().split(' ')[0];
+    url = SUPABASE_URL+'/rest/v1/chsa_students?full_name=ilike.'
+      +encodeURIComponent(firstName+'*')+'&select=reg_number,full_name,email&limit=5';
+    res = await fetch(url,{headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    if(res.ok){
+      const d = await res.json();
+      if(d && d.length){
+        // Pick the one that best matches
+        const best = d.find(s=>matches(s.full_name,fullName)) || d[0];
+        return best;
+      }
     }
   }catch(e){}
 
   return {full_name: fullName||'Unknown', reg_number:'—', email:'—'};
 }
+
+
 
 
 // ─────────────────────────────────────────────────────────────────

@@ -281,10 +281,10 @@ async function authInit(){
       }catch(e){ /* trust local session on error */ }
     }
     // Returning user: show greeting overlay for 2s then enter survey
-    const first = session.full_name.split(' ')[0];
-    localStorage.setItem('chsa_user_name', first);
-    fillInterviewerFields(first);
-    showReturningGreeting(first);
+    const first = session.full_name.split(' ')[0]; // first name for greeting display only
+    localStorage.setItem('chsa_user_name', session.full_name); // store full name for records
+    fillInterviewerFields(session.full_name); // fill form with full name
+    showReturningGreeting(first); // greet with first name only
   }
   // New user: wait for lamp interaction → login
 }
@@ -300,8 +300,9 @@ function authShowAuthCard(){
 
 function authEnterApp(){
   const s = authGetSession();
-  const first = s?.full_name ? s.full_name.split(' ')[0] : getUserName();
-  if(first){ localStorage.setItem('chsa_user_name',first); fillInterviewerFields(first); }
+  const fullN = s?.full_name || getUserName();
+  const first = fullN ? fullN.split(' ')[0] : fullN;
+  if(fullN){ localStorage.setItem('chsa_user_name', fullN); fillInterviewerFields(fullN); }
 
   // Fade auth out
   const auth = document.getElementById('lamp-auth');
@@ -653,7 +654,7 @@ async function authLogin(){
     if(user.status==='removed'){ authMsg('login','⚠ Your access has been removed. Contact the coordinator.','rgba(255,150,100,.9)'); return; }
     // All statuses except removed — enter immediately
     authSaveSession({...user, status:'active'});
-    localStorage.setItem('chsa_user_name', user.full_name.split(' ')[0]);
+    localStorage.setItem('chsa_user_name', user.full_name); // store full name for records
     authEnterApp();
   }catch(e){ authMsg('login','⚠ Connection error — try again'); }
 }
@@ -741,7 +742,7 @@ async function authSubmitRegistration(reg, name, email, isGoogle=false){
     }
     // Already registered — sign in immediately
     authSaveSession({reg_number:s.reg_number, full_name:s.full_name, status:'active', email});
-    localStorage.setItem('chsa_user_name', s.full_name.split(' ')[0]);
+    localStorage.setItem('chsa_user_name', s.full_name); // store full name for records
     authEnterApp();
     return;
   }
@@ -956,12 +957,13 @@ function showHomePage(){
   if(!hp)return;
   hp.style.display='flex';
   requestAnimationFrame(function(){hp.style.opacity='1';});
-  var name=getUserName()||'Interviewer';
+  var fullN=getUserName()||'Interviewer';
+  var name=fullN.split(' ')[0]; // first name only for greeting
   var h=new Date().getHours();
   var g=h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
   var ne=document.getElementById('hp-name');
   var ge=document.getElementById('hp-greeting');
-  if(ne)ne.textContent=name;
+  if(ne)ne.textContent=fullN; // show full name on home page
   if(ge)ge.textContent=g;
   _hpStats();
 }
