@@ -921,7 +921,17 @@ async function authLogin(){
       {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
     );
     const data = await res.json();
-    if(!data.length){ authMsg('login','❌ ID not found — please register first.'); return; }
+    if(!data.length){
+      // Not found — switch to register tab and pre-fill their admission number
+      authMsg('login','⚠ Not found — please register below.');
+      setTimeout(function(){
+        authShowTab('register');
+        var regInput = document.getElementById('auth-reg-num');
+        if(regInput){ regInput.value = reg; }
+        authMsg('register','Enter your full name to complete registration');
+      }, 800);
+      return;
+    }
     const user = data[0];
     if(user.status==='removed'){ authMsg('login','⚠ Your access has been removed. Contact the coordinator.','rgba(255,150,100,.9)'); return; }
     // All statuses except removed — enter immediately
@@ -999,10 +1009,14 @@ async function handleGoogleCredential(response, mode){
 
 async function authSubmitRegistration(reg, name, email, isGoogle=false){
   const panel = isGoogle ? 'login' : 'register';
-  // Check if already registered
-  const checkUrl = email
-    ? `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?or=(reg_number.eq.${encodeURIComponent(reg)},email.eq.${encodeURIComponent(email)})&select=status,full_name,reg_number`
-    : `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?reg_number=eq.${encodeURIComponent(reg)}&select=status,full_name`;
+
+  // Check by reg_number, email, OR full_name — catches users who registered without a reg number
+  const nameEncoded = encodeURIComponent(name.trim());
+  const regEncoded  = encodeURIComponent(reg);
+  let checkUrl = `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?select=status,full_name,reg_number&or=(reg_number.eq.${regEncoded},full_name.ilike.${nameEncoded}`;
+  if(email) checkUrl += `,email.eq.${encodeURIComponent(email)}`;
+  checkUrl += ')&limit=1';
+
   const check = await fetch(checkUrl,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
   const existing = await check.json();
 
@@ -1012,30 +1026,40 @@ async function authSubmitRegistration(reg, name, email, isGoogle=false){
       authMsg(panel,'⚠ Your access was removed. Contact the coordinator.','rgba(255,150,100,.9)');
       return;
     }
-    // Already registered — sign in immediately
-    authSaveSession({reg_number:s.reg_number, full_name:s.full_name, status:'active', email});
-    localStorage.setItem('chsa_user_name', s.full_name); // store full name for records
+    // Found — if reg_number was missing, update it now
+    const noReg = !s.reg_number || s.reg_number==='—' || !s.reg_number.trim();
+    if(noReg){
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?full_name=ilike.${nameEncoded}`,
+        {method:'PATCH',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Prefer:'return=minimal'},
+        body:JSON.stringify({reg_number:reg,email:email||null})}
+      ).catch(()=>{});
+      showToast('✓ Admission number added to your account');
+    }
+    authSaveSession({reg_number:reg, full_name:s.full_name, status:'active', email});
+    localStorage.setItem('chsa_user_name', s.full_name);
     authEnterApp();
     return;
   }
 
-  // New — register and enter immediately, notify coordinator in background
+  // Brand new user
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}`,{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Prefer:'return=minimal'},
     body:JSON.stringify({reg_number:reg, full_name:name, email:email||null, status:'active', requested_at:new Date().toISOString()})
   });
 
   if(res.ok||res.status===201||res.status===204){
     authSaveSession({reg_number:reg, full_name:name, status:'active', email});
-    localStorage.setItem('chsa_user_name', name.split(' ')[0]);
-    authNotifyTeacher(name, reg, email); // silent background email
+    localStorage.setItem('chsa_user_name', name);
+    authNotifyTeacher(name, reg, email);
     authEnterApp();
   } else {
     const err = await res.text();
     authMsg(panel,'⚠ '+err.slice(0,80));
   }
 }
+
 
 async function authRegister(){
   const rawReg  = document.getElementById('auth-reg-num').value.trim();
@@ -1185,6 +1209,42 @@ if ('serviceWorker' in navigator) {
     }
   });
 }
+
+// ═══════════════════════════════════════════════════════
+//  FORCE VERSION CHECK — catches stuck PWA installs
+//  Every open: fetch version.json from GitHub (no-cache)
+//  If version changed → wipe all caches → hard reload
+//  To push update to ALL devices: bump version in version.json
+// ═══════════════════════════════════════════════════════
+const _APP_VER_KEY = 'chsa_app_version';
+
+function checkAppVersion(){
+  if(!navigator.onLine) return;
+  fetch('./version.json?t='+Date.now(), {cache:'no-store'})
+  .then(r => r.json())
+  .then(data => {
+    const latest  = String(data.version||'');
+    const current = localStorage.getItem(_APP_VER_KEY)||'';
+    if(!current){
+      localStorage.setItem(_APP_VER_KEY, latest);
+      return;
+    }
+    if(latest && current !== latest){
+      console.log('[Version] '+current+' → '+latest+' — clearing cache and reloading');
+      localStorage.setItem(_APP_VER_KEY, latest);
+      if('caches' in window){
+        caches.keys()
+          .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+          .then(() => window.location.reload(true));
+      } else {
+        window.location.reload(true);
+      }
+    }
+  })
+  .catch(()=>{/* offline or network error — ignore */});
+}
+
+checkAppVersion();
 
 // ══════════════════════════════════════════════════════
 //  PWA INSTALL LOGIC

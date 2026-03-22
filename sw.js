@@ -8,7 +8,7 @@
 //  Bump CACHE_VERSION to push update to ALL installed PWAs
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_VERSION = 'chsa-v2.8';
+const CACHE_VERSION = 'chsa-v3.0';
 const CACHE_NAME    = CACHE_VERSION;
 
 const APP_FILES = [
@@ -60,6 +60,11 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== location.origin) return;
+  // Never cache version.json — must always be fetched fresh
+  if (url.pathname.endsWith('/version.json')) {
+    event.respondWith(fetch(event.request, {cache: 'no-store'}).catch(() => new Response('{}', {headers:{'Content-Type':'application/json'}})));
+    return;
+  }
 
   event.respondWith(
     caches.open(CACHE_NAME).then(cache =>
