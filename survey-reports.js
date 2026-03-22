@@ -208,12 +208,13 @@ table.dt tfoot td{font-weight:800;background:#e8f5ed;padding:3pt 5pt;border-top:
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   html,body{background:#fff!important;margin:0!important;padding:0!important;}
-  .cover,.rpt-page{box-shadow:none!important;margin:0!important;}
-  .dl-fab{display:none!important;}
-  .cover,.rpt-page{page-break-after:always!important;}
+  .cover,.rpt-page{box-shadow:none!important;margin:0!important;page-break-after:always!important;}
   .cover:last-child,.rpt-page:last-child{page-break-after:auto!important;}
+  .dl-fab{display:none!important;}
 }
 @page{size:letter portrait;margin:0;}
+/* html2pdf capture: body width must match letter at 96dpi = 816px */
+body{max-width:816px;}
 `;
 
 // ─────────────────────────────────────────────────────────────────
@@ -327,25 +328,53 @@ function _doc(title, pages){
     '<scr'+'ipt>',
     'function _dl(){',
     '  var btn=document.querySelector(".dl-fab");',
-    '  if(btn){btn.textContent="⏳ Generating PDF…";btn.disabled=true;}',
+    '  if(btn){btn.textContent="⏳ Building PDF…";btn.disabled=true;}',
     '  function runPdf(){',
+    '    // Hide button, set clean white background before capture',
+    '    if(btn)btn.style.display="none";',
+    '    document.body.style.background="#fff";',
+    '    document.body.style.padding="0";',
+    '    document.body.style.margin="0";',
+    '    // Each .cover and .rpt-page becomes exactly one PDF page',
+    '    var pages=document.querySelectorAll(".cover,.rpt-page");',
+    '    pages.forEach(function(p){',
+    '      p.style.margin="0";',
+    '      p.style.boxShadow="none";',
+    '      p.style.pageBreakAfter="always";',
+    '    });',
+    '    var fname=document.title.replace(/[^a-zA-Z0-9_-]/g,"_")+"_"+new Date().toISOString().split("T")[0]+".pdf";',
     '    var opt={',
     '      margin:0,',
-    '      filename:document.title.replace(/[^a-zA-Z0-9_-]/g,"_")+"_"+new Date().toISOString().split("T")[0]+".pdf",',
-    '      image:{type:"jpeg",quality:0.98},',
-    '      html2canvas:{scale:2,useCORS:true,letterRendering:true},',
-    '      jsPDF:{unit:"in",format:"letter",orientation:"portrait"}',
+    '      filename:fname,',
+    '      image:{type:"jpeg",quality:1},',
+    '      html2canvas:{',
+    '        scale:2,',
+    '        useCORS:true,',
+    '        letterRendering:true,',
+    '        windowWidth:816,',
+    '        windowHeight:1056',
+    '      },',
+    '      jsPDF:{unit:"pt",format:"letter",orientation:"portrait"},',
+    '      pagebreak:{mode:["css","legacy"],before:[".cover",".rpt-page"]}',
     '    };',
     '    html2pdf().set(opt).from(document.body).save()',
-    '      .then(function(){if(btn){btn.textContent="\u2b07 Download PDF";btn.disabled=false;}})',
-    '      .catch(function(e){if(btn){btn.textContent="\u2b07 Download PDF";btn.disabled=false;}alert("PDF error: "+e.message);});',
+    '      .then(function(){',
+    '        if(btn){btn.style.display="";btn.textContent="\u2b07 Download PDF";btn.disabled=false;}',
+    '      })',
+    '      .catch(function(e){',
+    '        if(btn){btn.style.display="";btn.textContent="\u2b07 Download PDF";btn.disabled=false;}',
+    '        alert("PDF error: "+e.message);',
+    '      });',
     '  }',
     '  if(typeof html2pdf==="function"){runPdf();}',
     '  else{',
     '    var s=document.createElement("script");',
     '    s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";',
     '    s.onload=runPdf;',
-    '    s.onerror=function(){if(btn){btn.textContent="\u2b07 Download PDF";btn.disabled=false;}alert("Could not load PDF library");};',
+    '    s.onerror=function(){',
+    '      if(btn){btn.style.display="";btn.textContent="\u2b07 Download PDF";btn.disabled=false;}',
+    '      alert("Could not load PDF library. Check internet connection.");',
+    '    };',
     '    document.head.appendChild(s);',
     '  }',
     '}',
