@@ -1107,6 +1107,67 @@ if (isIOS && !isStandalone) {
   }, 100);
 }
 
+// ── MY REPORTS: show all finished records with report buttons ──
+function homeOpenMyReports(){
+  // Navigate to survey then open drawer filtered to finished records
+  homeGoSurvey();
+  setTimeout(function(){
+    // Open the records drawer
+    if(typeof openDrawer==='function') openDrawer();
+    showToast('Tap any finished record to open its report');
+  }, 450);
+}
+
+// ── MY PROGRESS: show personal stats modal ──
+function homeOpenProgress(){
+  try{
+    var recs = JSON.parse(localStorage.getItem('chsa4')||'{}');
+    var myName = getUserName()||'';
+    var keys = Object.keys(recs).filter(function(k){ return !k.startsWith('_'); });
+    var total = keys.length;
+    var finished = keys.filter(function(k){ return recs[k]._finished; }).length;
+    var synced  = keys.filter(function(k){ return recs[k]._synced; }).length;
+    var today = new Date().toISOString().split('T')[0];
+    var todayCount = keys.filter(function(k){ return recs[k].interview_date===today; }).length;
+
+    // Build a simple modal
+    var existing = document.getElementById('hp-progress-modal');
+    if(existing) existing.remove();
+
+    var modal = document.createElement('div');
+    modal.id = 'hp-progress-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:7500;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;';
+    modal.innerHTML = '<div style="background:linear-gradient(160deg,#071510,#0b1e14);border-radius:24px 24px 0 0;padding:28px 24px calc(28px + env(safe-area-inset-bottom));width:100%;max-width:480px;border:1px solid rgba(255,255,255,.08)">'
+      +'<div style="text-align:center;margin-bottom:20px">'
+      +'<div style="font-size:2rem;margin-bottom:6px">📊</div>'
+      +'<div style="color:#fff;font-size:1.1rem;font-weight:800">My Progress</div>'
+      +'<div style="color:rgba(29,185,84,.7);font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:4px">'+myName+'</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">'
+      +_hpStatCard(total,    'Total Interviews', '#1a5c35')
+      +_hpStatCard(todayCount,'Today',           '#1a4060')
+      +_hpStatCard(finished, 'Completed',        '#1a5c35')
+      +_hpStatCard(synced,   'Synced ✓',         total>0&&synced===total?'#1a5c35':'#e67e22')
+      +'</div>'
+      +(total-synced>0?'<div style="background:rgba(230,126,34,.12);border:1px solid rgba(230,126,34,.25);border-radius:12px;padding:11px 14px;font-size:.75rem;color:rgba(255,255,255,.7);margin-bottom:14px">⚠ '+(total-synced)+' record'+(total-synced!==1?'s':'')+' not yet synced to server. Go online and tap Upload Data.</div>':'')
+      +(finished>0?'<button onclick="var m=document.getElementById(\'hp-progress-modal\');if(m)m.remove();homeOpenMyReports();" style="width:100%;padding:13px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:12px;color:#fff;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;margin-bottom:8px">&#128209; View My Reports</button>':'')
+      +'<button onclick="var m=document.getElementById(\'hp-progress-modal\');if(m)m.remove();" style="width:100%;padding:12px;background:rgba(255,255,255,.07);border:none;border-radius:12px;color:rgba(255,255,255,.5);font-family:inherit;font-size:.85rem;cursor:pointer">Close</button>'
+      +'</div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  }catch(err){
+    showToast('Could not load progress', true);
+  }
+}
+
+function _hpStatCard(val, label, color){
+  return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 10px;text-align:center;border-top:2px solid '+color+'">'
+    +'<div style="color:#fff;font-size:1.6rem;font-weight:800;line-height:1">'+val+'</div>'
+    +'<div style="color:rgba(255,255,255,.4);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">'+label+'</div>'
+    +'</div>';
+}
+
+
 // ══════════════════════════════════════════════════════
 //  HOME PAGE
 // ══════════════════════════════════════════════════════

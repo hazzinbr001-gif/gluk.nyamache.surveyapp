@@ -32,26 +32,35 @@
       <div style="color:rgba(29,185,84,.7);font-size:.63rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-top:8px">Great Lakes University · Nyamache</div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
+
+      <!-- START SURVEY — primary action -->
       <button data-role="survey-only" onclick="homeGoSurvey()" style="width:100%;padding:18px 20px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 6px 28px rgba(26,92,53,.45);text-align:left;font-family:inherit" ontouchstart="this.style.opacity='.85'" ontouchend="this.style.opacity='1'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📋</div>
-        <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Start Survey</div><div style="color:rgba(255,255,255,.5);font-size:.7rem;margin-top:2px">Conduct a household health interview</div></div>
+        <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">New Interview</div><div style="color:rgba(255,255,255,.5);font-size:.7rem;margin-top:2px">Start a household health interview</div></div>
         <div style="color:rgba(255,255,255,.3);font-size:1.3rem">›</div>
       </button>
-      <button onclick="homeGoAdmin()" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.12)'" ontouchend="this.style.background='rgba(255,255,255,.06)'">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🔐</div>
-        <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Admin Dashboard</div><div style="color:rgba(255,255,255,.4);font-size:.7rem;margin-top:2px">View records, insights &amp; reports</div></div>
+
+      <!-- MY REPORTS — view/print reports for finished interviews -->
+      <button data-role="survey-only" onclick="homeOpenMyReports()" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.12)'" ontouchend="this.style.background='rgba(255,255,255,.06)'">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📑</div>
+        <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">My Reports</div><div style="color:rgba(255,255,255,.4);font-size:.7rem;margin-top:2px">View &amp; print reports for completed interviews</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
-      <button data-role="survey-only" onclick="homeGoSurvey();setTimeout(openDrawer,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📁</div>
-        <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Saved Records</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Resume or review past interviews</div></div>
-        <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
-      </button>
-      <button data-role="survey-only" onclick="homeGoSurvey();setTimeout(openSyncModal,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">☁️</div>
-        <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Sync Data</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Upload records to the server</div></div>
-        <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
-      </button>
+
+      <!-- 2-column row: My Progress + Sync -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+        <button data-role="survey-only" onclick="homeOpenProgress()" style="padding:15px 12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
+          <div style="font-size:26px">📊</div>
+          <div style="color:rgba(255,255,255,.8);font-size:.82rem;font-weight:800">My Progress</div>
+          <div style="color:rgba(255,255,255,.35);font-size:.65rem">Your interview stats</div>
+        </button>
+        <button data-role="survey-only" onclick="homeGoSurvey();setTimeout(openSyncModal,400)" style="padding:15px 12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
+          <div style="font-size:26px">☁️</div>
+          <div style="color:rgba(255,255,255,.8);font-size:.82rem;font-weight:800">Upload Data</div>
+          <div style="color:rgba(255,255,255,.35);font-size:.65rem">Sync to server</div>
+        </button>
+      </div>
+
     </div>
     <div id="hp-admin-note" style="display:none;width:100%;background:rgba(255,180,0,.12);border:1.5px solid rgba(255,180,0,.3);border-radius:14px;padding:13px 16px;text-align:center;margin-bottom:4px">
         <div style="font-size:1.2rem;margin-bottom:4px">🔐</div>
@@ -70,7 +79,14 @@
       <span style="color:rgba(255,255,255,.1)">|</span>
       <button onclick="showDonateModal()" style="background:none;border:none;color:rgba(29,185,84,.5);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">☕ Buy me a coffee</button>
     </div>
-    <div style="color:rgba(255,255,255,.1);font-size:.57rem">Built by HazzinBR · Community Health Survey v2.0 · Free</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px">
+      <button onclick="showModal('about-modal')" style="background:none;border:none;color:rgba(255,255,255,.22);font-size:.62rem;cursor:pointer;font-family:inherit;padding:4px">About</button>
+      <span style="color:rgba(255,255,255,.08)">·</span>
+      <button onclick="showModal('help-modal')" style="background:none;border:none;color:rgba(255,255,255,.22);font-size:.62rem;cursor:pointer;font-family:inherit;padding:4px">Help &amp; Contact</button>
+      <span style="color:rgba(255,255,255,.08)">·</span>
+      <button onclick="showModal('terms-modal')" style="background:none;border:none;color:rgba(255,255,255,.22);font-size:.62rem;cursor:pointer;font-family:inherit;padding:4px">Terms</button>
+    </div>
+    <div style="color:rgba(255,255,255,.08);font-size:.55rem;margin-top:4px">Community Health Survey v2.0 · Built by Atandi Brian (HazzinBR) · Free &amp; Open</div>
   </div>
 </div>
 
@@ -697,6 +713,257 @@
   <div class="asl-sub">You are logged in as Administrator. Survey data entry is restricted to registered student interviewers only.</div>
   <button class="asl-btn" onclick="_showAdminSurveyLock(false);goBackHome()">← Back to Home</button>
 </div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  INFO MODALS: About · Help · Terms                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- SHARED MODAL OVERLAY STYLE -->
+<style>
+.info-modal{
+  display:none;position:fixed;inset:0;z-index:8500;
+  background:rgba(0,0,0,.75);
+  align-items:flex-end;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.info-modal.open{display:flex;}
+.info-modal-card{
+  background:linear-gradient(170deg,#0b1e14 0%,#071018 100%);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px 24px 0 0;
+  width:100%;max-width:480px;
+  max-height:88vh;
+  overflow-y:auto;
+  padding:0 0 calc(20px + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling:touch;
+}
+.info-modal-hdr{
+  position:sticky;top:0;
+  background:linear-gradient(170deg,#0b1e14,#071018);
+  padding:20px 22px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  z-index:2;
+}
+.info-modal-title{color:#fff;font-size:1rem;font-weight:800;}
+.info-modal-close{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);border-radius:99px;width:30px;height:30px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.info-modal-body{padding:18px 22px;}
+.info-section{margin-bottom:18px;}
+.info-section-title{color:rgba(29,185,84,.8);font-size:.65rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.info-section-text{color:rgba(255,255,255,.65);font-size:.82rem;line-height:1.7;}
+.info-section-text strong{color:rgba(255,255,255,.9);}
+.info-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 15px;margin-bottom:10px;}
+.info-chip{display:inline-block;background:rgba(29,185,84,.15);border:1px solid rgba(29,185,84,.25);color:rgba(29,185,84,.9);border-radius:99px;padding:3px 10px;font-size:.65rem;font-weight:700;margin:2px;}
+</style>
+
+<!-- ─── ABOUT MODAL ─── -->
+<div id="about-modal" class="info-modal" onclick="if(event.target===this)closeModal('about-modal')">
+  <div class="info-modal-card">
+    <div class="info-modal-hdr">
+      <span class="info-modal-title">🏥 About This App</span>
+      <button class="info-modal-close" onclick="closeModal('about-modal')">✕</button>
+    </div>
+    <div class="info-modal-body">
+
+      <div style="text-align:center;padding:10px 0 20px">
+        <div style="font-size:3rem;margin-bottom:8px">🧑‍💻</div>
+        <div style="color:#fff;font-size:1.1rem;font-weight:800">Atandi Brian</div>
+        <div style="color:rgba(29,185,84,.7);font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:3px">HazzinBR · Developer · Designer · Coffee Enthusiast ☕</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">The App</div>
+        <div class="info-section-text">
+          <strong>Community Health Survey v2.0</strong> is a free, offline-first Progressive Web App (PWA) built specifically for community health fieldwork at <strong>Great Lakes University of Kisumu</strong>, in collaboration with <strong>Nyamache Sub County Hospital, Kisii County, Kenya</strong>.<br><br>
+          It was designed so that student health workers can collect data in the field — even with zero internet — and generate official Ministry of Health format reports automatically. No paper, no spreadsheets, no stress. 🎉
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">The Developer</div>
+        <div class="info-card">
+          <div style="color:#fff;font-size:.9rem;font-weight:700;margin-bottom:4px">Atandi Brian — HazzinBR 👋</div>
+          <div style="color:rgba(255,255,255,.55);font-size:.78rem;line-height:1.65;">
+            A developer who believes that technology should solve <em>real</em> problems for <em>real</em> people — not just look cool in a portfolio. This app was built with genuine care for public health in Kenya, powered by too much coffee ☕, a love for clean code, and the firm belief that community health workers deserve better tools than a clipboard and a prayer.<br><br>
+            When not debugging JavaScript at 2am, Brian can be found wondering why CSS always has <em>one more issue</em> to fix. 😄
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">What It Does</div>
+        <div class="info-section-text">
+          <span class="info-chip">📋 12-Section Survey</span>
+          <span class="info-chip">📴 Works Offline</span>
+          <span class="info-chip">☁️ Auto Sync</span>
+          <span class="info-chip">📑 Official Reports</span>
+          <span class="info-chip">👥 Multi-User</span>
+          <span class="info-chip">🔐 Role-Based Access</span>
+          <span class="info-chip">📊 Admin Dashboard</span>
+          <span class="info-chip">🆓 Free Forever</span>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Can This App Be Adapted?</div>
+        <div class="info-section-text">
+          <strong>Absolutely yes.</strong> This app was built to be adaptable. It can be customised for any community health survey, any county, any university, or any public health programme in Kenya or beyond. Different survey sections, different questions, different report formats — all possible. Just reach out. The goal is better public health data for everyone. 🌍
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Built With Love &amp; Caffeine</div>
+        <div class="info-section-text">
+          This app is <strong>free to use</strong>, free to share, and free to learn from. If it helps even one community health worker collect better data, it was worth every late night. If you find it useful, a ☕ coffee goes a long way toward keeping the developer caffeinated and the code maintained.
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Version</div>
+        <div class="info-section-text">
+          Community Health Survey <strong>v2.0</strong> · © 2026 HazzinBR · Great Lakes University of Kisumu · Nyamache Sub County Hospital
+        </div>
+      </div>
+
+      <button onclick="showDonateModal()" style="width:100%;padding:13px;background:linear-gradient(135deg,rgba(29,185,84,.2),rgba(26,64,96,.2));border:1px solid rgba(29,185,84,.3);border-radius:12px;color:rgba(29,185,84,.9);font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;margin-top:4px">☕ Buy the developer a coffee</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── HELP & CONTACT MODAL ─── -->
+<div id="help-modal" class="info-modal" onclick="if(event.target===this)closeModal('help-modal')">
+  <div class="info-modal-card">
+    <div class="info-modal-hdr">
+      <span class="info-modal-title">🆘 Help &amp; Contact</span>
+      <button class="info-modal-close" onclick="closeModal('help-modal')">✕</button>
+    </div>
+    <div class="info-modal-body">
+
+      <div class="info-section">
+        <div class="info-section-title">Quick Help</div>
+        <div class="info-card">
+          <div style="color:rgba(255,255,255,.8);font-size:.8rem;font-weight:700;margin-bottom:8px">🔑 Login Issues</div>
+          <div style="color:rgba(255,255,255,.5);font-size:.76rem;line-height:1.6;">Use your admission number in the format given by your university (e.g. B11/GLUK/S53K/2022). Make sure you are connected to the internet the first time you register. If your access has been removed, contact your course coordinator.</div>
+        </div>
+        <div class="info-card">
+          <div style="color:rgba(255,255,255,.8);font-size:.8rem;font-weight:700;margin-bottom:8px">📴 Working Offline</div>
+          <div style="color:rgba(255,255,255,.5);font-size:.76rem;line-height:1.6;">The app works fully offline. All your interviews are saved on your phone automatically. When you get back to an area with internet, tap <strong>Upload Data</strong> to sync your records to the server.</div>
+        </div>
+        <div class="info-card">
+          <div style="color:rgba(255,255,255,.8);font-size:.8rem;font-weight:700;margin-bottom:8px">📑 Generating Reports</div>
+          <div style="color:rgba(255,255,255,.5);font-size:.76rem;line-height:1.6;">After finishing an interview, tap <strong>Finish</strong> and choose your report type. For all your reports together, tap <strong>My Reports</strong> on the home page. To print as PDF, open the report then use your browser's Share → Print → Save as PDF.</div>
+        </div>
+        <div class="info-card">
+          <div style="color:rgba(255,255,255,.8);font-size:.8rem;font-weight:700;margin-bottom:8px">🔄 App Not Updating?</div>
+          <div style="color:rgba(255,255,255,.5);font-size:.76rem;line-height:1.6;">If the app looks different from what others have, close it completely and reopen. The app updates itself in the background when you have internet. If still stuck, go to your browser settings → Clear site data → reopen.</div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Contact — Course Coordinator</div>
+        <div class="info-card">
+          <div style="color:rgba(255,255,255,.7);font-size:.78rem;line-height:1.7;">
+            For academic issues, access problems, or survey-related questions, contact your course coordinator at <strong>Great Lakes University of Kisumu</strong> or report to the health management team at <strong>Nyamache Sub County Hospital</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Contact — App Technical Support</div>
+        <div class="info-card">
+          <div style="color:rgba(255,255,255,.7);font-size:.78rem;line-height:1.7;">
+            For bugs, technical issues, or customisation requests, reach the developer:<br><br>
+            <strong style="color:rgba(29,185,84,.9)">Atandi Brian (HazzinBR)</strong><br>
+            📧 <strong>brianhazzin816@gmail.com</strong><br>
+            📞 <strong>0112 973 866</strong><br><br>
+            <span style="color:rgba(255,255,255,.4);font-size:.72rem;">Please describe the issue clearly — what you were doing, what happened, and your device/browser. Screenshots help a lot! 📸</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Customisation &amp; Adaptation</div>
+        <div class="info-section-text">
+          Need this app adapted for a different survey, hospital, county or university? The app can be modified to fit any community health data collection need. Contact the developer with your requirements.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── TERMS & CONDITIONS MODAL ─── -->
+<div id="terms-modal" class="info-modal" onclick="if(event.target===this)closeModal('terms-modal')">
+  <div class="info-modal-card">
+    <div class="info-modal-hdr">
+      <span class="info-modal-title">📜 Terms &amp; Conditions</span>
+      <button class="info-modal-close" onclick="closeModal('terms-modal')">✕</button>
+    </div>
+    <div class="info-modal-body">
+
+      <div class="info-section">
+        <div class="info-section-title">Acceptance</div>
+        <div class="info-section-text">By registering and using the Community Health Survey application, you agree to the following terms. These terms are set by <strong>Great Lakes University of Kisumu</strong> in partnership with <strong>Nyamache Sub County Hospital</strong>.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Authorised Use</div>
+        <div class="info-section-text">This application is provided exclusively for use by registered students and authorised personnel of Great Lakes University of Kisumu for the purpose of community health situation analysis fieldwork. Use of the app for any other purpose is not permitted.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Data &amp; Confidentiality</div>
+        <div class="info-section-text">All data collected through this app is strictly confidential. Respondents must provide verbal informed consent before any interview begins. No names or personal identifiers of respondents shall be recorded. Data is stored securely and used solely for academic and public health purposes.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Data Accuracy</div>
+        <div class="info-section-text">Each student interviewer is personally responsible for the accuracy and integrity of data they collect. Falsifying, fabricating, or manipulating survey data is a serious academic and ethical violation and may result in disciplinary action.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Account Responsibility</div>
+        <div class="info-section-text">Your admission number and account are personal and non-transferable. Do not share your login details. You are responsible for all activity conducted under your account. Report any unauthorised access to your course coordinator immediately.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Access Control</div>
+        <div class="info-section-text">The university and hospital reserve the right to revoke access to any user who violates these terms, misuses the application, or fails to comply with the ethical guidelines of the fieldwork programme.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Intellectual Property</div>
+        <div class="info-section-text">The Community Health Survey application was developed by <strong>Atandi Brian (HazzinBR)</strong> and is provided free of charge. The application code, design, and reports remain the intellectual property of the developer. Redistribution or commercial use without permission is not allowed.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Disclaimer</div>
+        <div class="info-section-text">This application is provided "as is" for academic and public health purposes. The developer and the university are not liable for data loss due to device failure, loss of internet connectivity, or other technical factors outside their control. Students are advised to sync their data regularly.</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Updates to Terms</div>
+        <div class="info-section-text">These terms may be updated from time to time. Continued use of the application constitutes acceptance of any revised terms. Last updated: March 2026.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONTROLLER ─── -->
+<script>
+function showModal(id){
+  var m = document.getElementById(id);
+  if(m) m.classList.add('open');
+}
+function closeModal(id){
+  var m = document.getElementById(id);
+  if(m) m.classList.remove('open');
+}
+</script>
+
 </body>
 </html>
 
