@@ -65,7 +65,7 @@
   </div>
   <div style="position:relative;z-index:1;width:100%;padding:12px 20px calc(16px + env(safe-area-inset-bottom));text-align:center;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05)">
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:5px">
-      <button onclick="forgetUser()" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">Switch Account</button>
+      <button onclick="authSignOut()" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">⏻ Sign Out</button>
       <span style="color:rgba(255,255,255,.1)">|</span>
       <button onclick="showDonateModal()" style="background:none;border:none;color:rgba(29,185,84,.5);font-size:.65rem;cursor:pointer;font-family:inherit;padding:4px">☕ Buy me a coffee</button>
     </div>
@@ -565,6 +565,7 @@
     <div class="adm-right">
       <div class="adm-conn"><div class="adm-conn-dot" id="adm-conn-dot"></div><div class="adm-conn-txt" id="adm-conn-txt">Loading…</div></div>
       <button class="adm-close" onclick="closeAdmin()">✕ Close</button>
+      <button class="adm-close" onclick="authSignOut()" style="background:rgba(220,50,50,.2);border-color:rgba(220,50,50,.4);color:#ff8a8a;margin-left:6px">⏻ Sign Out</button>
     </div>
   </div>
 
