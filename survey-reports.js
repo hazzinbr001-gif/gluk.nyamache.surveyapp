@@ -1011,6 +1011,15 @@ function _openReportFrame(html, title){
   const doc=fr.contentDocument||fr.contentWindow.document;
   doc.open();doc.write(html);doc.close();
   if(ti)ti.textContent=title;
+  // Update close button label for admin
+  const closeBtn=document.getElementById('report-close-btn');
+  if(closeBtn){
+    if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+      closeBtn.textContent='← Dashboard';
+    } else {
+      closeBtn.textContent='✕ Close';
+    }
+  }
   // Use showScreen to properly override any inline display:none
   if(typeof showScreen==='function'){
     showScreen('report');
@@ -1055,9 +1064,18 @@ function printReport(){
 function closeReportOverlay(){
   const ov=document.getElementById('report-overlay');
   if(ov){ ov.classList.remove('open'); ov.style.display='none'; }
+  // Admin — return to dashboard automatically
+  if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    if(typeof openAdminDash==='function') setTimeout(openAdminDash, 200);
+  }
 }
 function startNewSurveyFromReport(){ closeReportOverlay(); newRec(); showToast('✓ New survey started'); }
-function goHomeFromReport(){ closeReportOverlay(); }
+function goHomeFromReport(){
+  closeReportOverlay();
+  if(localStorage.getItem('chsa_is_admin_bypass')!=='1'){
+    if(typeof goBackHome==='function') goBackHome();
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────
 //  SURVEY FINISH MODAL REPORTS
