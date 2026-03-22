@@ -31,7 +31,7 @@
       <div style="color:rgba(29,185,84,.7);font-size:.63rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-top:8px">Great Lakes University · Nyamache</div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
-      <button onclick="homeGoSurvey()" style="width:100%;padding:18px 20px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 6px 28px rgba(26,92,53,.45);text-align:left;font-family:inherit" ontouchstart="this.style.opacity='.85'" ontouchend="this.style.opacity='1'">
+      <button data-role="survey-only" onclick="homeGoSurvey()" style="width:100%;padding:18px 20px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 6px 28px rgba(26,92,53,.45);text-align:left;font-family:inherit" ontouchstart="this.style.opacity='.85'" ontouchend="this.style.opacity='1'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📋</div>
         <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Start Survey</div><div style="color:rgba(255,255,255,.5);font-size:.7rem;margin-top:2px">Conduct a household health interview</div></div>
         <div style="color:rgba(255,255,255,.3);font-size:1.3rem">›</div>
@@ -41,18 +41,23 @@
         <div style="flex:1"><div style="color:#fff;font-size:1rem;font-weight:800">Admin Dashboard</div><div style="color:rgba(255,255,255,.4);font-size:.7rem;margin-top:2px">View records, insights &amp; reports</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
-      <button onclick="homeGoSurvey();setTimeout(openDrawer,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
+      <button data-role="survey-only" onclick="homeGoSurvey();setTimeout(openDrawer,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📁</div>
         <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Saved Records</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Resume or review past interviews</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
-      <button onclick="homeGoSurvey();setTimeout(openSyncModal,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
+      <button data-role="survey-only" onclick="homeGoSurvey();setTimeout(openSyncModal,400)" style="width:100%;padding:16px 20px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit" ontouchstart="this.style.background='rgba(255,255,255,.1)'" ontouchend="this.style.background='rgba(255,255,255,.04)'">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">☁️</div>
         <div style="flex:1"><div style="color:rgba(255,255,255,.8);font-size:1rem;font-weight:800">Sync Data</div><div style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:2px">Upload records to the server</div></div>
         <div style="color:rgba(255,255,255,.2);font-size:1.3rem">›</div>
       </button>
     </div>
-    <div style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:28px">
+    <div id="hp-admin-note" style="display:none;width:100%;background:rgba(255,180,0,.12);border:1.5px solid rgba(255,180,0,.3);border-radius:14px;padding:13px 16px;text-align:center;margin-bottom:4px">
+        <div style="font-size:1.2rem;margin-bottom:4px">🔐</div>
+        <div style="color:#FFD700;font-size:.8rem;font-weight:700">Administrator Account</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.7rem;margin-top:3px">Survey access is restricted. Use Admin Dashboard to view records and reports.</div>
+      </div>
+      <div style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:28px">
       <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center"><div id="hp-stat-total" style="color:#fff;font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Records</div></div>
       <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center"><div id="hp-stat-today" style="color:#1DB954;font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Today</div></div>
       <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 8px;text-align:center"><div id="hp-stat-synced" style="color:rgba(255,255,255,.7);font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="color:rgba(255,255,255,.35);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Synced</div></div>
@@ -683,6 +688,14 @@
 
 
 
+
+<!-- Admin Survey Lock Overlay -->
+<div id="admin-survey-lock">
+  <div class="asl-icon">🔒</div>
+  <div class="asl-title">Administrator View Only</div>
+  <div class="asl-sub">You are logged in as Administrator. Survey data entry is restricted to registered student interviewers only.</div>
+  <button class="asl-btn" onclick="_showAdminSurveyLock(false);goBackHome()">← Back to Home</button>
+</div>
 </body>
 </html>
 

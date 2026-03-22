@@ -7,15 +7,17 @@ const ADMIN_PW = 'hazzin2025';
 let _tapCount=0, _tapTimer=null, _gateAttempts=0;
 
 function adminTap(){
+  var isAdminBypass = localStorage.getItem('chsa_is_admin_bypass')==='1';
+  var alreadyVerified = sessionStorage.getItem('adm_ok')==='1';
+  if(!isAdminBypass && !alreadyVerified){
+    showToast('Admin access restricted', true); return;
+  }
+  if(isAdminBypass){ if(typeof openAdminDash==='function') openAdminDash(); return; }
   _tapCount++;
   clearTimeout(_tapTimer);
   if(_tapCount>=8){ _tapCount=0; openAdminGate(); }
-  else {
-    _tapTimer=setTimeout(()=>_tapCount=0,3000);
-    if(_tapCount>=5) showToast('Tap '+( 8-_tapCount)+' more…');
-  }
-}
-function openAdminGate(){
+  else{ _tapTimer=setTimeout(()=>_tapCount=0,3000); }
+}function openAdminGate(){
   if(sessionStorage.getItem('adm_ok')==='1'){ openAdminDash(); return; }
   document.getElementById('admin-gate').classList.add('open');
   setTimeout(()=>document.getElementById('gate-pass')?.focus(),200);

@@ -1026,14 +1026,21 @@ function showHomePage(){
   hp.style.display='flex';
   requestAnimationFrame(function(){hp.style.opacity='1';});
   var fullN=getUserName()||'Interviewer';
-  var name=fullN.split(' ')[0]; // first name only for greeting
+  var name=fullN.split(' ')[0];
   var h=new Date().getHours();
   var g=h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
   var ne=document.getElementById('hp-name');
   var ge=document.getElementById('hp-greeting');
-  if(ne)ne.textContent=fullN; // show full name on home page
+  if(ne)ne.textContent=fullN;
   if(ge)ge.textContent=g;
   _hpStats();
+
+  // ── Admin bypass: hide survey buttons, show only Admin Dashboard ──
+  var isAdmin = localStorage.getItem('chsa_is_admin_bypass')==='1';
+  var surveyBtns = hp.querySelectorAll('[data-role="survey-only"]');
+  surveyBtns.forEach(function(b){ b.style.display = isAdmin ? 'none' : ''; });
+  var adminNote = document.getElementById('hp-admin-note');
+  if(adminNote) adminNote.style.display = isAdmin ? 'block' : 'none';
 }
 function _hpStats(){
   try{
@@ -1051,15 +1058,34 @@ function _hpStats(){
   }catch(e){}
 }
 function goBackHome(){
+  _showAdminSurveyLock(false); // always hide lock when going back
+  // Admin bypass — go to admin dashboard, not survey home
+  if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    var ov=document.getElementById('admin-overlay');
+    if(ov&&ov.classList.contains('open')) return; // already in admin
+    showHomePage(); // show home but survey buttons will be hidden
+    return;
+  }
   _hpStats();
   var hp=document.getElementById('home-page');
   if(hp){hp.style.display='flex';requestAnimationFrame(function(){hp.style.opacity='1';});}
 }
+function _showAdminSurveyLock(show){
+  var lock = document.getElementById('admin-survey-lock');
+  if(lock){ if(show) lock.classList.add('active'); else lock.classList.remove('active'); }
+}
+
 function homeGoSurvey(){
-  // Admin bypass users cannot conduct surveys — only access admin
+  // Admin bypass — can VIEW the survey dimmed but not submit
   if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
-    showToast('Admin account — please use Admin Dashboard', true);
-    homeGoAdmin();
+    showToast('Admin view only — survey is locked', true);
+    // Still navigate but show lock overlay
+    if(typeof _autoTimer!=='undefined'&&_autoTimer){clearInterval(_autoTimer);_autoTimer=null;}
+    var ls=document.getElementById('loader-screen');
+    if(ls) ls.classList.remove('open','out');
+    var hp=document.getElementById('home-page');
+    if(hp){hp.style.opacity='0';setTimeout(function(){hp.style.display='none';},350);}
+    setTimeout(function(){ _showAdminSurveyLock(true); }, 400);
     return;
   }
   // Cancel the loader auto-timer so it can't fire showHomePage() after we leave
@@ -1074,6 +1100,13 @@ function homeGoSurvey(){
   if(hp){ hp.style.opacity='0'; setTimeout(function(){ hp.style.display='none'; }, 350); }
 }
 function homeGoAdmin(){
+  // Students (non-admin-bypass) cannot access admin dashboard
+  var isAdminBypass = localStorage.getItem('chsa_is_admin_bypass')==='1';
+  var alreadyVerified = sessionStorage.getItem('adm_ok')==='1';
+  if(!isAdminBypass && !alreadyVerified){
+    showToast('Admin access restricted to authorised personnel', true);
+    return;
+  }
   // Cancel any pending loader timer
   if(typeof _autoTimer !== 'undefined' && _autoTimer){
     clearInterval(_autoTimer); _autoTimer = null;
@@ -1083,8 +1116,13 @@ function homeGoAdmin(){
   // Hide home page then open admin
   var hp = document.getElementById('home-page');
   if(hp){ hp.style.opacity='0'; setTimeout(function(){ hp.style.display='none'; }, 300); }
+  // Admin bypass skips password gate entirely
   setTimeout(function(){
-    if(typeof openAdminGate==='function') openAdminGate();
-    else { var g=document.getElementById('admin-gate'); if(g) g.classList.add('open'); }
+    if(isAdminBypass){
+      if(typeof openAdminDash==='function') openAdminDash();
+    } else {
+      if(typeof openAdminGate==='function') openAdminGate();
+      else { var g=document.getElementById('admin-gate'); if(g) g.classList.add('open'); }
+    }
   }, 320);
 }

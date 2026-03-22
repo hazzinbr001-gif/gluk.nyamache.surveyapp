@@ -391,3 +391,31 @@ table.dt select{width:100%;padding:5px 4px;border:1px solid var(--border);border
 .adm-detail-btns{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #dde8e2;display:flex;gap:8px;flex-shrink:0;}
 .adm-detail-btns .adm-btn{flex:1;justify-content:center;}
 @media(max-width:380px){.adm-charts{grid-template-columns:1fr;}}
+
+/* ── ADMIN SURVEY LOCK OVERLAY ── */
+#admin-survey-lock{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:6500;
+  background:rgba(10,15,12,.82);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:30px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+#admin-survey-lock.active{ display:flex; }
+.asl-icon{ font-size:3.5rem; margin-bottom:16px; }
+.asl-title{ color:#FFD700; font-size:1.1rem; font-weight:800; margin-bottom:8px; }
+.asl-sub{ color:rgba(255,255,255,.55); font-size:.8rem; line-height:1.6; max-width:280px; }
+.asl-btn{
+  margin-top:24px;
+  background:linear-gradient(135deg,#1a5c35,#1a4060);
+  color:#fff; border:none; border-radius:12px;
+  padding:13px 28px; font-family:inherit;
+  font-size:.9rem; font-weight:700; cursor:pointer;
+}
