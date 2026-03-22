@@ -940,56 +940,107 @@ function printReport(){
   const fr = document.getElementById('report-frame');
   if(!fr){ showToast('No report open', true); return; }
 
+  // Get filename from title
   const ti  = document.getElementById('report-title');
   const raw = ti ? ti.textContent : 'Health-Report';
-  const name = raw.replace(/[^a-zA-Z0-9\s\-]/g,'').trim().replace(/\s+/g,'-') || 'Health-Report';
-  const filename = name + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+  const filename = raw.replace(/[^a-zA-Z0-9\s\-]/g,'').trim().replace(/\s+/g,'-') + '_'
+                 + new Date().toISOString().split('T')[0] + '.pdf';
 
-  showToast('Generating PDF… please wait');
+  showToast('Generating PDF\u2026 please wait');
 
+  // Extract the FULL HTML string from the iframe (CSS is already embedded inside)
+  let fullHTML = '';
   try{
     const innerDoc = fr.contentDocument || fr.contentWindow.document;
-    const el = innerDoc.getElementById('pdf-body') || innerDoc.body;
-
-    // Load html2pdf if not already loaded
-    function runPDF(){
-      const opt = {
-        margin:       [10, 12, 15, 12],
-        filename:     filename,
-        image:        { type: 'jpeg', quality: 0.97 },
-        html2canvas:  { scale: 2, useCORS: true, allowTaint: true,
-                        scrollX: 0, scrollY: 0,
-                        windowWidth: innerDoc.documentElement.scrollWidth },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all','css'], before: '.page-break', after: '.cover' }
-      };
-      html2pdf().set(opt).from(el).save()
-        .then(function(){ showToast('\u2713 PDF downloaded successfully'); })
-        .catch(function(e){ showToast('PDF error: '+e.message, true); });
-    }
-
-    if(typeof html2pdf !== 'undefined'){
-      runPDF();
-    } else {
-      // Load html2pdf.js from CDN
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.onload = runPDF;
-      script.onerror = function(){
-        // CDN failed — download as HTML instead
-        showToast('Offline: downloading as HTML file');
-        const html = innerDoc.documentElement.outerHTML;
-        const blob = new Blob(['<!DOCTYPE html>'+html], {type:'text/html;charset=utf-8'});
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href=url; a.download=name+'_'+new Date().toISOString().split('T')[0]+'.html';
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a); URL.revokeObjectURL(url);
-      };
-      document.head.appendChild(script);
-    }
+    fullHTML = '<!DOCTYPE html>' + innerDoc.documentElement.outerHTML;
   } catch(e){
-    showToast('Error: '+e.message, true);
+    showToast('Cannot access report content', true); return;
+  }
+
+  function runPDF(){
+    // Create a hidden container in the PARENT window
+    const container = document.createElement('div');
+    container.style.cssText = [
+      'position:fixed', 'top:0', 'left:0',
+      'width:210mm',    'height:auto',
+      'overflow:visible',
+      'z-index:-9999',  'opacity:0',
+      'pointer-events:none',
+      'background:#fff'
+    ].join(';');
+
+    // Write the report HTML into a shadow iframe in parent window
+    // Use srcdoc so CSS is fully self-contained and same-origin
+    const tmpFrame = document.createElement('iframe');
+    tmpFrame.style.cssText = 'position:fixed;top:0;left:0;width:210mm;height:1px;opacity:0;pointer-events:none;z-index:-9999;border:none;';
+    tmpFrame.setAttribute('sandbox','allow-same-origin allow-scripts');
+    document.body.appendChild(tmpFrame);
+
+    const tmpDoc = tmpFrame.contentDocument || tmpFrame.contentWindow.document;
+    tmpDoc.open();
+    tmpDoc.write(fullHTML);
+    tmpDoc.close();
+
+    // Wait for fonts and images to load
+    setTimeout(function(){
+      const el = tmpDoc.body;
+
+      // Set explicit width so html2canvas captures full A4 width
+      el.style.width = '210mm';
+      el.style.background = '#fff';
+
+      const opt = {
+        margin:      [8, 10, 12, 10],
+        filename:    filename,
+        image:       { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale:       2,
+          useCORS:     true,
+          allowTaint:  true,
+          scrollX:     0,
+          scrollY:     0,
+          width:       794,   /* 210mm at 96dpi */
+          windowWidth: 794,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:   { mode: 'css', before: '.page-break', after: '.cover' }
+      };
+
+      html2pdf()
+        .set(opt)
+        .from(el)
+        .save()
+        .then(function(){
+          document.body.removeChild(tmpFrame);
+          showToast('\u2713 PDF saved to Downloads');
+        })
+        .catch(function(e){
+          document.body.removeChild(tmpFrame);
+          showToast('PDF failed: ' + e.message, true);
+        });
+    }, 1200);
+  }
+
+  // Load html2pdf.js bundle if not already present
+  if(typeof html2pdf !== 'undefined'){
+    runPDF();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload  = runPDF;
+    s.onerror = function(){
+      // Offline fallback: download as HTML file (opens perfectly in any browser)
+      showToast('No internet — downloading as HTML');
+      const blob = new Blob([fullHTML], {type:'text/html;charset=utf-8'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = filename.replace('.pdf','.html');
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    };
+    document.head.appendChild(s);
   }
 }
 
