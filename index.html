@@ -10,11 +10,11 @@
 <meta name="application-name" content="Health Survey">
 <meta name="theme-color" content="#1e5c38">
 <meta name="description" content="Community Health Situation Analysis — Offline Data Collection Tool">
-<link rel="manifest" href="./manifest.json">
+<link rel="manifest" href="./manifest.json?v=2.8">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <title>Community Health Survey</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="./survey-styles.css">
+<link rel="stylesheet" href="./survey-styles.css?v=2.8">
 </head>
 <body>
 
@@ -876,7 +876,7 @@
           <div style="color:rgba(255,255,255,.7);font-size:.78rem;line-height:1.7;">
             For bugs, technical issues, or customisation requests, reach the developer:<br><br>
             <strong style="color:rgba(29,185,84,.9)">Atandi Brian (HazzinBR)</strong><br>
-            📧 <strong>brianhazzin816@gmail.com</strong><br>
+            📧 <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dbb9a9b2bab5b3baa1a1b2b5e3eaed9bbcb6bab2b7f5b8b4b6">[email&#160;protected]</a></strong><br>
             📞 <strong>0112 973 866</strong><br><br>
             <span style="color:rgba(255,255,255,.4);font-size:.72rem;">Please describe the issue clearly — what you were doing, what happened, and your device/browser. Screenshots help a lot! 📸</span>
           </div>
@@ -953,7 +953,7 @@
 </div>
 
 <!-- ─── MODAL CONTROLLER ─── -->
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function showModal(id){
   var m = document.getElementById(id);
   if(m) m.classList.add('open');
@@ -964,13 +964,11 @@ function closeModal(id){
 }
 </script>
 
-</body>
-</html>
 
-</body>
-<script src="./survey-sync.js"></script>
-<script src="./survey-core.js"></script>
-<script src="./survey-reports.js"></script>
-<script src="./survey-auth.js"></script>
-<script src="./survey-admin.js"></script>
+<script src="./survey-sync.js?v=2.8"></script>
+<script src="./survey-core.js?v=2.8"></script>
+<script src="./survey-reports.js?v=2.8"></script>
+<script src="./survey-auth.js?v=2.8"></script>
+<script src="./survey-admin.js?v=2.8"></script>
 </html>
+</body

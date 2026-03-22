@@ -2,10 +2,10 @@
 //  Community Health Survey — Service Worker
 //  Great Lakes University · Nyamache Sub County Hospital
 //
-//  ONLINE:  Fetch fresh files, update cache, reload once
-//  OFFLINE: Serve from cache instantly — no reload, no noise
+//  ONLINE:  Auto-update, reload once with fresh files
+//  OFFLINE: Serve from cache instantly — no disruption
 //
-//  Bump CACHE_VERSION to push an update to all installed PWAs
+//  Bump CACHE_VERSION to push update to ALL installed PWAs
 // ═══════════════════════════════════════════════════════════
 
 const CACHE_VERSION = 'chsa-v2.8';
@@ -24,16 +24,18 @@ const APP_FILES = [
   './icon-192.png',
 ];
 
-// ── INSTALL: cache everything, skip waiting immediately ──
+// ── INSTALL ──
+// skipWaiting() here means this SW activates immediately
+// even on devices that had an old SW — no waiting for tabs to close
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(APP_FILES))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting())  // ← activate immediately, no waiting
   );
 });
 
-// ── ACTIVATE: delete old caches, take control ──
+// ── ACTIVATE: wipe old caches, claim all clients ──
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -42,43 +44,44 @@ self.addEventListener('activate', event => {
       ))
       .then(() => self.clients.claim())
       .then(() => {
-        // Notify all windows that a new version is active
-        // The page will decide whether to reload based on connectivity
+        // Tell all open windows: new version active
+        // Pages will reload only if they are online
         return self.clients.matchAll({type: 'window'}).then(clients => {
-          clients.forEach(client => client.postMessage({type: 'SW_UPDATED'}));
+          clients.forEach(c => c.postMessage({type: 'SW_UPDATED'}));
         });
       })
   );
 });
 
-// ── FETCH: Cache-first (instant load), update cache in background ──
+// ── FETCH: Cache-first ──
+// Online:  serve cache instantly + update cache in background
+// Offline: serve cache only — no network attempt, no errors
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.origin !== location.origin) return; // only handle our own files
+  if (url.origin !== location.origin) return;
 
   event.respondWith(
     caches.open(CACHE_NAME).then(cache =>
       cache.match(event.request).then(cached => {
-        // Background update — only if online
         if (navigator.onLine) {
-          const fresh = fetch(event.request).then(res => {
-            if (res && res.status === 200) {
-              cache.put(event.request, res.clone());
-            }
-            return res;
-          }).catch(() => cached); // network failed — fall back to cache
-          // Serve cache instantly, background update happens silently
+          // Background refresh
+          const fresh = fetch(event.request)
+            .then(res => {
+              if (res && res.status === 200) cache.put(event.request, res.clone());
+              return res;
+            })
+            .catch(() => cached);
           return cached || fresh;
         }
-        // Offline — serve from cache only, no network attempt
+        // Offline — cache only
         return cached || caches.match('./index.html');
       })
     )
   );
 });
 
-// ── Handle SKIP_WAITING message from page ──
+// ── Handle SKIP_WAITING from page (for old SWs) ──
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
