@@ -213,8 +213,7 @@ table.dt tfoot td{font-weight:800;background:#e8f5ed;padding:3pt 5pt;border-top:
   .dl-fab{display:none!important;}
 }
 @page{size:letter portrait;margin:0;}
-/* html2pdf capture: body width must match letter at 96dpi = 816px */
-body{max-width:816px;}
+
 `;
 
 // ─────────────────────────────────────────────────────────────────
@@ -327,56 +326,13 @@ function _doc(title, pages){
   const dlScript = [
     '<scr'+'ipt>',
     'function _dl(){',
-    '  var btn=document.querySelector(".dl-fab");',
-    '  if(btn){btn.textContent="⏳ Building PDF…";btn.disabled=true;}',
-    '  function runPdf(){',
-    '    // Hide button, set clean white background before capture',
-    '    if(btn)btn.style.display="none";',
-    '    document.body.style.background="#fff";',
-    '    document.body.style.padding="0";',
-    '    document.body.style.margin="0";',
-    '    // Each .cover and .rpt-page becomes exactly one PDF page',
-    '    var pages=document.querySelectorAll(".cover,.rpt-page");',
-    '    pages.forEach(function(p){',
-    '      p.style.margin="0";',
-    '      p.style.boxShadow="none";',
-    '      p.style.pageBreakAfter="always";',
-    '    });',
-    '    var fname=document.title.replace(/[^a-zA-Z0-9_-]/g,"_")+"_"+new Date().toISOString().split("T")[0]+".pdf";',
-    '    var opt={',
-    '      margin:0,',
-    '      filename:fname,',
-    '      image:{type:"jpeg",quality:1},',
-    '      html2canvas:{',
-    '        scale:2,',
-    '        useCORS:true,',
-    '        letterRendering:true,',
-    '        windowWidth:816,',
-    '        windowHeight:1056',
-    '      },',
-    '      jsPDF:{unit:"pt",format:"letter",orientation:"portrait"},',
-    '      pagebreak:{mode:["css","legacy"],before:[".cover",".rpt-page"]}',
-    '    };',
-    '    html2pdf().set(opt).from(document.body).save()',
-    '      .then(function(){',
-    '        if(btn){btn.style.display="";btn.textContent="\u2b07 Download PDF";btn.disabled=false;}',
-    '      })',
-    '      .catch(function(e){',
-    '        if(btn){btn.style.display="";btn.textContent="\u2b07 Download PDF";btn.disabled=false;}',
-    '        alert("PDF error: "+e.message);',
-    '      });',
-    '  }',
-    '  if(typeof html2pdf==="function"){runPdf();}',
-    '  else{',
-    '    var s=document.createElement("script");',
-    '    s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";',
-    '    s.onload=runPdf;',
-    '    s.onerror=function(){',
-    '      if(btn){btn.style.display="";btn.textContent="\u2b07 Download PDF";btn.disabled=false;}',
-    '      alert("Could not load PDF library. Check internet connection.");',
-    '    };',
-    '    document.head.appendChild(s);',
-    '  }',
+    'var h="<!DOCTYPE html>"+document.documentElement.outerHTML;',
+    'var b=new Blob([h],{type:"text/html"});',
+    'var u=URL.createObjectURL(b);',
+    'var a=document.createElement("a");',
+    'a.href=u;',
+    'a.download=document.title.replace(/[^a-zA-Z0-9_-]/g,"_")+"_"+new Date().toISOString().split("T")[0]+".html";',
+    'document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);',
     '}',
     '</'+'script>'
   ].join('');
@@ -387,7 +343,7 @@ function _doc(title, pages){
     +'<style>'+RPT_CSS+'</style>'
     +'</head><body>'
     +pages
-    +'<button class="dl-fab" onclick="_dl()">&#11015; Download PDF</button>'
+    +'<button class="dl-fab" onclick="_dl()">&#11015; Download File</button>'
     +dlScript
     +'</body></html>';
 }
@@ -858,15 +814,24 @@ function _openReportFrame(html, title){
 
 
 // ─────────────────────────────────────────────────────────────────
-//  DOWNLOAD — delegates to the single dl-fab inside the report iframe
-//  html2pdf runs inside the iframe on its own document = no splits
+//  DOWNLOAD — saves the report as a self-contained HTML file
 // ─────────────────────────────────────────────────────────────────
 function printReport(){
   const fr=document.getElementById('report-frame');
   if(!fr){showToast('No report open',true);return;}
+  const ti=document.getElementById('report-title');
+  const raw=(ti?ti.textContent:'Health-Report').replace(/[^a-zA-Z0-9\s\-]/g,'').trim().replace(/\s+/g,'_');
+  const filename=(raw||'Health-Report')+'_'+new Date().toISOString().split('T')[0]+'.html';
   try{
-    const btn=(fr.contentDocument||fr.contentWindow.document).querySelector('.dl-fab');
-    if(btn){btn.click();}else{showToast('No report loaded',true);}
+    const innerDoc=fr.contentDocument||fr.contentWindow.document;
+    const html='<!DOCTYPE html>'+innerDoc.documentElement.outerHTML;
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+    showToast('✓ Report saved — open the file and use Print → Save as PDF');
   }catch(e){showToast('Error: '+e.message,true);}
 }
 function closeReportOverlay(){ document.getElementById('report-overlay')?.classList.remove('open'); }
