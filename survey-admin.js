@@ -19,14 +19,11 @@ function adminTap(){
   else{ _tapTimer=setTimeout(()=>_tapCount=0,3000); }
 }function openAdminGate(){
   if(sessionStorage.getItem('adm_ok')==='1'){ openAdminDash(); return; }
-  document.getElementById('admin-gate').classList.add('open');
+  showScreen('gate');
   setTimeout(()=>document.getElementById('gate-pass')?.focus(),200);
 }
 function closeAdminGate(){
-  document.getElementById('admin-gate').classList.remove('open');
-  document.getElementById('gate-pass').value='';
-  document.getElementById('gate-err').textContent='';
-  _tapCount=0;
+  if(typeof showHomePage==='function') showHomePage();
 }
 function checkGate(){
   const entered=document.getElementById('gate-pass').value;
@@ -42,19 +39,33 @@ function checkGate(){
   }
 }
 function openAdminDash(){
-  document.getElementById('admin-overlay').classList.add('open');
-  // Wire report buttons (safe — runs after DOM is ready)
+  showScreen('admin');
+  // Wire report buttons
   var b1 = document.getElementById('btn-ind-reports');
   var b2 = document.getElementById('btn-grp-report');
   if(b1) b1.onclick = function(){ openAllInterviewerReports(); };
   if(b2) b2.onclick = function(){ openGroupReport(); };
+  // Update close button label for admin bypass
+  var closeBtn = document.querySelector('.adm-close');
+  if(closeBtn && localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    closeBtn.textContent = '⏻ Sign Out';
+    closeBtn.onclick = function(){ authSignOut(); };
+  } else if(closeBtn){
+    closeBtn.textContent = '✕ Close';
+    closeBtn.onclick = closeAdmin;
+  }
   admLoad();
 }
 function closeAdmin(){
-  document.getElementById('admin-overlay').classList.remove('open');
-  // Admin bypass has nowhere else to go — show home page (survey buttons are hidden)
-  // Regular users go back to survey
-  if(typeof goBackHome==='function') goBackHome();
+  var isAdminBypass = localStorage.getItem('chsa_is_admin_bypass')==='1';
+  if(isAdminBypass){
+    // Admin: re-open dashboard immediately — no home page
+    openAdminDash();
+  } else {
+    // Students: close overlay and go back to survey home
+    showScreen('admin'); // ensure hidden
+    if(typeof goBackHome==='function') goBackHome();
+  }
 }
 
 // ══════════════════════════════════════════════════════

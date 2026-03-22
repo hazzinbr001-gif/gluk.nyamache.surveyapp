@@ -18,8 +18,9 @@
 </head>
 <body>
 
+
 <!-- ══════════════════════════ HOME PAGE ══════════════════════════ -->
-<div id="home-page" style="display:none;opacity:0;position:fixed;inset:0;z-index:7000;background:linear-gradient(160deg,#071510 0%,#0b1e14 50%,#071018 100%);flex-direction:column;align-items:center;justify-content:space-between;overflow-y:auto;transition:opacity .4s ease;font-family:'Plus Jakarta Sans',sans-serif;">
+<div id="home-page" style="display:none;opacity:0;position:fixed;inset:0;z-index:7000;background:linear-gradient(160deg,#071510 0%,#0b1e14 50%,#071018 100%);flex-direction:column;align-items:center;justify-content:space-between;overflow-y:auto;transition:opacity .4s ease;font-family:'Plus Jakarta Sans',sans-serif;transform:translateZ(0);-webkit-transform:translateZ(0);">
   <div style="position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(29,185,84,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(29,185,84,.03) 1px,transparent 1px);background-size:36px 36px;z-index:0"></div>
   <div style="position:fixed;width:340px;height:340px;border-radius:50%;background:rgba(26,92,53,.4);filter:blur(80px);top:-100px;right:-80px;pointer-events:none;z-index:0"></div>
   <div style="position:fixed;width:260px;height:260px;border-radius:50%;background:rgba(26,64,96,.35);filter:blur(70px);bottom:-60px;left:-60px;pointer-events:none;z-index:0"></div>
@@ -565,7 +566,6 @@
     <div class="adm-right">
       <div class="adm-conn"><div class="adm-conn-dot" id="adm-conn-dot"></div><div class="adm-conn-txt" id="adm-conn-txt">Loading…</div></div>
       <button class="adm-close" onclick="closeAdmin()">✕ Close</button>
-      <button class="adm-close" onclick="authSignOut()" style="background:rgba(220,50,50,.2);border-color:rgba(220,50,50,.4);color:#ff8a8a;margin-left:6px">⏻ Sign Out</button>
     </div>
   </div>
 
