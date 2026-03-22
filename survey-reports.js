@@ -937,9 +937,37 @@ function openFullReport(){  closeFinish(); _openReportFrame(buildFullReport(),  
 function openIMRaDReport(){ closeFinish(); _openReportFrame(buildIMRaDReport(cRec()),'📑 IMRaD Report'); }
 
 function printReport(){
-  const f=document.getElementById('report-frame');
-  if(f&&f.contentWindow){ f.contentWindow.focus(); f.contentWindow.print(); }
-  else window.print();
+  // Get the current report HTML from the iframe
+  const fr = document.getElementById('report-frame');
+  if(!fr){ showToast('No report open', true); return; }
+  try{
+    const doc = fr.contentDocument || fr.contentWindow.document;
+    const html = doc.documentElement.outerHTML;
+    const ti   = document.getElementById('report-title');
+    const name = (ti ? ti.textContent : 'Health-Report')
+                   .replace(/[^a-zA-Z0-9\s\-]/g,'')
+                   .trim().replace(/\s+/g,'-') || 'Health-Report';
+    const filename = name + '_' + new Date().toISOString().split('T')[0] + '.html';
+
+    // Create a Blob and trigger download
+    const blob = new Blob(['<!DOCTYPE html>'+html], {type:'text/html;charset=utf-8'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ Report downloaded — open the file to print as PDF');
+  } catch(e){
+    // Fallback: open in new tab for manual save
+    const fr2 = document.getElementById('report-frame');
+    if(fr2 && fr2.contentWindow){
+      fr2.contentWindow.focus();
+      fr2.contentWindow.print();
+    }
+  }
 }
 function closeReportOverlay(){ document.getElementById('report-overlay')?.classList.remove('open'); }
 function startNewSurveyFromReport(){ closeReportOverlay(); newRec(); showToast('✓ New survey started'); }

@@ -302,7 +302,7 @@
 <div class="bot-nav">
   <button class="btn-prev" id="bPrev" onclick="prevSec()">←</button>
   <button class="btn-next" id="bNext" onclick="nextSec()">Next →</button>
-  <button class="btn-finish" id="bFin" style="display:none" onclick="showFinish()">✓ Finish &amp; Print</button>
+  <button class="btn-finish" id="bFin" style="display:none" onclick="showFinish()">✓ Finish &amp; Save</button>
 </div>
 
 <div class="ov" id="ov" onclick="closeDrw()"></div>
@@ -334,7 +334,7 @@
   <div id="report-toolbar">
     <span id="report-title">Report</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-      <button class="report-tb-btn report-tb-print" onclick="printReport()">🖨 Print / Save PDF</button>
+      <button class="report-tb-btn report-tb-print" onclick="printReport()" style="background:rgba(255,255,255,.92);color:#1e5c38">⬇ Download Report</button>
       <button class="report-tb-btn" onclick="closeReportOverlay()">✕ Close</button>
     </div>
   </div>

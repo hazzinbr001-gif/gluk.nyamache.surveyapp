@@ -986,14 +986,29 @@ function goBackHome(){
   if(hp){hp.style.display='flex';requestAnimationFrame(function(){hp.style.opacity='1';});}
 }
 function homeGoSurvey(){
-  var hp=document.getElementById('home-page');
-  if(hp){hp.style.opacity='0';setTimeout(function(){hp.style.display='none';},350);}
+  // Cancel the loader auto-timer so it can't fire showHomePage() after we leave
+  if(typeof _autoTimer !== 'undefined' && _autoTimer){
+    clearInterval(_autoTimer); _autoTimer = null;
+  }
+  // Also stop the loader screen if it's somehow still running
+  var ls = document.getElementById('loader-screen');
+  if(ls){ ls.classList.remove('open','out'); }
+  // Hide the home page
+  var hp = document.getElementById('home-page');
+  if(hp){ hp.style.opacity='0'; setTimeout(function(){ hp.style.display='none'; }, 350); }
 }
 function homeGoAdmin(){
-  var hp=document.getElementById('home-page');
-  if(hp){hp.style.opacity='0';setTimeout(function(){hp.style.display='none';},300);}
+  // Cancel any pending loader timer
+  if(typeof _autoTimer !== 'undefined' && _autoTimer){
+    clearInterval(_autoTimer); _autoTimer = null;
+  }
+  var ls = document.getElementById('loader-screen');
+  if(ls){ ls.classList.remove('open','out'); }
+  // Hide home page then open admin
+  var hp = document.getElementById('home-page');
+  if(hp){ hp.style.opacity='0'; setTimeout(function(){ hp.style.display='none'; }, 300); }
   setTimeout(function(){
-    if(typeof openAdminGate==='function')openAdminGate();
-    else{var g=document.getElementById('admin-gate');if(g)g.classList.add('open');}
-  },320);
+    if(typeof openAdminGate==='function') openAdminGate();
+    else { var g=document.getElementById('admin-gate'); if(g) g.classList.add('open'); }
+  }, 320);
 }
