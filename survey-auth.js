@@ -4,7 +4,7 @@
 //   B11/GLUK/S53K/2022  →  /^B\d+\/[A-Z]+\/[A-Z0-9]+\/\d{4}$/
 //   B11/SO6/K/2021      →  /^B\d+\/[A-Z0-9]+\/[A-Z0-9]+\/\d{4}$/
 // Both collapse to: starts with B + digits, then 3 slash-separated segments, ends with 4-digit year
-const ADMIN_BYPASS_CODE = 'Admin72';
+const ADMIN_BYPASS_CODE = 'ADMIN72';
 const ADMISSION_REGEX   = /^B\d+\/[A-Z0-9]+\/[A-Z0-9]+\/\d{4}$/;
 
 function isValidAdmission(reg){
@@ -678,18 +678,16 @@ function authMsg(panel, msg, color='rgba(255,200,100,.9)'){
 async function authLogin(){
   const rawReg = document.getElementById('auth-reg-login').value.trim();
   if(!rawReg){ authMsg('login','⚠ Enter your admission number'); return; }
+  const reg = rawReg.toUpperCase();
 
-  // ── Admin bypass — check BEFORE uppercasing ──
-  if(isAdminBypass(rawReg)){
+  // ── Admin bypass ──
+  if(isAdminBypass(reg)){
     authSaveSession({reg_number:'ADMIN', full_name:'Administrator', status:'admin'});
     localStorage.setItem('chsa_user_name','Administrator');
     localStorage.setItem('chsa_is_admin_bypass','1');
     authEnterApp();
     return;
   }
-
-  // Uppercase only for admission number validation
-  const reg = rawReg.toUpperCase();
 
   // ── Format validation ──
   if(!isValidAdmission(reg)){
