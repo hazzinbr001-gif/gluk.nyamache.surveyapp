@@ -677,10 +677,9 @@ function authMsg(panel, msg, color='rgba(255,200,100,.9)'){
 
 async function authLogin(){
   const rawReg = document.getElementById('auth-reg-login').value.trim();
-  const reg = rawReg.toUpperCase();
   if(!rawReg){ authMsg('login','⚠ Enter your admission number'); return; }
 
-  // ── Admin bypass ──
+  // ── Admin bypass — check BEFORE uppercasing ──
   if(isAdminBypass(rawReg)){
     authSaveSession({reg_number:'ADMIN', full_name:'Administrator', status:'admin'});
     localStorage.setItem('chsa_user_name','Administrator');
@@ -689,8 +688,11 @@ async function authLogin(){
     return;
   }
 
+  // Uppercase only for admission number validation
+  const reg = rawReg.toUpperCase();
+
   // ── Format validation ──
-  if(!isValidAdmission(rawReg)){
+  if(!isValidAdmission(reg)){
     authMsg('login','⚠ Invalid admission number format');
     return;
   }
