@@ -1,67 +1,75 @@
-// ══════════════════════════════════════════════════════
-//  HazzinBR Health Survey — Service Worker v2.0
-//  Required for PWA install prompt on Android Chrome
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  Community Health Survey — Service Worker
+//  Great Lakes University · Nyamache Sub County Hospital
+//  Strategy: Cache-first (instant offline), update in background
+// ═══════════════════════════════════════════════════════════
 
-const CACHE = 'hazzinbr-survey-v2';
+const CACHE_VERSION = 'chsa-v2.4';
+const CACHE_NAME    = CACHE_VERSION;
 
-const PRECACHE = [
-  './health_survey.html',
+const STATIC_FILES = [
+  './',
+  './index.html',
+  './survey-styles.css',
+  './survey-core.js',
+  './survey-auth.js',
+  './survey-admin.js',
+  './survey-sync.js',
+  './survey-reports.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
 ];
 
-// ── Install: pre-cache core files ──
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache =>
-      Promise.allSettled(
-        PRECACHE.map(url =>
-          cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
-        )
-      )
-    )
+// ── INSTALL: cache everything, activate immediately ──
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(STATIC_FILES))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// ── Activate: clean up old caches ──
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      )
-    )
+// ── ACTIVATE: delete old caches ──
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// ── Fetch: network first, fall back to cache ──
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+// ── FETCH: Stale-While-Revalidate ──
+// 1. Serve from cache IMMEDIATELY (app works offline, no delay)
+// 2. Fetch fresh copy from network in background
+// 3. Update cache silently — next load gets the new version
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
 
-  // Never intercept Supabase API calls — always needs network
-  if (e.request.url.includes('supabase.co')) return;
+  const url = new URL(event.request.url);
 
-  // Never intercept Google Fonts
-  if (e.request.url.includes('fonts.googleapis.com') ||
-      e.request.url.includes('fonts.gstatic.com')) return;
+  // Only handle our own app files — not Supabase, Google Fonts, CDNs
+  if (url.origin !== location.origin) return;
 
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res && res.status === 200 && res.type !== 'opaque') {
-          const clone = res.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, clone));
-        }
-        return res;
+  event.respondWith(
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(event.request).then(cached => {
+
+        // Fetch fresh in background — update cache silently
+        const networkFetch = fetch(event.request)
+          .then(networkRes => {
+            if (networkRes && networkRes.status === 200) {
+              cache.put(event.request, networkRes.clone());
+            }
+            return networkRes;
+          })
+          .catch(() => null); // offline — silent fail
+
+        // Return cache immediately if available, else wait for network
+        return cached || networkFetch;
       })
-      .catch(() =>
-        caches.match(e.request).then(cached =>
-          cached || caches.match('./health_survey.html')
-        )
-      )
+    )
   );
 });
