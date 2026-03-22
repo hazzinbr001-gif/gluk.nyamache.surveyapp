@@ -52,6 +52,9 @@ function openAdminDash(){
 }
 function closeAdmin(){
   document.getElementById('admin-overlay').classList.remove('open');
+  // Admin bypass has nowhere else to go — show home page (survey buttons are hidden)
+  // Regular users go back to survey
+  if(typeof goBackHome==='function') goBackHome();
 }
 
 // ══════════════════════════════════════════════════════

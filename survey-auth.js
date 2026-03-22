@@ -1041,6 +1041,23 @@ function showHomePage(){
   surveyBtns.forEach(function(b){ b.style.display = isAdmin ? 'none' : ''; });
   var adminNote = document.getElementById('hp-admin-note');
   if(adminNote) adminNote.style.display = isAdmin ? 'block' : 'none';
+  // For admin: make sure the survey elements underneath are hidden
+  if(isAdmin){
+    var topbar = document.querySelector('.topbar');
+    var botnav = document.querySelector('.bot-nav');
+    var secs   = document.getElementById('secsWrap');
+    if(topbar) topbar.style.visibility = 'hidden';
+    if(botnav) botnav.style.visibility = 'hidden';
+    if(secs)   secs.style.visibility   = 'hidden';
+  } else {
+    // Restore visibility for students
+    var topbar = document.querySelector('.topbar');
+    var botnav = document.querySelector('.bot-nav');
+    var secs   = document.getElementById('secsWrap');
+    if(topbar) topbar.style.visibility = '';
+    if(botnav) botnav.style.visibility = '';
+    if(secs)   secs.style.visibility   = '';
+  }
 }
 function _hpStats(){
   try{
@@ -1058,12 +1075,16 @@ function _hpStats(){
   }catch(e){}
 }
 function goBackHome(){
-  _showAdminSurveyLock(false); // always hide lock when going back
-  // Admin bypass — go to admin dashboard, not survey home
+  _showAdminSurveyLock(false); // always hide lock
   if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    // Admin bypass: always show home page (survey buttons hidden there)
+    // Make sure admin overlay is closed first
     var ov=document.getElementById('admin-overlay');
-    if(ov&&ov.classList.contains('open')) return; // already in admin
-    showHomePage(); // show home but survey buttons will be hidden
+    if(ov) ov.classList.remove('open');
+    // Make sure survey is hidden behind home page
+    var sw=document.getElementById('welcome-screen');
+    // Show home page — survey buttons are hidden for admin
+    showHomePage();
     return;
   }
   _hpStats();
