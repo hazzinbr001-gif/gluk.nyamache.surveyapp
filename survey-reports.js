@@ -1011,7 +1011,13 @@ function _openReportFrame(html, title){
   const doc=fr.contentDocument||fr.contentWindow.document;
   doc.open();doc.write(html);doc.close();
   if(ti)ti.textContent=title;
-  ov.classList.add('open');
+  // Use showScreen to properly override any inline display:none
+  if(typeof showScreen==='function'){
+    showScreen('report');
+  } else {
+    ov.style.display='block';
+    ov.classList.add('open');
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1046,7 +1052,10 @@ function printReport(){
   }catch(e){showToast('Error: '+e.message,true);}
 }
 
-function closeReportOverlay(){ document.getElementById('report-overlay')?.classList.remove('open'); }
+function closeReportOverlay(){
+  const ov=document.getElementById('report-overlay');
+  if(ov){ ov.classList.remove('open'); ov.style.display='none'; }
+}
 function startNewSurveyFromReport(){ closeReportOverlay(); newRec(); showToast('✓ New survey started'); }
 function goHomeFromReport(){ closeReportOverlay(); }
 
