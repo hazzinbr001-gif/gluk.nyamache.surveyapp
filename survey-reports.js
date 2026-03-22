@@ -937,38 +937,63 @@ function openFullReport(){  closeFinish(); _openReportFrame(buildFullReport(),  
 function openIMRaDReport(){ closeFinish(); _openReportFrame(buildIMRaDReport(cRec()),'📑 IMRaD Report'); }
 
 function printReport(){
-  // Get the current report HTML from the iframe
   const fr = document.getElementById('report-frame');
   if(!fr){ showToast('No report open', true); return; }
-  try{
-    const doc = fr.contentDocument || fr.contentWindow.document;
-    const html = doc.documentElement.outerHTML;
-    const ti   = document.getElementById('report-title');
-    const name = (ti ? ti.textContent : 'Health-Report')
-                   .replace(/[^a-zA-Z0-9\s\-]/g,'')
-                   .trim().replace(/\s+/g,'-') || 'Health-Report';
-    const filename = name + '_' + new Date().toISOString().split('T')[0] + '.html';
 
-    // Create a Blob and trigger download
-    const blob = new Blob(['<!DOCTYPE html>'+html], {type:'text/html;charset=utf-8'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('✓ Report downloaded — open the file to print as PDF');
-  } catch(e){
-    // Fallback: open in new tab for manual save
-    const fr2 = document.getElementById('report-frame');
-    if(fr2 && fr2.contentWindow){
-      fr2.contentWindow.focus();
-      fr2.contentWindow.print();
+  const ti  = document.getElementById('report-title');
+  const raw = ti ? ti.textContent : 'Health-Report';
+  const name = raw.replace(/[^a-zA-Z0-9\s\-]/g,'').trim().replace(/\s+/g,'-') || 'Health-Report';
+  const filename = name + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+
+  showToast('Generating PDF… please wait');
+
+  try{
+    const innerDoc = fr.contentDocument || fr.contentWindow.document;
+    const el = innerDoc.getElementById('pdf-body') || innerDoc.body;
+
+    // Load html2pdf if not already loaded
+    function runPDF(){
+      const opt = {
+        margin:       [10, 12, 15, 12],
+        filename:     filename,
+        image:        { type: 'jpeg', quality: 0.97 },
+        html2canvas:  { scale: 2, useCORS: true, allowTaint: true,
+                        scrollX: 0, scrollY: 0,
+                        windowWidth: innerDoc.documentElement.scrollWidth },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all','css'], before: '.page-break', after: '.cover' }
+      };
+      html2pdf().set(opt).from(el).save()
+        .then(function(){ showToast('\u2713 PDF downloaded successfully'); })
+        .catch(function(e){ showToast('PDF error: '+e.message, true); });
     }
+
+    if(typeof html2pdf !== 'undefined'){
+      runPDF();
+    } else {
+      // Load html2pdf.js from CDN
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = runPDF;
+      script.onerror = function(){
+        // CDN failed — download as HTML instead
+        showToast('Offline: downloading as HTML file');
+        const html = innerDoc.documentElement.outerHTML;
+        const blob = new Blob(['<!DOCTYPE html>'+html], {type:'text/html;charset=utf-8'});
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href=url; a.download=name+'_'+new Date().toISOString().split('T')[0]+'.html';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+      };
+      document.head.appendChild(script);
+    }
+  } catch(e){
+    showToast('Error: '+e.message, true);
   }
 }
+
+
 function closeReportOverlay(){ document.getElementById('report-overlay')?.classList.remove('open'); }
 function startNewSurveyFromReport(){ closeReportOverlay(); newRec(); showToast('✓ New survey started'); }
 function goHomeFromReport(){ closeReportOverlay(); goSec(0,'back'); }
