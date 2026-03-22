@@ -15,6 +15,63 @@ function isAdminBypass(reg){
   return reg.trim() === ADMIN_BYPASS_CODE;
 }
 
+
+// ══════════════════════════════════════════════════════
+//  SCREEN ROUTER — only one screen visible at a time
+// ══════════════════════════════════════════════════════
+var SCREENS = {
+  welcome: '#welcome-screen',
+  loader:  '#loader-screen',
+  home:    '#home-page',
+  survey:  '#secsWrap',        // main survey content
+  admin:   '#admin-overlay',
+  gate:    '#admin-gate',
+  report:  '#report-overlay',
+  lock:    '#admin-survey-lock',
+};
+
+function showScreen(name){
+  // Hide everything first
+  Object.keys(SCREENS).forEach(function(k){
+    var el = document.querySelector(SCREENS[k]);
+    if(!el) return;
+    el.style.display = 'none';
+    el.style.opacity = '1';
+  });
+  // Show the requested screen
+  var target = document.querySelector(SCREENS[name]);
+  if(!target) return;
+  var displayType = 'block';
+  if(name==='home')   displayType='flex';
+  if(name==='loader') displayType='flex';
+  target.style.display = displayType;
+  // Survey needs topbar and botnav too
+  if(name==='survey'){
+    var topbar=document.querySelector('.topbar');
+    var botnav=document.querySelector('.bot-nav');
+    if(topbar){topbar.style.display='flex';topbar.style.visibility='';}
+    if(botnav){botnav.style.display='flex';botnav.style.visibility='';}
+    target.style.display='block';
+  }
+  // Admin/gate/lock hide the survey topbar/botnav
+  if(name==='admin'||name==='gate'||name==='lock'||name==='home'){
+    var topbar=document.querySelector('.topbar');
+    var botnav=document.querySelector('.bot-nav');
+    if(topbar) topbar.style.display='none';
+    if(botnav) botnav.style.display='none';
+  }
+}
+
+function _currentScreen(){
+  var found = null;
+  Object.keys(SCREENS).forEach(function(k){
+    var el = document.querySelector(SCREENS[k]);
+    if(el && el.style.display!=='none' && el.style.display!=='') found=k;
+  });
+  return found;
+}
+
+
 /* Community Health Survey — Auth + Home Page © 2026 HazzinBR */
 //  WELCOME SCREEN LOGIC
 // ══════════════════════════════════════════════════════
@@ -286,24 +343,46 @@ function spawnDust(){
 
 // ── PHASE 2: AUTH ──────────────────────────────────────
 async function authInit(){
+
+  // ══════════════════════════════════════════════════════
+  //  ADMIN BYPASS — check first, before ANYTHING else
+  //  Admin has reg_number='ADMIN' which doesn't exist in
+  //  Supabase, so we must skip the fetch entirely.
+  // ══════════════════════════════════════════════════════
+  if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    // Hide everything immediately
+    var ws = document.getElementById('welcome-screen');
+    var ls = document.getElementById('loader-screen');
+    if(ws) ws.style.display='none';
+    if(ls) ls.style.display='none';
+    var topbar = document.querySelector('.topbar');
+    var botnav = document.querySelector('.bot-nav');
+    var secs   = document.getElementById('secsWrap');
+    if(topbar) topbar.style.visibility='hidden';
+    if(botnav) botnav.style.visibility='hidden';
+    if(secs)   secs.style.visibility='hidden';
+    // Go straight to admin dashboard — no home page, no greeting
+    if(typeof openAdminDash==='function'){
+      openAdminDash();
+    } else {
+      // openAdminDash not yet loaded — wait briefly for scripts
+      setTimeout(function(){ openAdminDash(); }, 400);
+    }
+    return;
+  }
+
   const session = authGetSession();
 
   // ── Silently upgrade existing users who only have first name stored ──
-  // If session has full_name but chsa_user_name is only the first word, upgrade it
   if(session && session.full_name){
     const stored = localStorage.getItem('chsa_user_name')||'';
     const full   = session.full_name.trim();
-    // stored is incomplete if it has no space (first name only) but full_name has multiple words
     if(full.includes(' ') && !stored.includes(' ')){
       localStorage.setItem('chsa_user_name', full);
-      // Also update the hidden interviewer field in the form immediately
       const hn = document.getElementById('h_interviewer_name');
       if(hn) hn.value = full;
     }
-    // If stored is empty, always fill it
-    if(!stored){
-      localStorage.setItem('chsa_user_name', full);
-    }
+    if(!stored) localStorage.setItem('chsa_user_name', full);
   }
 
   if(session && session.full_name){
@@ -317,14 +396,15 @@ async function authInit(){
         if(data[0]?.status==='removed'){ authClearSession(); return; }
       }catch(e){ /* trust local session on error */ }
     }
-    // Returning user: show greeting overlay for 2s then enter survey
-    const first = session.full_name.split(' ')[0]; // first name for greeting display only
-    localStorage.setItem('chsa_user_name', session.full_name); // store full name for records
-    fillInterviewerFields(session.full_name); // fill form with full name
-    showReturningGreeting(first); // greet with first name only
+    // Returning student — show greeting then enter
+    const first = session.full_name.split(' ')[0];
+    localStorage.setItem('chsa_user_name', session.full_name);
+    fillInterviewerFields(session.full_name);
+    showReturningGreeting(first);
   }
   // New user: wait for lamp interaction → login
 }
+
 
 function authShowAuthCard(){
   if(!_lampOn) lampPull();
@@ -341,13 +421,20 @@ function authEnterApp(){
   const first = fullN ? fullN.split(' ')[0] : fullN;
   if(fullN){ localStorage.setItem('chsa_user_name', fullN); fillInterviewerFields(fullN); }
 
-  // Fade auth out
+  // Fade auth card out
   const auth = document.getElementById('lamp-auth');
   if(auth){
     auth.style.transition = 'opacity .45s ease';
     auth.style.opacity = '0';
     setTimeout(()=>{ auth.style.pointerEvents='none'; }, 470);
   }
+
+  // Admin bypass — skip loader, open dashboard directly
+  if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+    setTimeout(function(){ openAdminDash(); }, 600);
+    return;
+  }
+
   setTimeout(showLoader, 500);
 }
 
@@ -466,7 +553,7 @@ function loaderBegin(){
   const ls = document.getElementById('loader-screen');
   if(ls){
     ls.classList.add('out');
-    setTimeout(()=>{ ls.classList.remove('open','out'); showHomePage(); }, 560);
+    setTimeout(()=>{ showHomePage(); }, 560);
   }
 }
 
@@ -622,7 +709,12 @@ function showReturningGreeting(name){
   // Hold for 5 seconds, then sweep out and enter survey
   setTimeout(()=>{
     ov.style.animation = 'rgOut .55s ease forwards';
-    setTimeout(enterApp, 560);
+    // Final safety net — if somehow admin gets here, go to home not survey
+    if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
+      openAdminDash();
+    } else {
+      setTimeout(enterApp, 560);
+    }
   }, 5000);
 }
 
@@ -1019,12 +1111,8 @@ if (isIOS && !isStandalone) {
 //  HOME PAGE
 // ══════════════════════════════════════════════════════
 function showHomePage(){
-  var ws=document.getElementById('welcome-screen');
-  if(ws){ws.classList.add('hiding');setTimeout(function(){ws.style.display='none';},680);}
-  var hp=document.getElementById('home-page');
-  if(!hp)return;
-  hp.style.display='flex';
-  requestAnimationFrame(function(){hp.style.opacity='1';});
+  showScreen('home');
+  // Populate greeting
   var fullN=getUserName()||'Interviewer';
   var name=fullN.split(' ')[0];
   var h=new Date().getHours();
@@ -1034,30 +1122,16 @@ function showHomePage(){
   if(ne)ne.textContent=fullN;
   if(ge)ge.textContent=g;
   _hpStats();
-
-  // ── Admin bypass: hide survey buttons, show only Admin Dashboard ──
-  var isAdmin = localStorage.getItem('chsa_is_admin_bypass')==='1';
-  var surveyBtns = hp.querySelectorAll('[data-role="survey-only"]');
-  surveyBtns.forEach(function(b){ b.style.display = isAdmin ? 'none' : ''; });
-  var adminNote = document.getElementById('hp-admin-note');
-  if(adminNote) adminNote.style.display = isAdmin ? 'block' : 'none';
-  // For admin: make sure the survey elements underneath are hidden
-  if(isAdmin){
-    var topbar = document.querySelector('.topbar');
-    var botnav = document.querySelector('.bot-nav');
-    var secs   = document.getElementById('secsWrap');
-    if(topbar) topbar.style.visibility = 'hidden';
-    if(botnav) botnav.style.visibility = 'hidden';
-    if(secs)   secs.style.visibility   = 'hidden';
-  } else {
-    // Restore visibility for students
-    var topbar = document.querySelector('.topbar');
-    var botnav = document.querySelector('.bot-nav');
-    var secs   = document.getElementById('secsWrap');
-    if(topbar) topbar.style.visibility = '';
-    if(botnav) botnav.style.visibility = '';
-    if(secs)   secs.style.visibility   = '';
+  // Admin: hide survey-only buttons, show admin note
+  var isAdmin=localStorage.getItem('chsa_is_admin_bypass')==='1';
+  var hp=document.getElementById('home-page');
+  if(hp){
+    hp.querySelectorAll('[data-role="survey-only"]').forEach(function(b){
+      b.style.display=isAdmin?'none':'';
+    });
   }
+  var adminNote=document.getElementById('hp-admin-note');
+  if(adminNote) adminNote.style.display=isAdmin?'block':'none';
 }
 function _hpStats(){
   try{
@@ -1075,21 +1149,8 @@ function _hpStats(){
   }catch(e){}
 }
 function goBackHome(){
-  _showAdminSurveyLock(false); // always hide lock
-  if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
-    // Admin bypass: always show home page (survey buttons hidden there)
-    // Make sure admin overlay is closed first
-    var ov=document.getElementById('admin-overlay');
-    if(ov) ov.classList.remove('open');
-    // Make sure survey is hidden behind home page
-    var sw=document.getElementById('welcome-screen');
-    // Show home page — survey buttons are hidden for admin
-    showHomePage();
-    return;
-  }
   _hpStats();
-  var hp=document.getElementById('home-page');
-  if(hp){hp.style.display='flex';requestAnimationFrame(function(){hp.style.opacity='1';});}
+  showHomePage();
 }
 function _showAdminSurveyLock(show){
   var lock = document.getElementById('admin-survey-lock');
@@ -1100,25 +1161,12 @@ function homeGoSurvey(){
   // Admin bypass — can VIEW the survey dimmed but not submit
   if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
     showToast('Admin view only — survey is locked', true);
-    // Still navigate but show lock overlay
-    if(typeof _autoTimer!=='undefined'&&_autoTimer){clearInterval(_autoTimer);_autoTimer=null;}
-    var ls=document.getElementById('loader-screen');
-    if(ls) ls.classList.remove('open','out');
-    var hp=document.getElementById('home-page');
-    if(hp){hp.style.opacity='0';setTimeout(function(){hp.style.display='none';},350);}
-    setTimeout(function(){ _showAdminSurveyLock(true); }, 400);
+    // Admin — show lock screen instead
+    showScreen('lock');
     return;
   }
-  // Cancel the loader auto-timer so it can't fire showHomePage() after we leave
-  if(typeof _autoTimer !== 'undefined' && _autoTimer){
-    clearInterval(_autoTimer); _autoTimer = null;
-  }
-  // Also stop the loader screen if it's somehow still running
-  var ls = document.getElementById('loader-screen');
-  if(ls){ ls.classList.remove('open','out'); }
-  // Hide the home page
-  var hp = document.getElementById('home-page');
-  if(hp){ hp.style.opacity='0'; setTimeout(function(){ hp.style.display='none'; }, 350); }
+  if(typeof _autoTimer!=='undefined'&&_autoTimer){clearInterval(_autoTimer);_autoTimer=null;}
+  showScreen('survey');
 }
 function homeGoAdmin(){
   // Students (non-admin-bypass) cannot access admin dashboard
@@ -1134,16 +1182,9 @@ function homeGoAdmin(){
   }
   var ls = document.getElementById('loader-screen');
   if(ls){ ls.classList.remove('open','out'); }
-  // Hide home page then open admin
-  var hp = document.getElementById('home-page');
-  if(hp){ hp.style.opacity='0'; setTimeout(function(){ hp.style.display='none'; }, 300); }
-  // Admin bypass skips password gate entirely
-  setTimeout(function(){
-    if(isAdminBypass){
-      if(typeof openAdminDash==='function') openAdminDash();
-    } else {
-      if(typeof openAdminGate==='function') openAdminGate();
-      else { var g=document.getElementById('admin-gate'); if(g) g.classList.add('open'); }
-    }
-  }, 320);
+  if(isAdminBypass){
+    if(typeof openAdminDash==='function') openAdminDash();
+  } else {
+    if(typeof openAdminGate==='function') openAdminGate();
+  }
 }
