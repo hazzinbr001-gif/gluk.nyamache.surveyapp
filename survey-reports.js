@@ -258,17 +258,52 @@ table.data-tbl tbody td.num{text-align:center;font-weight:700;}
 }
 .print-fab:active{opacity:.85;}
 @media print{
-  body{background:#fff;}
-  .page{box-shadow:none;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body{background:#fff!important;margin:0!important;padding:0!important;}
+  .page{box-shadow:none!important;margin:0!important;max-width:100%!important;}
   .print-fab{display:none!important;}
-  .doc-footer{position:running(footer);}
-  @page{
-    size:A4;
-    margin:20mm 20mm 25mm 20mm;
-    @bottom-center{content:element(footer);}
-  }
+  .cover{page-break-after:always!important;}
+  .page-break{page-break-before:always!important;}
+  h2.sec{page-break-after:avoid;}
+  h3.sub{page-break-after:avoid;}
+  tr{page-break-inside:avoid;}
+  .sig-section{page-break-inside:avoid;}
+}
+@page{
+  size:A4 portrait;
+  margin:15mm 18mm 20mm 18mm;
 }
 `;
+
+
+// ─────────────────────────────────────────────────────────────────
+//  STUDENT DETAILS LOOKUP — gets reg_number + email from Supabase
+// ─────────────────────────────────────────────────────────────────
+async function _getStudentDetails(fullName){
+  // 1. Try cached _admStudents list
+  if(typeof _admStudents !== 'undefined' && Array.isArray(_admStudents)){
+    const s = _admStudents.find(st => st.full_name &&
+      st.full_name.toLowerCase() === fullName.toLowerCase());
+    if(s) return s;
+  }
+  // 2. Try current session
+  try{
+    const session = JSON.parse(localStorage.getItem('chsa_auth')||'null');
+    if(session && session.full_name &&
+       session.full_name.toLowerCase() === fullName.toLowerCase()){
+      return session;
+    }
+  }catch(e){}
+  // 3. Fetch from Supabase students table
+  try{
+    const res = await fetch(
+      SUPABASE_URL+'/rest/v1/chsa_students?full_name=eq.'+encodeURIComponent(fullName)+'&select=reg_number,full_name,email',
+      {headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    if(res.ok){ const d=await res.json(); if(d&&d.length) return d[0]; }
+  }catch(e){}
+  return {full_name:fullName, reg_number:'—', email:'—'};
+}
 
 // ─────────────────────────────────────────────────────────────────
 //  HELPER FUNCTIONS
@@ -364,7 +399,8 @@ function _coverPage(title, subtitle, metaRows, reportType){
 //            Results (per case + aggregated) · Discussion · Conclusion ·
 //            Recommendations · Signature
 // ─────────────────────────────────────────────────────────────────
-function buildInterviewerReport(interviewer, records){
+function buildInterviewerReport(interviewer, records, student){
+  student = student || {full_name:interviewer, reg_number:"—", email:"—"};
   const n = records.length;
   if(!n) return '<html><body>No records for this interviewer.</body></html>';
 
@@ -443,7 +479,9 @@ ${_coverPage(
   'Community Health Situation Analysis',
   `Interviewer Field Report — ${interviewer}`,
   [
-    ['Interviewer', interviewer],
+    ['Full Name', student.full_name||interviewer],
+    ['Admission / ID No.', student.reg_number||'—'],
+    ['Email', student.email||'—'],
     ['Institution', 'Great Lakes University of Kisumu'],
     ['Survey Area', locStr],
     ['Survey Period', dateRange],
@@ -456,13 +494,13 @@ ${_coverPage(
 <div class="doc">
 ${_rptHeader(
   `Community Health Situation Analysis — ${interviewer}`,
-  `Nyamache Sub County, Kisii County · ${dateRange}`,
+  `Reg: ${student.reg_number||'—'} · ${student.email||'—'} · Nyamache Sub County · ${dateRange}`,
   'Interviewer Field Report'
 )}
 
 <!-- ═══ EXECUTIVE SUMMARY ═══ -->
 <h2 class="sec">Executive Summary</h2>
-<p class="body-text">This report presents findings from <strong>${n} household interview${n!==1?'s':''}</strong> conducted by <strong>${interviewer}</strong> in <strong>${locStr}</strong> during the period <strong>${dateRange}</strong>, as part of the Community Health Situation Analysis programme at <strong>Great Lakes University of Kisumu</strong> in partnership with <strong>Nyamache Sub County Hospital</strong>, Kisii County.</p>
+<p class="body-text">This report presents findings from <strong>${n} household interview${n!==1?'s':''}</strong> conducted by <strong>${student.full_name||interviewer}</strong> (${student.reg_number||"—"}) in <strong>${locStr}</strong> during the period <strong>${dateRange}</strong>, as part of the Community Health Situation Analysis programme at <strong>Great Lakes University of Kisumu</strong> in partnership with <strong>Nyamache Sub County Hospital</strong>, Kisii County.</p>
 <p class="body-text">Key findings indicate that latrine coverage stands at <strong>${_pct(latrine,n)}%</strong> (${latrine}/${n} households), water treatment compliance at <strong>${_pct(waterTx,n)}%</strong>, and HIV/AIDS awareness at <strong>${_pct(hivHeard,n)}%</strong>. The most prevalent illness reported was <strong>${topIll[0]?topIll[0][0]:'none identified'}</strong>${topIll[0]?` affecting ${topIll[0][1]} households (${_pct(topIll[0][1],n)}%)`:''}.${deathsHH>0?` A total of <strong>${totalDeaths} death${totalDeaths!==1?'s':''}</strong> were reported across <strong>${deathsHH} household${deathsHH!==1?'s':''}</strong> in the past five years.`:''} A total of <strong>${allFlags.length} red flag${allFlags.length!==1?'s':''}</strong> were identified requiring follow-up. The primary concern identified is <strong>${lowestIndicator}</strong>, which represents the most significant health risk in the surveyed households.</p>
 <div class="stat-row">
   ${_statBox(n,'Households','blue')}
@@ -475,7 +513,7 @@ ${_rptHeader(
 
 <!-- ═══ 1. INTRODUCTION ═══ -->
 <h2 class="sec">1. Introduction</h2>
-<p class="body-text">Community health situation analysis is a systematic approach to assessing the health status, disease burden, and social determinants of health within a defined community. This assessment was undertaken by <strong>${interviewer}</strong> as a student health worker at <strong>Great Lakes University of Kisumu</strong>, under the supervision of the clinical faculty and in collaboration with the <strong>Nyamache Sub County Hospital</strong> health management team.</p>
+<p class="body-text">Community health situation analysis is a systematic approach to assessing the health status, disease burden, and social determinants of health within a defined community. This assessment was undertaken by <strong>${student.full_name||interviewer}</strong> (Admission No: <strong>${student.reg_number||"—"}</strong>${student.email?", "+student.email:""}) as a student health worker at <strong>Great Lakes University of Kisumu</strong>, under the supervision of the clinical faculty and in collaboration with the <strong>Nyamache Sub County Hospital</strong> health management team.</p>
 <p class="body-text">The survey was conducted in <strong>${locStr}</strong>, Nyamache Sub County, Kisii County, covering a total of <strong>${n} households</strong> during the period <strong>${dateRange}</strong>. The primary objectives of this assessment were to: (i) document the prevailing health conditions and disease burden in the surveyed households; (ii) identify key social and environmental determinants of health; (iii) assess coverage of essential health services including water, sanitation and HIV/AIDS; and (iv) generate evidence-based recommendations for targeted health interventions.</p>
 <p class="body-text">This report is submitted in partial fulfilment of the community health practical requirements and is intended for review by the course coordinator, sub-county health officer, and relevant programme managers at Nyamache Sub County Hospital.</p>
 
@@ -593,12 +631,12 @@ ${recs.map(r=>`<div class="flag-${r.lvl==='critical'?'critical':r.lvl==='warning
 
 <!-- ═══ SIGNATURES ═══ -->
 <h2 class="sec">Declaration and Signatures</h2>
-<p class="body-text">I, <strong>${interviewer}</strong>, hereby declare that the data presented in this report was collected personally, accurately, and in accordance with the ethical guidelines of Great Lakes University of Kisumu. All respondents provided verbal informed consent prior to participation.</p>
+<p class="body-text">I, <strong>${student.full_name||interviewer}</strong> (Admission No: ${student.reg_number||"—"}), hereby declare that the data presented in this report was collected personally, accurately, and in accordance with the ethical guidelines of Great Lakes University of Kisumu. All respondents provided verbal informed consent prior to participation.</p>
 <div class="sig-section">
   <div class="sig-box">
     <div class="sig-line"></div>
-    <div class="sig-name">${interviewer}</div>
-    <div class="sig-label">Interviewer · Great Lakes University</div>
+    <div class="sig-name">${student.full_name||interviewer}</div>
+    <div class="sig-label">${student.reg_number||""} · ${student.email||""} · Great Lakes University</div>
   </div>
   <div class="sig-box">
     <div class="sig-line"></div>
@@ -627,7 +665,8 @@ ${recs.map(r=>`<div class="flag-${r.lvl==='critical'?'critical':r.lvl==='warning
 //  Called from admin: openGroupReport()
 //  Full class report with individual comparison + aggregated analysis
 // ─────────────────────────────────────────────────────────────────
-function buildGroupReport(records){
+function buildGroupReport(records, students){
+  students = students || {};
   const n = records.length;
   if(!n) return '<html><body>No records loaded.</body></html>';
 
@@ -657,8 +696,9 @@ function buildGroupReport(records){
   const ivRows = ivNames.map(iv=>{
     const recs = records.filter(r=>r.interviewer===iv);
     const m=recs.length;
+    const st=students[iv]||{reg_number:'—',email:'—'};
     return `<tr>
-      <td class="label">${iv}</td>
+      <td class="label">${iv}<br><span style="font-size:7pt;color:#888;font-weight:400">${st.reg_number||'—'}</span></td>
       <td class="center">${m}</td>
       <td class="center" style="color:${_pct(_count(recs,'latrine','Yes'),m)>=80?'#1a5c35':'#c0392b'};font-weight:700">${_pct(_count(recs,'latrine','Yes'),m)}%</td>
       <td class="center" style="color:${_pct(_count(recs,'water_treated','Yes'),m)>=80?'#1a5c35':'#c0392b'};font-weight:700">${_pct(_count(recs,'water_treated','Yes'),m)}%</td>
@@ -841,78 +881,48 @@ ${grecs.map(r=>`<div class="flag-${r.lvl==='critical'?'critical':r.lvl==='warnin
 // ─────────────────────────────────────────────────────────────────
 //  ADMIN ENTRY POINTS
 // ─────────────────────────────────────────────────────────────────
-function openInterviewerReport(interviewer){
+async function openInterviewerReport(interviewer){
+  if(typeof _admRecs==='undefined'||!_admRecs.length){showToast('No records loaded',true);return;}
   const recs = _admRecs.filter(r=>r.interviewer===interviewer);
   if(!recs.length){ showToast('No records for '+interviewer, true); return; }
-  const html = buildInterviewerReport(interviewer, recs);
+  showToast('Building report...');
+  const student = await _getStudentDetails(interviewer);
+  const html = buildInterviewerReport(interviewer, recs, student);
   _openReportFrame(html, '📑 Report — '+interviewer);
 }
 
 function openAllInterviewerReports(){
-  if(typeof _admRecs==='undefined'||!_admRecs.length){ showToast('No records loaded — open Admin and tap Refresh first', true); return; }
-  var ivNames = [...new Set(_admRecs.map(function(r){return r.interviewer||'Unknown';}))]
-                .filter(Boolean).sort();
-
-  // Remove any existing menu
-  var existing = document.getElementById('rpt-menu');
-  if(existing) existing.remove();
-
-  // Build menu
-  var menu = document.createElement('div');
-  menu.id = 'rpt-menu';
-  menu.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;';
-
-  var btns = '';
-  ivNames.forEach(function(iv){
-    var cnt = _admRecs.filter(function(r){return r.interviewer===iv;}).length;
-    btns += '<button class="rpt-iv-btn" data-iv="'+encodeURIComponent(iv)+'" style="width:100%;padding:13px 16px;background:#f4f8f5;border:1.5px solid #cce0d4;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1a5c35;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;margin-bottom:0">'
-          + '📑 '+iv
-          + '<span style="font-size:.72rem;font-weight:400;color:#6b8a74">'+cnt+' record'+(cnt!==1?'s':'')+'</span>'
-          + '</button>';
-  });
-
-  menu.innerHTML = '<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))">'
-    + '<div style="font-weight:800;font-size:1rem;color:#1a5c35;margin-bottom:4px">📑 Select Report</div>'
-    + '<div style="font-size:.78rem;color:#6b8a74;margin-bottom:14px">Choose an interviewer or the full class group report</div>'
-    + '<div style="display:flex;flex-direction:column;gap:8px">'
-    + btns
-    + '<button id="rpt-group-btn" style="width:100%;padding:13px 16px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center">'
-    + '👥 Full Class Group Report'
-    + '<span style="font-size:.72rem;font-weight:400;opacity:.7">'+_admRecs.length+' total records</span>'
-    + '</button>'
-    + '<button id="rpt-cancel-btn" style="width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:12px;font-family:inherit;font-size:.88rem;cursor:pointer;color:#888">Cancel</button>'
-    + '</div></div>';
-
+  if(!_admRecs||!_admRecs.length){ showToast('No records loaded — refresh first', true); return; }
+  const ivNames = [...new Set(_admRecs.map(r=>r.interviewer||'Unknown'))].sort();
+  if(ivNames.length===1){
+    openInterviewerReport(ivNames[0]);
+    return;
+  }
+  // Ask which report to open
+  const menu = document.createElement('div');
+  menu.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;';
+  menu.innerHTML=`<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom))">
+    <div style="font-weight:800;font-size:1rem;color:#1a5c35;margin-bottom:4px">Select Report</div>
+    <div style="font-size:.78rem;color:#6b8a74;margin-bottom:16px">Choose an interviewer or the full group report</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${ivNames.map(iv=>`<button onclick="document.body.removeChild(document.getElementById('rpt-menu'));openInterviewerReport('${iv.replace(/'/g,"\\'")}');" style="width:100%;padding:13px 16px;background:#f4f8f5;border:1.5px solid #cce0d4;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1a5c35;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center">📑 ${iv} <span style="font-size:.72rem;font-weight:400;color:#6b8a74">${_admRecs.filter(r=>r.interviewer===iv).length} record${_admRecs.filter(r=>r.interviewer===iv).length!==1?'s':''}</span></button>`).join('')}
+      <button onclick="document.body.removeChild(document.getElementById('rpt-menu'));openGroupReport();" style="width:100%;padding:13px 16px;background:linear-gradient(135deg,#1a5c35,#1a4060);border:none;border-radius:12px;font-family:inherit;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center">👥 Full Class Group Report <span style="font-size:.72rem;font-weight:400;opacity:.7">${_admRecs.length} records</span></button>
+      <button onclick="document.body.removeChild(document.getElementById('rpt-menu'))" style="width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:12px;font-family:inherit;font-size:.88rem;cursor:pointer;color:#888">Cancel</button>
+    </div>
+  </div>`;
+  menu.id='rpt-menu';
   document.body.appendChild(menu);
-
-  // Wire up events AFTER DOM insertion (avoids inline onclick escaping issues)
-  menu.querySelectorAll('.rpt-iv-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var iv = decodeURIComponent(btn.getAttribute('data-iv'));
-      menu.remove();
-      openInterviewerReport(iv);
-    });
-  });
-  document.getElementById('rpt-group-btn').addEventListener('click', function(){
-    menu.remove();
-    openGroupReport();
-  });
-  document.getElementById('rpt-cancel-btn').addEventListener('click', function(){
-    menu.remove();
-  });
-  // Tap backdrop to close
-  menu.addEventListener('click', function(e){
-    if(e.target === menu) menu.remove();
-  });
 }
 
-
-function openGroupReport(){
-  if(typeof _admRecs==='undefined'||!_admRecs.length){ showToast('No records loaded — open Admin and tap Refresh first', true); return; }
-  var html = buildGroupReport(_admRecs);
-  _openReportFrame(html, '👥 Class Group Report');
+async function openGroupReport(){
+  if(typeof _admRecs==='undefined'||!_admRecs.length){showToast('No records loaded — tap Refresh first',true);return;}
+  showToast('Building group report...');
+  const ivNames=[...new Set(_admRecs.map(r=>r.interviewer||'Unknown'))].sort();
+  const students={};
+  for(const iv of ivNames){ students[iv]=await _getStudentDetails(iv); }
+  const html=buildGroupReport(_admRecs,students);
+  _openReportFrame(html,'👥 Class Group Report');
 }
-
 
 function _openReportFrame(html, title){
   const ov = document.getElementById('report-overlay');
