@@ -79,38 +79,86 @@ const PIE_COLS=['#4CAF72','#1a4f6e','#f39c12','#c0392b','#8e44ad','#16a085','#d3
 function admSetConn(s){
   const dot=document.getElementById('adm-conn-dot');
   const txt=document.getElementById('adm-conn-txt');
-  const cols={ok:'#4CAF72',error:'#c0392b',loading:'#f39c12'};
+  const cols={ok:'#4CAF72',error:'#c0392b',loading:'#f39c12',offline:'#888'};
   if(dot) dot.style.background=cols[s]||'#f39c12';
-  if(txt) txt.textContent=s==='ok'?_admRecs.length+' records':s==='error'?'Connection error':'Loading…';
+  const count=Array.isArray(_admRecs)?_admRecs.length:0;
+  if(txt){
+    if(s==='ok')      txt.textContent=count+' record'+(count!==1?'s':'');
+    else if(s==='loading') txt.textContent=count?count+' records (updating…)':'Loading…';
+    else if(s==='offline') txt.textContent=count+' records (offline cache)';
+    else if(s==='error')   txt.textContent='Connection error';
+    else txt.textContent='Loading…';
+  }
 }
 
-async function admLoad(){
-  admSetConn('loading');
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?order=synced_at.desc&limit=500`,{
-      headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
+function _admEnrich(recs){
+  // Upgrade first-name-only interviewer fields using student list
+  if(!Array.isArray(_admStudents)||!_admStudents.length) return;
+  recs.forEach(function(rec){
+    if(!rec.interviewer||rec.interviewer.includes(' ')) return;
+    const fn=rec.interviewer.toLowerCase();
+    const match=_admStudents.find(function(s){
+      return s.full_name&&s.full_name.trim().toLowerCase().startsWith(fn+' ');
     });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    _admRecs=await res.json();
-    // ── Enrich interviewer names for old records that only have first name ──
-    // Cross-reference with _admStudents if available
-    if(Array.isArray(_admStudents) && _admStudents.length){
-      _admRecs.forEach(function(rec){
-        if(!rec.interviewer || rec.interviewer.includes(' ')) return; // already full name or empty
-        // Try to find matching student by first name
-        const fn = rec.interviewer.toLowerCase();
-        const match = _admStudents.find(function(s){
-          return s.full_name && s.full_name.trim().toLowerCase().startsWith(fn+' ');
-        });
-        if(match) rec.interviewer = match.full_name; // upgrade to full name in memory
-      });
-    }
+    if(match) rec.interviewer=match.full_name;
+  });
+}
+
+function _admSaveCache(recs){
+  try{ localStorage.setItem('chsa_adm_cache', JSON.stringify({ts:Date.now(),recs:recs})); }catch(e){}
+}
+
+function _admLoadCache(){
+  try{
+    const raw=localStorage.getItem('chsa_adm_cache');
+    if(!raw) return null;
+    const obj=JSON.parse(raw);
+    // Cache valid for 5 minutes
+    if(Date.now()-obj.ts < 5*60*1000) return obj.recs;
+  }catch(e){}
+  return null;
+}
+
+function admLoad(){
+  // ── Step 1: Show cached data instantly if available ──
+  const cached=_admLoadCache();
+  if(cached && cached.length){
+    _admRecs=cached;
+    _admEnrich(_admRecs);
     admSetConn('ok');
     admRenderAll();
-  }catch(e){
-    admSetConn('error');
-    document.getElementById('adm-tbody').innerHTML=`<tr><td colspan="11" style="text-align:center;padding:24px;color:#c0392b">⚠ ${e.message}</td></tr>`;
+    // Show subtle "updating..." indicator
+    admSetConn('loading');
+  } else {
+    admSetConn('loading');
   }
+
+  // ── Step 2: Fetch fresh data from Supabase in background ──
+  fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?order=synced_at.desc&limit=500`,{
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
+  })
+  .then(function(res){
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return res.json();
+  })
+  .then(function(data){
+    _admRecs=data;
+    _admEnrich(_admRecs);
+    _admSaveCache(_admRecs); // save to cache for next open
+    admSetConn('ok');
+    admRenderAll();
+  })
+  .catch(function(e){
+    if(!cached||!cached.length){
+      // No cache and no network — show error
+      admSetConn('error');
+      const tbody=document.getElementById('adm-tbody');
+      if(tbody) tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:24px;color:#c0392b">⚠ '+e.message+' — pull down to retry</td></tr>';
+    } else {
+      // We showed cached data — just mark as offline
+      admSetConn('offline');
+    }
+  });
 }
 
 function admGetFlags(r){
