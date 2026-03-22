@@ -270,6 +270,16 @@ function _page(num, total, hdr, ftr, content){
 function _sb(n, label, cls){
   return '<div class="sb '+(cls||'')+'"><div class="sn">'+n+'</div><div class="sl">'+label+'</div></div>';
 }
+// Indicator bar: label, count of Yes, total
+function _bar(label, count, total){
+  const pct=total>0?Math.round(count/total*100):0;
+  const col=pct<60?'#c0392b':pct<80?'#e67e22':'#1a5c35';
+  return '<div class="ir">'
+    +'<div class="il">'+label+'</div>'
+    +'<div class="it"><div class="if" style="width:'+pct+'%;background:'+col+'"></div></div>'
+    +'<div class="ip" style="color:'+col+'">'+count+'/'+total+' ('+pct+'%)</div>'
+    +'</div>';
+}
 // Flag box
 function _flag(level, title, body){
   const cls=level==='critical'?'fc':level==='warning'?'fw':'fg';
