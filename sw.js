@@ -8,7 +8,7 @@
 //  Bump CACHE_VERSION to push an update to all installed PWAs
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_VERSION = 'chsa-v2.7';
+const CACHE_VERSION = 'chsa-v2.8';
 const CACHE_NAME    = CACHE_VERSION;
 
 const APP_FILES = [
