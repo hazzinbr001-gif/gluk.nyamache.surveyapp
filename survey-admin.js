@@ -130,42 +130,46 @@ function _admLoadCache(){
 }
 
 function admLoad(){
-  // ── Step 1: Show cached data instantly if available ──
-  const cached=_admLoadCache();
+  // ── Step 1: Show cached data instantly ──
+  const cached = _admLoadCache();
   if(cached && cached.length){
-    _admRecs=cached;
+    _admRecs = cached;
     _admEnrich(_admRecs);
     admSetConn('ok');
     admRenderAll();
-    // Show subtle "updating..." indicator
     admSetConn('loading');
   } else {
     admSetConn('loading');
   }
 
-  // ── Step 2: Fetch fresh data from Supabase in background ──
-  fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?order=synced_at.desc&limit=500`,{
-    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
-  })
-  .then(function(res){
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    return res.json();
-  })
-  .then(function(data){
-    _admRecs=data;
-    _admEnrich(_admRecs);
-    _admSaveCache(_admRecs); // save to cache for next open
+  // ── Step 2: Fetch BOTH records AND students together in parallel ──
+  // This ensures names are always enriched correctly on first load
+  const recsFetch = fetch(
+    `${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?order=synced_at.desc&limit=500`,
+    {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
+  ).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+
+  const studentsFetch = fetch(
+    `${SUPABASE_URL}/rest/v1/${STUDENTS_TABLE}?order=requested_at.desc`,
+    {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
+  ).then(function(r){ return r.ok ? r.json() : []; });
+
+  Promise.all([recsFetch, studentsFetch])
+  .then(function(results){
+    _admRecs     = results[0];
+    _admStudents = results[1]; // always fresh students alongside records
+    _admEnrich(_admRecs);      // now enrichment always has student data
+    _admSaveCache(_admRecs);
     admSetConn('ok');
     admRenderAll();
+    admRenderStudents();       // update students tab too
   })
   .catch(function(e){
-    if(!cached||!cached.length){
-      // No cache and no network — show error
+    if(!cached || !cached.length){
       admSetConn('error');
-      const tbody=document.getElementById('adm-tbody');
-      if(tbody) tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:24px;color:#c0392b">⚠ '+e.message+' — pull down to retry</td></tr>';
+      const tbody = document.getElementById('adm-tbody');
+      if(tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:#c0392b">⚠ '+e.message+' — check connection and retry</td></tr>';
     } else {
-      // We showed cached data — just mark as offline
       admSetConn('offline');
     }
   });
