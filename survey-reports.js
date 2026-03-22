@@ -1011,15 +1011,11 @@ function _openReportFrame(html, title){
   const doc=fr.contentDocument||fr.contentWindow.document;
   doc.open();doc.write(html);doc.close();
   if(ti)ti.textContent=title;
-  // Update close button label for admin
-  const closeBtn=document.getElementById('report-close-btn');
-  if(closeBtn){
-    if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
-      closeBtn.textContent='← Dashboard';
-    } else {
-      closeBtn.textContent='✕ Close';
-    }
-  }
+  // Update close button label + hide survey-only buttons for admin
+  const isAdmin = localStorage.getItem('chsa_is_admin_bypass')==='1';
+  const closeBtn = document.getElementById('report-close-btn');
+  if(closeBtn) closeBtn.textContent = isAdmin ? '← Dashboard' : '✕ Close';
+
   // Use showScreen to properly override any inline display:none
   if(typeof showScreen==='function'){
     showScreen('report');
