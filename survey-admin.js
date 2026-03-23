@@ -449,9 +449,7 @@ async function admNotifyAllBadRecords(){
     return fl.some(f=>f.includes('Wrong date')||f.includes('Date missing')||f.includes('Invalid location')||f.includes('Location missing'))&&!r.needs_correction;
   });
   if(!bad.length){showToast('✅ No unnotified bad records found');return;}
-  if(!confirm('Send correction notice to '+bad.length+' record(s)?
-
-Interviewers will see a blocking prompt on their next login listing exactly what to fix.')) return;
+  if(!confirm('Send correction notice to '+bad.length+' record(s)?\n\nInterviewers will see a blocking prompt on their next login listing exactly what to fix.')) return;
   let ok=0,fail=0;
   for(const r of bad){
     const notes=admGetFlags(r).filter(f=>f.includes('Wrong date')||f.includes('Date missing')||f.includes('Invalid location')||f.includes('Location missing')).join(' | ');
