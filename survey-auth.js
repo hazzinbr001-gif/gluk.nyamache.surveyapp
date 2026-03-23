@@ -453,29 +453,25 @@ function _showIssuesOverlay(issues, onClear){
 async function _checkLocalRecordsOnLogin(session, onClear){
   var issues=[];
 
-  // 1. Local unsynced records
+  // 1. All local records (synced or not) — date and location only
   try{
     var stored=JSON.parse(localStorage.getItem('chsa4')||'{}');
     Object.keys(stored).forEach(function(id){
       var rec=stored[id];
-      if(rec._synced) return;
+      if(typeof rec!=='object'||rec===null||id.startsWith('_')) return;
       var date=rec.interview_date||'';
       var loc=rec.interview_location||rec.interview_location_custom||'';
+      var synced=rec._synced?' (already uploaded)':' (not yet uploaded)';
       if(date&&date<_SURVEY_START)
-        issues.push('📅 Local record dated "'+date+'" is before survey start ('+_SURVEY_START+'). Open it and correct the date.');
+        issues.push('📅 Record'+synced+' dated "'+date+'" is before survey start ('+_SURVEY_START+'). Open it and correct the date.');
       if(loc&&!_VALID_LOCS.includes(loc))
-        issues.push('📍 Local record has invalid location "'+loc+'". Open it and select an approved location.');
+        issues.push('📍 Record'+synced+' has invalid location "'+loc+'". Open it and select an approved location.');
       if(!loc)
-        issues.push('📍 A local record has no location. Open it and fix.');
+        issues.push('📍 A record'+synced+' has no location set. Open it and fix.');
     });
   }catch(e){}
 
-  // 2. Admission number
-  var reg=session.reg_number||'';
-  if(!reg||reg==='\u2014') issues.push('📋 Your admission number is missing. Update your profile.');
-  else if(reg!=='ADMIN'&&!_ADNUM_RE.test(reg)) issues.push('📋 Admission number "'+reg+'" wrong format. Expected: B11/GLUK/S53K/2022');
-
-  // 3. Server — uploaded records flagged by admin
+  // 2. Server — uploaded records flagged by admin (date/location issues only)
   if(navigator.onLine&&session.full_name){
     try{
       var ivName=encodeURIComponent(session.full_name.trim());

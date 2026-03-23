@@ -232,9 +232,8 @@ function admGetFiltered(){
     if(_admFilter==='hiv-no'&&r.hiv_heard!=='No') return false;
     if(_admFilter==='today'&&r.interview_date!==_admToday) return false;
     if(_admFilter==='bad-data'){
-      const fl2=admGetFlags(r);
-      const hasBadDate=fl2.some(f=>f.includes('date')||f.includes('Date'));
-      const hasBadLoc=fl2.some(f=>f.includes('location')||f.includes('Location'));
+      const hasBadDate=fl.some(f=>f.includes('date')||f.includes('Date')||f.includes('Wrong date')||f.includes('Date missing'));
+      const hasBadLoc=fl.some(f=>f.includes('location')||f.includes('Location')||f.includes('Invalid location')||f.includes('Location missing'));
       if(!hasBadDate&&!hasBadLoc) return false;
     }
     return true;
