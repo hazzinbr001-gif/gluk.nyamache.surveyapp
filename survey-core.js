@@ -123,7 +123,6 @@ function runAllRules(){
   rulePregnancyGender();
   ruleConsentBlock();
   ruleLocation();
-  ruleDate();
   ruleSkipMeals();
   ruleMoveAway();
   ruleDeaths();
@@ -452,39 +451,17 @@ function ruleConsentBlock(){
 }
 
 // ── RULE: Interview location must be one of the 5 approved locations ──
-const VALID_LOCATIONS = [
-  'Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri',
-  'Mosasa','Igare','Nyamegondo 1','Nyamegondo 2','Bomobasi',
-  'Nyakeobiri 1','Nyakeobiri 2','Masanga'
-];
-const MIN_INTERVIEW_DATE = '2026-03-23'; // no dates before this
+const VALID_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
 function ruleLocation(){
   const loc = gvRadio('interview_location');
   const grp = document.querySelector('[name="interview_location"]')?.closest('.form-group');
   if(!grp) return;
   if(!loc){
-    showFieldMsg(grp,'⚠ Location required — select one of the 13 approved areas before you can submit this record','warn');
+    showFieldMsg(grp,'\u26A0 Location required — select one of the 6 approved areas before you can submit this record','warn');
   } else if(!VALID_LOCATIONS.includes(loc)){
-    showFieldMsg(grp,`\u{1F6AB} "${loc}" is NOT an approved location. This record cannot be submitted. Go back to Consent and select a valid location.`,'warn');
+    showFieldMsg(grp,`\u{1F6AB} "${loc}" is NOT an approved location. This record cannot be submitted. Go back to Consent and change the location to one of: Riakerongo, Rusinga Sub-location, Nyakweri 1, Nyakweri 2, or Nyakiobiri`,'warn');
   } else {
     clearFieldMsg(grp);
-  }
-}
-
-// ── RULE: Interview date cannot be before today ──
-function ruleDate(){
-  const dateEl = document.querySelector('[name="interview_date"]');
-  const grp = dateEl?.closest('.form-group');
-  if(!dateEl || !grp) return;
-  // Always enforce min
-  dateEl.min = MIN_INTERVIEW_DATE;
-  const val = dateEl.value;
-  if(val && val < MIN_INTERVIEW_DATE){
-    showFieldMsg(grp,`⚠ Interview date "${val}" is in the past — date must be ${MIN_INTERVIEW_DATE} or later`,'warn');
-    dateEl.style.borderColor = 'var(--red)';
-  } else {
-    clearFieldMsg(grp);
-    dateEl.style.borderColor = '';
   }
 }
 
@@ -1339,25 +1316,14 @@ function showToast(m,e=false){const t=document.getElementById('toast');t.textCon
 async function showFinish(){
   if(!validate(cur))return;
 
-  // ── HARD BLOCK: location must be one of the approved locations ──
+  // ── HARD BLOCK: location must be one of the 5 approved locations ──
   const _loc = document.querySelector('[name="interview_location"]:checked')?.value || '';
   if(!_loc || !VALID_LOCATIONS.includes(_loc)){
     const _badLoc = _loc || 'none selected';
     showBlockedModal(
       '\u{1F6AB} Invalid Location — Cannot Submit',
-      `This record has location: "${_badLoc}"\n\nYou must go back to the Consent section (Page 1) and select one of the 13 approved locations.\n\nThe record will NOT be uploaded until this is corrected.`,
+      `This record has location: "${_badLoc}"\n\nYou must go back to the Consent section (Page 1) and select one of the 5 approved locations:\n\n• Riakerongo\n• Rusinga Sub-location\n• Nyakweri 1\n• Nyakweri 2\n• Nyakiobiri\n\nThe record will NOT be uploaded until this is corrected.`,
       'Go Back & Fix'
-    );
-    return;
-  }
-
-  // ── HARD BLOCK: date cannot be before today ──
-  const _dateVal = document.querySelector('[name="interview_date"]')?.value || '';
-  if(!_dateVal || _dateVal < MIN_INTERVIEW_DATE){
-    showBlockedModal(
-      '📅 Invalid Date — Cannot Submit',
-      `Interview date "${_dateVal || 'not set'}" is not valid.\n\nDates before ${MIN_INTERVIEW_DATE} are not accepted.\n\nPlease go back to the Consent section (Page 1) and set today's date or a future date.`,
-      'Go Back & Fix Date'
     );
     return;
   }
@@ -1892,7 +1858,7 @@ return sec('Introduction','Consent Form',`
 <input type="hidden" name="interviewer_name" id="h_interviewer_name">
 <input type="hidden" name="interviewer_school" value="Great Lakes University of Kisumu">
 
-${fg(q('Q1','Interview Date','req')+`<input class="form-input" type="date" name="interview_date" value="${today}" min="${today}">`)}
+${fg(q('Q1','Interview Date','req')+`<input class="form-input" type="date" name="interview_date" value="${today}">`)}
 
 ${fg(q('Q2','Interview Location','req')+`
 <div class="chips" style="margin-bottom:8px">
@@ -1901,14 +1867,6 @@ ${fg(q('Q2','Interview Location','req')+`
   <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri1" value="Nyakweri 1"><label for="loc_nyakweri1">📍 Nyakweri 1</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri2" value="Nyakweri 2"><label for="loc_nyakweri2">📍 Nyakweri 2</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_nyakiobiri" value="Nyakiobiri"><label for="loc_nyakiobiri">📍 Nyakiobiri</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_mosasa" value="Mosasa"><label for="loc_mosasa">📍 Mosasa</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_igare" value="Igare"><label for="loc_igare">📍 Igare</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyamegondo1" value="Nyamegondo 1"><label for="loc_nyamegondo1">📍 Nyamegondo 1</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyamegondo2" value="Nyamegondo 2"><label for="loc_nyamegondo2">📍 Nyamegondo 2</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_bomobasi" value="Bomobasi"><label for="loc_bomobasi">📍 Bomobasi</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakeobiri1" value="Nyakeobiri 1"><label for="loc_nyakeobiri1">📍 Nyakeobiri 1</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakeobiri2" value="Nyakeobiri 2"><label for="loc_nyakeobiri2">📍 Nyakeobiri 2</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_masanga" value="Masanga"><label for="loc_masanga">📍 Masanga</label></div>
 </div>
 <p class="info-note">Select the location where this interview is taking place</p>`)}
 
@@ -2260,8 +2218,6 @@ function init(){
   const name=getUserName();
   if(name) fillInterviewerFields(name);
   setTimeout(runAllRules,200);
-  // Check if supervisor flagged any records for this user to fix
-  setTimeout(checkPendingCorrections, 1500);
 }
 document.addEventListener('DOMContentLoaded',init);
 
@@ -2279,198 +2235,3 @@ document.addEventListener('DOMContentLoaded',init);
     setTimeout(function(){nav.style.transform='translateZ(0)';},150);
   });
 })();
-
-// ══════════════════════════════════════════════════════
-//  CORRECTION PROMPTS — Admin-flagged record alerts
-// ══════════════════════════════════════════════════════
-
-async function checkPendingCorrections() {
-  const name = (typeof getUserName === 'function' ? getUserName() : null)
-             || localStorage.getItem('chsa_user_name');
-  if (!name) return;
-
-  // ── 1. Check local records for past dates ──
-  const localCorrections = [];
-  try {
-    const stored = JSON.parse(localStorage.getItem('chsa4') || '{}');
-    Object.entries(stored).forEach(([id, rec]) => {
-      if (!rec._finished) return; // only check submitted records
-      const d = rec.interview_date || '';
-      if (d && d < MIN_INTERVIEW_DATE) {
-        localCorrections.push({
-          record_id: id,
-          interview_date: d,
-          location: rec.interview_location || '—',
-          correction_note: `Interview date "${d}" is invalid — dates before ${MIN_INTERVIEW_DATE} are not accepted. Please open this record, update the date to today or later, and re-submit.`,
-          _local: true
-        });
-      }
-    });
-  } catch(e) {}
-
-  // ── 2. Check server for admin-flagged records ──
-  let serverCorrections = [];
-  if (typeof isSyncConfigured === 'function' && isSyncConfigured() && navigator.onLine) {
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?interviewer=ilike.${encodeURIComponent(name)}&needs_correction=eq.true&order=interview_date.desc`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
-      );
-      if (res.ok) {
-        const rows = await res.json();
-        if (Array.isArray(rows)) serverCorrections = rows;
-      }
-    } catch (e) {}
-  }
-
-  // ── 3. Merge — deduplicate by record_id ──
-  const seen = new Set(serverCorrections.map(r => r.record_id));
-  const merged = [
-    ...serverCorrections,
-    ...localCorrections.filter(r => !seen.has(r.record_id))
-  ];
-
-  if (!merged.length) return;
-  showCorrectionModal(merged);
-}
-
-function showCorrectionModal(corrections) {
-  document.getElementById('correction-modal')?.remove();
-
-  const items = corrections.map((r, i) => `
-    <div style="background:#fdecea;border:1.5px solid #d32f2f;border-radius:11px;padding:13px 14px;margin-bottom:11px">
-      <div style="font-weight:900;font-size:0.86rem;color:#c62828;margin-bottom:4px">
-        🚨 Record ${i + 1} — ${r.interview_date || '?'} · ${r.location || '?'}
-      </div>
-      <div style="font-size:0.78rem;color:#444;margin-bottom:11px;line-height:1.6;
-                  background:#fff;border-radius:7px;padding:9px 11px;border:1px solid #f5c6c6">
-        <strong style="color:#b71c1c">Supervisor note:</strong><br>
-        ${r.correction_note || 'This record has incorrect data and must be corrected before it can be used.'}
-      </div>
-      <button onclick="fixCorrectionRecord('${r.record_id}')"
-        style="width:100%;padding:12px;background:linear-gradient(135deg,#b71c1c,#c62828);
-               color:#fff;border:none;border-radius:9px;font-size:0.84rem;font-weight:900;
-               cursor:pointer;font-family:inherit;letter-spacing:.3px;box-shadow:0 3px 10px rgba(198,40,40,.35)">
-        ✏ Open &amp; Fix This Record
-      </button>
-    </div>
-  `).join('');
-
-  const modal = document.createElement('div');
-  modal.id = 'correction-modal';
-  modal.style.cssText = `
-    position:fixed;inset:0;z-index:9999;
-    background:rgba(0,0,0,.65);
-    display:flex;align-items:flex-end;justify-content:center;
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    animation:fadeIn .25s ease both;
-  `;
-  modal.innerHTML = `
-    <div style="
-      background:#fff;border-radius:22px 22px 0 0;
-      padding:20px 16px calc(28px + env(safe-area-inset-bottom));
-      width:100%;max-width:480px;max-height:88vh;overflow-y:auto;
-      box-shadow:0 -8px 40px rgba(0,0,0,.35);
-    ">
-      <div style="width:38px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px"></div>
-      <div style="display:flex;align-items:center;gap:13px;margin-bottom:10px">
-        <div style="font-size:2.2rem">🚨</div>
-        <div>
-          <div style="font-size:1.05rem;font-weight:900;color:#c62828">Action Required</div>
-          <div style="font-size:0.75rem;color:#888;margin-top:2px">
-            Your supervisor flagged ${corrections.length} record${corrections.length > 1 ? 's' : ''} with wrong data
-          </div>
-        </div>
-      </div>
-
-      <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:9px;
-                  padding:11px 13px;margin:12px 0 15px;font-size:0.77rem;color:#7b5800;line-height:1.7">
-        ⚠ Please open each flagged record, fix the issue shown, and re-submit it.
-        Your supervisor cannot update your records for you — only <strong>you</strong> can correct them.
-      </div>
-
-      ${items}
-
-      <button onclick="document.getElementById('correction-modal').remove()"
-        style="width:100%;padding:13px;background:#f5f5f5;color:#999;border:none;
-               border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer;
-               font-family:inherit;margin-top:2px">
-        Remind Me Later
-      </button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-async function fixCorrectionRecord(recordId) {
-  document.getElementById('correction-modal')?.remove();
-  showToast('⏳ Loading record from server…');
-
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(recordId)}`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
-    );
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const rows = await res.json();
-    if (!rows.length) { showToast('⚠ Record not found on server', true); return; }
-
-    const serverRec = rows[0];
-    const correctionNote = serverRec.correction_note || 'Fix the issue shown and re-submit this record.';
-
-    // Parse the full form data from raw_json
-    const data = typeof serverRec.raw_json === 'string'
-      ? JSON.parse(serverRec.raw_json)
-      : (serverRec.raw_json || {});
-
-    // Load it into local state — mark as unfinished so it re-uploads cleanly
-    recId = recordId;
-    recs[recId] = {
-      ...data,
-      _u: new Date().toLocaleString(),
-      _correction: true,
-      _finished: false,
-      _synced: false
-    };
-    ss();
-
-    if (typeof showScreen === 'function') showScreen('survey');
-    loadInto(recs[recId]);
-    goSec(0); // Always go to Section 0 (Consent/Location) — most common problem
-    renDrw();
-
-    setTimeout(() => {
-      showToast('✏ Record loaded — fix the issue and re-submit');
-      _showCorrectionBanner(correctionNote);
-    }, 400);
-
-  } catch (e) {
-    showToast('⚠ Could not load record: ' + e.message, true);
-  }
-}
-
-function _showCorrectionBanner(note) {
-  document.getElementById('correction-banner')?.remove();
-  const banner = document.createElement('div');
-  banner.id = 'correction-banner';
-  banner.style.cssText = `
-    position:sticky;top:0;left:0;right:0;z-index:800;
-    background:linear-gradient(90deg,#b71c1c,#c62828);
-    color:#fff;padding:11px 14px;
-    display:flex;align-items:center;gap:10px;
-    font-size:0.79rem;font-weight:700;line-height:1.4;
-    box-shadow:0 3px 12px rgba(183,28,28,.45);
-  `;
-  banner.innerHTML = `
-    <span style="font-size:1.3rem;flex-shrink:0">🚨</span>
-    <span style="flex:1">CORRECTION MODE — ${note}</span>
-    <button onclick="document.getElementById('correction-banner').remove()"
-      style="background:rgba(255,255,255,.18);border:none;color:#fff;
-             padding:5px 10px;border-radius:6px;cursor:pointer;
-             font-size:0.72rem;font-weight:700;white-space:nowrap;flex-shrink:0">✕ Hide</button>
-  `;
-  // Insert above the sections wrapper
-  const wrap = document.getElementById('secsWrap');
-  if (wrap) wrap.insertAdjacentElement('beforebegin', banner);
-  else document.body.insertAdjacentElement('afterbegin', banner);
-}
