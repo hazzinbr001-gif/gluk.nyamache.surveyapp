@@ -1139,19 +1139,7 @@ function spawnParticles(){
   }
 }
 
-// ── Location toggle (Nyamache vs Other) ──
-document.addEventListener('change', e=>{
-  if(e.target.name === 'interview_location'){
-    const otherInput = document.getElementById('loc_other_input');
-    if(!otherInput) return;
-    if(e.target.value === '__other__'){
-      otherInput.style.display = 'block';
-      otherInput.focus();
-    } else {
-      otherInput.style.display = 'none';
-    }
-  }
-});
+// ── Location toggle removed — locations are now fixed chips (no custom input) ──
 
 // ── Run welcome & auth ──
 spawnParticles();
@@ -1468,18 +1456,15 @@ function _showAdminSurveyLock(show){
 }
 
 function homeGoSurvey(){
-  // Admin bypass — show lock screen
+  // Admin bypass — can VIEW the survey dimmed but not submit
   if(localStorage.getItem('chsa_is_admin_bypass')==='1'){
     showToast('Admin view only — survey is locked', true);
+    // Admin — show lock screen instead
     showScreen('lock');
     return;
   }
   if(typeof _autoTimer!=='undefined'&&_autoTimer){clearInterval(_autoTimer);_autoTimer=null;}
   showScreen('survey');
-  // Re-fill interviewer name every time survey is opened from home
-  // This ensures consent form always has the correct name filled in
-  var name = getUserName()||'';
-  if(name && typeof fillInterviewerFields==='function') fillInterviewerFields(name);
 }
 function homeGoAdmin(){
   // Students (non-admin-bypass) cannot access admin dashboard

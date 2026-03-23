@@ -6,7 +6,7 @@ const SECS=[{label:'Consent Form'},{label:'A: Demography'},{label:'B: Housing'},
 //  REQUIRED FIELDS PER SECTION
 // ══════════════════════════════════════════════════════
 const REQS={
-  0:[['consent_given','radio','Respondent Consent'],['interviewer_name','text','Interviewer Name'],['interview_date','text','Interview Date']],
+  0:[['consent_given','radio','Respondent Consent'],['interviewer_name','text','Interviewer Name'],['interview_date','text','Interview Date'],['interview_location','radio','Interview Location']],
   1:[['a_age','text','Age of Respondent'],['a_gender','radio','Gender'],['a_tot_m','text','Total Males'],['a_tot_f','text','Total Females']],
   2:[['b_type','radio','Type of House'],['b_roof','radio','Roofing Material']],
   3:[['c_consult','radio','Consultation Sought']],
@@ -122,6 +122,7 @@ function runAllRules(){
   ruleGenderPosition();
   rulePregnancyGender();
   ruleConsentBlock();
+  ruleLocation();
   ruleSkipMeals();
   ruleMoveAway();
   ruleDeaths();
@@ -447,6 +448,21 @@ function ruleConsentAge(){
 // ── RULE: consent=No blocks going forward (hard gate) ──
 function ruleConsentBlock(){
   // Handled in validate() — if consent=No, block
+}
+
+// ── RULE: Interview location must be one of the 6 approved locations ──
+const VALID_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Igare','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
+function ruleLocation(){
+  const loc = gvRadio('interview_location');
+  const grp = document.querySelector('[name="interview_location"]')?.closest('.form-group');
+  if(!grp) return;
+  if(!loc){
+    showFieldMsg(grp,'\u26A0 Please select a location before proceeding','warn');
+  } else if(!VALID_LOCATIONS.includes(loc)){
+    showFieldMsg(grp,`\u26A0 "${loc}" is not an approved location — please select one of the 6 listed locations`,'warn');
+  } else {
+    clearFieldMsg(grp);
+  }
 }
 
 // ── RULE: Total males + females must equal sum of age brackets ──
@@ -1825,11 +1841,14 @@ ${fg(q('Q1','Interview Date','req')+`<input class="form-input" type="date" name=
 
 ${fg(q('Q2','Interview Location','req')+`
 <div class="chips" style="margin-bottom:8px">
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyamache" value="Nyamache Sub County Hospital"><label for="loc_nyamache">🏥 Nyamache Sub County Hospital</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_other" value="__other__"><label for="loc_other">📍 Other location</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_riakerongo" value="Riakerongo"><label for="loc_riakerongo">📍 Riakerongo</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_rusinga" value="Rusinga Sub-location"><label for="loc_rusinga">📍 Rusinga Sub-location</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_igare" value="Igare"><label for="loc_igare">📍 Igare</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri1" value="Nyakweri 1"><label for="loc_nyakweri1">📍 Nyakweri 1</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri2" value="Nyakweri 2"><label for="loc_nyakweri2">📍 Nyakweri 2</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakiobiri" value="Nyakiobiri"><label for="loc_nyakiobiri">📍 Nyakiobiri</label></div>
 </div>
-<input class="form-input" type="text" id="loc_other_input" name="interview_location_custom" placeholder="Type village / sub-location..." style="display:none;margin-top:4px" autocomplete="off">
-<p class="info-note">Tap 'Other location' to type a custom location</p>`)}
+<p class="info-note">Select the location where this interview is taking place</p>`)}
 
 ${fg(q('Q3','Does respondent consent to this interview?','req')+chips(radio('consent_given','Yes','✓ Yes — Consents')+radio('consent_given','No','✗ No — Declines'))+'<p class="info-note">If respondent declines, stop the interview.</p>')}
 `,'#1a5276','#1f618d');}
