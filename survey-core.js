@@ -1235,7 +1235,21 @@ function updUI(){
 // ══════════════════════════════════════════════════════
 //  RECORDS
 // ══════════════════════════════════════════════════════
-function newRec(){saveCur();recId='R'+Date.now();recs[recId]={_c:new Date().toLocaleString(),_u:new Date().toLocaleString()};ss();loadInto({});goSec(0);renDrw();showToast('New interview started');}
+function newRec(){
+  saveCur();
+  recId='R'+Date.now();
+  recs[recId]={_c:new Date().toLocaleString(),_u:new Date().toLocaleString()};
+  ss();
+  loadInto({});
+  goSec(0);
+  renDrw();
+  // ── Make sure survey screen is visible ──
+  if(typeof showScreen==='function') showScreen('survey');
+  // ── Re-fill interviewer name so consent form is not empty ──
+  var name = typeof getUserName==='function' ? getUserName() : (localStorage.getItem('chsa_user_name')||'');
+  if(name && typeof fillInterviewerFields==='function') fillInterviewerFields(name);
+  showToast('✓ New interview started');
+}
 function loadRec(id){saveCur();recId=id;loadInto(recs[id]||{});goSec(0);closeDrw();showToast('Record loaded');}
 function delRec(id){if(!confirm('Delete this record?'))return;delete recs[id];ss();if(recId===id){recId=null;loadInto({});}renDrw();showToast('Deleted',true);}
 function renDrw(){
@@ -1368,7 +1382,14 @@ async function retryFinishSync(){
     setSyncStatus('error');
   }
 }
-function closeFinish(){document.getElementById('finModal').classList.remove('open');}
+function closeFinish(){
+  document.getElementById('finModal').classList.remove('open');
+  // Make sure survey screen is still visible after closing modal
+  if(typeof showScreen==='function') showScreen('survey');
+  // Re-fill interviewer name in case it got wiped
+  var name = typeof getUserName==='function' ? getUserName() : (localStorage.getItem('chsa_user_name')||'');
+  if(name && typeof fillInterviewerFields==='function') fillInterviewerFields(name);
+}
 
 function openBriefReport(){
   closeFinish();
