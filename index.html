@@ -590,6 +590,7 @@
     <div class="adm-toolbar">
       <div class="adm-btns">
         <button class="adm-btn g" onclick="admLoad()">↻ Refresh</button>
+        <button class="adm-btn" style="background:#e65100;color:#fff" onclick="admNotifyAllBadRecords()">🔔 Notify All Bad Records</button>
         <button class="adm-btn n" onclick="admExportCSV()">⬇ CSV</button>
         <button class="adm-btn a" onclick="admExportJSON()">💾 JSON</button>
         <button class="adm-btn r" onclick="admForceSyncAll()">⬆ Force Sync</button>
@@ -629,6 +630,7 @@
       <div class="adm-chip" onclick="admFilter('no-water',this)">Untreated Water</div>
       <div class="adm-chip" onclick="admFilter('hiv-no',this)">HIV Unaware</div>
       <div class="adm-chip" onclick="admFilter('today',this)">Today</div>
+      <div class="adm-chip" onclick="admFilter('bad-data',this)" style="color:#ff5252;border-color:rgba(211,47,47,.4)">🚫 Bad Date/Location</div>
     </div>
     <div class="adm-tbl-wrap">
       <div class="adm-tbl-hdr"><span class="adm-tbl-title">All Records</span><span id="adm-tbl-count" style="font-size:.72rem;opacity:.8">Loading…</span></div>
