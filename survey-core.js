@@ -2235,3 +2235,62 @@ document.addEventListener('DOMContentLoaded',init);
     setTimeout(function(){nav.style.transform='translateZ(0)';},150);
   });
 })();
+
+// ══════════════════════════════════════════════════════
+//  CORRECTION NOTIFICATIONS — interviewer side
+//  Called from showHomePage in survey-auth.js after login.
+//  Fetches any records the admin has flagged for this user
+//  and shows a prompt with the exact error messages.
+// ══════════════════════════════════════════════════════
+async function checkCorrectionNotifications(){
+  try{
+    var name = localStorage.getItem('chsa_user_name');
+    if(!name) return;
+    var nameEncoded = encodeURIComponent(name);
+    var res = await fetch(
+      SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
+      '?needs_correction=eq.true'+
+      '&interviewer=ilike.'+nameEncoded+
+      '&select=record_id,interview_date,location,correction_notes',
+      {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
+    );
+    if(!res.ok) return;
+    var flagged = await res.json();
+    if(!Array.isArray(flagged)||!flagged.length) return;
+    showCorrectionPrompt(flagged);
+  }catch(e){
+    console.warn('Correction check failed:',e);
+  }
+}
+
+function showCorrectionPrompt(records){
+  document.getElementById('correction-prompt')?.remove();
+  var items = records.map(function(r){
+    return '<div style="background:#fff3f3;border:1px solid #e57373;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.78rem;line-height:1.6">'+
+      '<strong>📅 '+(r.interview_date||'Unknown date')+' &nbsp;·&nbsp; 📍 '+(r.location||'Unknown location')+'</strong><br>'+
+      '<span style="color:#c62828">'+(r.correction_notes||'Admin has flagged this record — please re-open and correct it.')+'</span>'+
+    '</div>';
+  }).join('');
+  var el = document.createElement('div');
+  el.id = 'correction-prompt';
+  el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'+
+    'background:linear-gradient(135deg,#b71c1c,#c0392b);color:#fff;'+
+    'padding:16px 18px 22px;border-radius:18px 18px 0 0;'+
+    'box-shadow:0 -4px 24px rgba(0,0,0,.3);font-family:inherit;'+
+    'max-height:65vh;overflow-y:auto;';
+  el.innerHTML =
+    '<div style="font-size:1rem;font-weight:800;margin-bottom:3px">🚨 Admin: Correction Required</div>'+
+    '<div style="font-size:0.74rem;opacity:.85;margin-bottom:12px">'+records.length+' of your record(s) have been flagged and must be corrected.</div>'+
+    items+
+    '<div style="display:flex;gap:10px;margin-top:14px">'+
+      '<button onclick="document.getElementById(\'correction-prompt\').remove()" '+
+        'style="flex:1;padding:10px;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:10px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:inherit">'+
+        '✕ Dismiss'+
+      '</button>'+
+      '<button onclick="document.getElementById(\'correction-prompt\').remove();if(typeof showScreen===\'function\')showScreen(\'list\')" '+
+        'style="flex:2;padding:10px;background:#fff;color:#c0392b;border:none;border-radius:10px;font-weight:800;font-size:.8rem;cursor:pointer;font-family:inherit">'+
+        '📋 Go to My Records'+
+      '</button>'+
+    '</div>';
+  document.body.appendChild(el);
+}

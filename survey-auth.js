@@ -417,85 +417,15 @@ async function authInit(){
       });
       return;
     }
-    // Returning student — check records then show greeting
+    // Returning student — show greeting then enter
     const first = session.full_name.split(' ')[0];
     localStorage.setItem('chsa_user_name', session.full_name);
     fillInterviewerFields(session.full_name);
-    _checkLocalRecordsOnLogin(session, function(){ showReturningGreeting(first); });
+    showReturningGreeting(first);
   }
   // New user: wait for lamp interaction → login
 }
 
-
-// ── On-login record integrity check — date and location only ──
-const _SURVEY_START = '2026-03-23';
-const _VALID_LOCS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri','Mosasa','Igare','Nyamegondo 1','Nyamegondo 2','Bomobasi','Nyakeobiri 1','Nyakeobiri','Masanga'];
-
-function _showIssuesOverlay(issues, onClear){
-  var ov=document.createElement('div');
-  ov.id='correction-overlay';
-  ov.style.cssText='position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;padding:20px;font-family:"Plus Jakarta Sans",sans-serif';
-  var ih=issues.map(function(i){
-    return '<div style="background:rgba(211,47,47,.15);border:1px solid rgba(211,47,47,.35);border-radius:8px;padding:10px 12px;margin-bottom:8px;color:#ff8a80;font-size:.78rem;text-align:left;line-height:1.5">'+i+'</div>';
-  }).join('');
-  ov.innerHTML='<div style="background:linear-gradient(160deg,#1a0808,#0a0a18);border:1.5px solid rgba(211,47,47,.45);border-radius:22px;padding:28px 22px;width:100%;max-width:400px;text-align:center">'
-    +'<div style="font-size:2.4rem;margin-bottom:10px">⚠️</div>'
-    +'<div style="color:#ff5252;font-size:1.05rem;font-weight:800;margin-bottom:6px">Action Required</div>'
-    +'<div style="color:rgba(255,255,255,.45);font-size:.72rem;margin-bottom:14px">You have records with wrong date or location. Fix these before your data can be accepted.</div>'
-    +ih
-    +'<button id="correction-ok-btn" style="margin-top:16px;width:100%;padding:13px;background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.88rem;font-weight:800;cursor:pointer">⚠️ I Understand — I Will Fix These</button>'
-    +'</div>';
-  document.body.appendChild(ov);
-  document.getElementById('correction-ok-btn').onclick=function(){
-    var e=document.getElementById('correction-overlay');if(e)e.remove();onClear();
-  };
-}
-
-async function _checkLocalRecordsOnLogin(session, onClear){
-  var issues=[];
-
-  // 1. All local records (synced or not) — date and location only
-  try{
-    var stored=JSON.parse(localStorage.getItem('chsa4')||'{}');
-    Object.keys(stored).forEach(function(id){
-      var rec=stored[id];
-      if(typeof rec!=='object'||rec===null||id.startsWith('_')) return;
-      var date=rec.interview_date||'';
-      var loc=rec.interview_location||rec.interview_location_custom||'';
-      var synced=rec._synced?' (already uploaded)':' (not yet uploaded)';
-      if(date&&date<_SURVEY_START)
-        issues.push('📅 Record'+synced+' dated "'+date+'" is before survey start ('+_SURVEY_START+'). Open it and correct the date.');
-      if(loc&&!_VALID_LOCS.includes(loc))
-        issues.push('📍 Record'+synced+' has invalid location "'+loc+'". Open it and select an approved location.');
-      if(!loc)
-        issues.push('📍 A record'+synced+' has no location set. Open it and fix.');
-    });
-  }catch(e){}
-
-  // 2. Server — uploaded records flagged by admin (date/location issues only)
-  if(navigator.onLine&&session.full_name){
-    try{
-      var ivName=encodeURIComponent(session.full_name.trim());
-      var url=SUPABASE_URL+'/rest/v1/'+SYNC_TABLE
-        +'?interviewer=eq.'+ivName
-        +'&needs_correction=eq.true'
-        +'&select=record_id,interview_date,location,correction_notes';
-      var res=await fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
-      if(res.ok){
-        var flagged=await res.json();
-        if(Array.isArray(flagged)){
-          flagged.forEach(function(r){
-            var notes=r.correction_notes||'Wrong date or location — please correct.';
-            issues.push('🚨 Uploaded record ('+(r.interview_date||'?')+' — '+(r.location||'?')+'): '+notes);
-          });
-        }
-      }
-    }catch(e){}
-  }
-
-  if(!issues.length){onClear();return;}
-  _showIssuesOverlay(issues,onClear);
-}
 
 function authShowAuthCard(){
   if(!_lampOn) lampPull();
@@ -1500,6 +1430,8 @@ function showHomePage(){
   }
   var adminNote=document.getElementById('hp-admin-note');
   if(adminNote) adminNote.style.display=isAdmin?'block':'none';
+  // Notify interviewer if admin has flagged any of their records
+  if(!isAdmin && typeof checkCorrectionNotifications==='function') checkCorrectionNotifications();
 }
 function _hpStats(){
   try{
