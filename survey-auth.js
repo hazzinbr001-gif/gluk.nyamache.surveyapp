@@ -462,24 +462,24 @@ async function _checkLocalRecordsOnLogin(session, onClear){
       var date=rec.interview_date||'';
       var loc=rec.interview_location||rec.interview_location_custom||'';
       if(date&&date<_SURVEY_START)
-        issues.push('\U0001f4c5 Local record dated "'+date+'" is before survey start ('+_SURVEY_START+'). Open it and correct the date.');
+        issues.push('📅 Local record dated "'+date+'" is before survey start ('+_SURVEY_START+'). Open it and correct the date.');
       if(loc&&!_VALID_LOCS.includes(loc))
-        issues.push('\U0001f4cd Local record has invalid location "'+loc+'". Open it and select an approved location.');
+        issues.push('📍 Local record has invalid location "'+loc+'". Open it and select an approved location.');
       if(!loc)
-        issues.push('\U0001f4cd A local record has no location. Open it and fix.');
+        issues.push('📍 A local record has no location. Open it and fix.');
     });
   }catch(e){}
 
   // 2. Admission number
   var reg=session.reg_number||'';
-  if(!reg||reg==='\u2014') issues.push('\U0001f4cb Your admission number is missing. Update your profile.');
-  else if(reg!=='ADMIN'&&!_ADNUM_RE.test(reg)) issues.push('\U0001f4cb Admission number "'+reg+'" wrong format. Expected: B11/GLUK/S53K/2022');
+  if(!reg||reg==='\u2014') issues.push('📋 Your admission number is missing. Update your profile.');
+  else if(reg!=='ADMIN'&&!_ADNUM_RE.test(reg)) issues.push('📋 Admission number "'+reg+'" wrong format. Expected: B11/GLUK/S53K/2022');
 
   // 3. Server — uploaded records flagged by admin
   if(navigator.onLine&&session.full_name){
     try{
       var ivName=encodeURIComponent(session.full_name.trim());
-      var url=SUPABASE_URL+'/rest/v1/health_survey_record'
+      var url=SUPABASE_URL+'/rest/v1/'+SYNC_TABLE
         +'?interviewer=eq.'+ivName
         +'&needs_correction=eq.true'
         +'&select=record_id,interview_date,location,correction_notes';
@@ -489,7 +489,7 @@ async function _checkLocalRecordsOnLogin(session, onClear){
         if(Array.isArray(flagged)){
           flagged.forEach(function(r){
             var notes=r.correction_notes||'Wrong date or location \u2014 please correct.';
-            issues.push('\U0001f6a8 Uploaded record ('+(r.interview_date||'?')+' \u2014 '+(r.location||'?')+'): '+notes);
+            issues.push('🚨 Uploaded record ('+(r.interview_date||'?')+' \u2014 '+(r.location||'?')+'): '+notes);
           });
         }
       }
