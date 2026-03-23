@@ -175,9 +175,20 @@ function admLoad(){
   });
 }
 
+const APPROVED_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
+
 function admGetFlags(r){
   const raw=typeof r.raw_json==='string'?JSON.parse(r.raw_json||'{}'):(r.raw_json||{});
   const fl=[];
+
+  // ── LOCATION FLAG: must be one of the 5 approved locations ──
+  const loc = r.location || raw.interview_location || raw.interview_location_custom || '';
+  if(!loc){
+    fl.push('\u26A0 Location missing — interviewer must re-open and select a location');
+  } else if(!APPROVED_LOCATIONS.includes(loc)){
+    fl.push(`\u26A0 Invalid location "${loc}" — must be one of: ${APPROVED_LOCATIONS.join(', ')}`);
+  }
+
   if(r.latrine==='No') fl.push('No pit latrine');
   if(r.water_treated==='No') fl.push('Water not treated');
   if(r.hiv_heard==='No') fl.push('Never heard of HIV/AIDS');
@@ -299,11 +310,12 @@ function admRenderTable(){
   tbody.innerHTML=filtered.map((r,i)=>{
     const fl=admGetFlags(r);
     const idx=_admRecs.indexOf(r);
-    return `<tr onclick="admOpenDetail(${idx})">
+    const hasLocFlag = fl.some(f=>f.includes('location')||f.includes('Location'));
+    return `<tr onclick="admOpenDetail(${idx})" style="${hasLocFlag?'background:rgba(211,47,47,0.08);border-left:3px solid #d32f2f':''}">
       <td style="color:#aaa;font-size:.7rem">${i+1}</td>
       <td class="adm-td-name">${r.interviewer||'—'}</td>
       <td class="adm-td-date">${r.interview_date||'—'}</td>
-      <td style="font-size:.75rem">${r.location||'—'}</td>
+      <td style="font-size:.75rem;${hasLocFlag?'color:#d32f2f;font-weight:700':''}">${hasLocFlag?'🚨 ':''} ${r.location||'—'}</td>
       <td style="font-size:.75rem">${r.respondent_age||'?'} · ${r.respondent_gender||'?'}</td>
       <td><span class="adm-badge grey">${r.house_type||'—'}</span></td>
       <td><span class="adm-badge ${r.latrine==='Yes'?'ok':'red'}">${r.latrine||'—'}</span></td>
@@ -353,7 +365,12 @@ function admOpenDetail(idx){
       <div class="adm-detail-item"><div class="adm-detail-key">Deaths(5yr)</div><div class="adm-detail-val">${r.deaths_5yr==='Yes'?(r.deaths_count||'?')+' death(s)':'No'}</div></div>
     </div>
     <div class="adm-detail-sec-title">🚨 Red Flags</div>
-    ${fl.length?fl.map(f=>`<div class="adm-df-red">🚨 ${f}</div>`).join(''):'<div class="adm-df-ok">✅ No red flags</div>'}`;
+    ${fl.length?fl.map(f=>{
+      const isLocFlag = f.includes('location')||f.includes('Location')||f.includes('Invalid location');
+      return isLocFlag
+        ? `<div class="adm-df-red" style="background:#fdecea;border:1.5px solid #d32f2f;padding:10px 12px;border-radius:8px;margin-bottom:6px;font-weight:700">🚨 WRONG LOCATION — Record needs correction<br><span style="font-size:0.75rem;font-weight:400;color:#555">${f}</span><br><span style="font-size:0.72rem;color:#c62828;font-weight:600">The interviewer must re-open this record and select a valid location before it can be trusted.</span></div>`
+        : `<div class="adm-df-red">🚨 ${f}</div>`;
+    }).join(''):'<div class="adm-df-ok">✅ No red flags</div>'}`;
   document.getElementById('adm-detail-ov').classList.add('open');
 }
 function admCloseDetail(){ document.getElementById('adm-detail-ov').classList.remove('open'); }

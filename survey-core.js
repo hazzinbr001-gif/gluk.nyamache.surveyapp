@@ -450,16 +450,16 @@ function ruleConsentBlock(){
   // Handled in validate() — if consent=No, block
 }
 
-// ── RULE: Interview location must be one of the 6 approved locations ──
-const VALID_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Igare','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
+// ── RULE: Interview location must be one of the 5 approved locations ──
+const VALID_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
 function ruleLocation(){
   const loc = gvRadio('interview_location');
   const grp = document.querySelector('[name="interview_location"]')?.closest('.form-group');
   if(!grp) return;
   if(!loc){
-    showFieldMsg(grp,'\u26A0 Please select a location before proceeding','warn');
+    showFieldMsg(grp,'\u26A0 Location required — select one of the 6 approved areas before you can submit this record','warn');
   } else if(!VALID_LOCATIONS.includes(loc)){
-    showFieldMsg(grp,`\u26A0 "${loc}" is not an approved location — please select one of the 6 listed locations`,'warn');
+    showFieldMsg(grp,`\u{1F6AB} "${loc}" is NOT an approved location. This record cannot be submitted. Go back to Consent and change the location to one of: Riakerongo, Rusinga Sub-location, Nyakweri 1, Nyakweri 2, or Nyakiobiri`,'warn');
   } else {
     clearFieldMsg(grp);
   }
@@ -1173,7 +1173,15 @@ function showBlockedModal(title, body, btn){
   m.querySelector('.modal-title').textContent=title;
   m.querySelector('.modal-body').textContent=body;
   const btns=m.querySelector('.modal-btns');
-  btns.innerHTML=`
+  // Location block — show a direct "Go to Page 1" button
+  const isLocBlock = title.includes('Location') || title.includes('location');
+  btns.innerHTML = isLocBlock ? `
+    <button class="mbtn mbtn-p" onclick="closeFinish();goSec(0);" style="background:#c0392b;color:#fff">
+      \u{1F6AB} Go to Page 1 — Fix Location
+    </button>
+    <button class="mbtn mbtn-s" onclick="closeFinish()">
+      Cancel
+    </button>` : `
     <button class="mbtn mbtn-p" onclick="closeFinish()" style="background:var(--green)">
       ← Go Back &amp; Change Answer
     </button>
@@ -1307,6 +1315,19 @@ function showToast(m,e=false){const t=document.getElementById('toast');t.textCon
 // ══════════════════════════════════════════════════════
 async function showFinish(){
   if(!validate(cur))return;
+
+  // ── HARD BLOCK: location must be one of the 5 approved locations ──
+  const _loc = document.querySelector('[name="interview_location"]:checked')?.value || '';
+  if(!_loc || !VALID_LOCATIONS.includes(_loc)){
+    const _badLoc = _loc || 'none selected';
+    showBlockedModal(
+      '\u{1F6AB} Invalid Location — Cannot Submit',
+      `This record has location: "${_badLoc}"\n\nYou must go back to the Consent section (Page 1) and select one of the 5 approved locations:\n\n• Riakerongo\n• Rusinga Sub-location\n• Nyakweri 1\n• Nyakweri 2\n• Nyakiobiri\n\nThe record will NOT be uploaded until this is corrected.`,
+      'Go Back & Fix'
+    );
+    return;
+  }
+
   saveCur();
   // Mark this record as finished — only finished records are uploaded
   if(recId && recs[recId]){ recs[recId]._finished=true; ss(); }
@@ -1843,7 +1864,6 @@ ${fg(q('Q2','Interview Location','req')+`
 <div class="chips" style="margin-bottom:8px">
   <div class="chip"><input type="radio" name="interview_location" id="loc_riakerongo" value="Riakerongo"><label for="loc_riakerongo">📍 Riakerongo</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_rusinga" value="Rusinga Sub-location"><label for="loc_rusinga">📍 Rusinga Sub-location</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_igare" value="Igare"><label for="loc_igare">📍 Igare</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri1" value="Nyakweri 1"><label for="loc_nyakweri1">📍 Nyakweri 1</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri2" value="Nyakweri 2"><label for="loc_nyakweri2">📍 Nyakweri 2</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_nyakiobiri" value="Nyakiobiri"><label for="loc_nyakiobiri">📍 Nyakiobiri</label></div>
