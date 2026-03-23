@@ -240,7 +240,7 @@ function admRenderAll(){
 function admUpdateStats(){
   document.getElementById('adm-stat-total').textContent=_admRecs.length;
   document.getElementById('adm-stat-today').textContent=_admRecs.filter(r=>r.interview_date===_admToday).length;
-  document.getElementById('adm-stat-flags').textContent=_admRecs.filter(r=>admGetFlags(r).length>0).length;
+  document.getElementById('adm-stat-flags').textContent=_admRecs.filter(r=>admGetFlags(r).some(f=>f.includes('Wrong date')||f.includes('Date missing')||f.includes('Invalid location')||f.includes('Location missing'))).length;
   document.getElementById('adm-stat-iv').textContent=new Set(_admRecs.map(r=>r.interviewer)).size;
 }
 
@@ -248,7 +248,11 @@ function admRenderFlags(){
   const panel=document.getElementById('adm-flags-panel');
   const list=document.getElementById('adm-flags-list');
   const all=[];
-  _admRecs.forEach(r=>admGetFlags(r).forEach(f=>all.push({who:r.interviewer||'?',date:r.interview_date||'?',flag:f})));
+  // Only show date and location flags in the panel
+  _admRecs.forEach(r=>admGetFlags(r).filter(f=>
+    f.includes('Wrong date')||f.includes('Date missing')||
+    f.includes('Invalid location')||f.includes('Location missing')
+  ).forEach(f=>all.push({who:r.interviewer||'?',date:r.interview_date||'?',flag:f})));
   if(!all.length){panel.style.display='none';return;}
   panel.style.display='block';
   document.getElementById('adm-flags-count').textContent=all.length+' total';
