@@ -175,13 +175,26 @@ function admLoad(){
   });
 }
 
-const APPROVED_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
+const APPROVED_LOCATIONS = [
+  'Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri',
+  'Mosasa','Igare','Nyamegondo 1','Nyamegondo 2','Bomobasi',
+  'Nyakeobiri 1','Nyakeobiri 2','Masanga'
+];
+const MIN_INTERVIEW_DATE = '2026-03-23';
 
 function admGetFlags(r){
   const raw=typeof r.raw_json==='string'?JSON.parse(r.raw_json||'{}'):(r.raw_json||{});
   const fl=[];
 
-  // ── LOCATION FLAG: must be one of the 5 approved locations ──
+  // ── DATE FLAG: must be today or later ──
+  const d = r.interview_date || '';
+  if(!d){
+    fl.push('⚠ Interview date missing — interviewer must set a valid date');
+  } else if(d < MIN_INTERVIEW_DATE){
+    fl.push(`⚠ Invalid date "${d}" — dates before ${MIN_INTERVIEW_DATE} are not accepted. Interviewer must correct this record.`);
+  }
+
+  // ── LOCATION FLAG: must be one of the 13 approved locations ──
   const loc = r.location || raw.interview_location || raw.interview_location_custom || '';
   if(!loc){
     fl.push('\u26A0 Location missing — interviewer must re-open and select a location');
@@ -311,17 +324,27 @@ function admRenderTable(){
     const fl=admGetFlags(r);
     const idx=_admRecs.indexOf(r);
     const hasLocFlag = fl.some(f=>f.includes('location')||f.includes('Location'));
-    return `<tr onclick="admOpenDetail(${idx})" style="${hasLocFlag?'background:rgba(211,47,47,0.08);border-left:3px solid #d32f2f':''}">
+    const hasDateFlag = fl.some(f=>f.includes('date')||f.includes('Date'));
+    const isFlagged = r.needs_correction;
+    return `<tr onclick="admOpenDetail(${idx})" style="${
+      isFlagged ? 'background:rgba(103,58,183,0.09);border-left:3px solid #6c3483' :
+      hasDateFlag ? 'background:rgba(245,124,0,0.08);border-left:3px solid #f57c00' :
+      hasLocFlag ? 'background:rgba(211,47,47,0.08);border-left:3px solid #d32f2f' : ''
+    }">
       <td style="color:#aaa;font-size:.7rem">${i+1}</td>
       <td class="adm-td-name">${r.interviewer||'—'}</td>
-      <td class="adm-td-date">${r.interview_date||'—'}</td>
+      <td class="adm-td-date" style="${hasDateFlag?'color:#e65100;font-weight:700':''}">${hasDateFlag?'📅 ':''} ${r.interview_date||'—'}</td>
       <td style="font-size:.75rem;${hasLocFlag?'color:#d32f2f;font-weight:700':''}">${hasLocFlag?'🚨 ':''} ${r.location||'—'}</td>
       <td style="font-size:.75rem">${r.respondent_age||'?'} · ${r.respondent_gender||'?'}</td>
       <td><span class="adm-badge grey">${r.house_type||'—'}</span></td>
       <td><span class="adm-badge ${r.latrine==='Yes'?'ok':'red'}">${r.latrine||'—'}</span></td>
       <td><span class="adm-badge ${r.water_treated==='Yes'?'ok':'red'}">${r.water_treated||'—'}</span></td>
       <td><span class="adm-badge ${r.hiv_heard==='Yes'?'ok':'red'}">${r.hiv_heard||'—'}</span></td>
-      <td>${fl.length?`<span class="adm-badge red">🚨 ${fl.length}</span>`:`<span class="adm-badge ok">✓</span>`}</td>
+      <td>
+        ${isFlagged?`<span class="adm-badge" style="background:#ede7f6;color:#6c3483;border:1px solid #b39ddb">✏ Fix</span>`:''}
+        ${hasDateFlag?`<span class="adm-badge" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80">📅 Date</span>`:''}
+        ${fl.length?`<span class="adm-badge red">🚨 ${fl.length}</span>`:`<span class="adm-badge ok">✓</span>`}
+      </td>
       <td style="white-space:nowrap">
         <button class="adm-row-btn" onclick="event.stopPropagation();openInterviewerReport('${r.interviewer}')" style="background:#e8f0fd;color:#1a4f6e">📑</button>
       </td>
@@ -342,7 +365,7 @@ function admOpenDetail(idx){
     <div class="adm-detail-sec-title">Interview</div>
     <div class="adm-detail-grid">
       <div class="adm-detail-item"><div class="adm-detail-key">Interviewer</div><div class="adm-detail-val">${r.interviewer||'—'}</div></div>
-      <div class="adm-detail-item"><div class="adm-detail-key">Date</div><div class="adm-detail-val">${r.interview_date||'—'}</div></div>
+      <div class="adm-detail-item"><div class="adm-detail-key">Date</div><div class="adm-detail-val" style="${r.interview_date && r.interview_date < MIN_INTERVIEW_DATE ? 'color:#d32f2f;font-weight:700' : ''}">${r.interview_date && r.interview_date < MIN_INTERVIEW_DATE ? '🚨 ' : ''}${r.interview_date||'—'}</div></div>
       <div class="adm-detail-item"><div class="adm-detail-key">Location</div><div class="adm-detail-val">${r.location||'—'}</div></div>
       <div class="adm-detail-item"><div class="adm-detail-key">Consent</div><div class="adm-detail-val">${r.consent||'—'}</div></div>
     </div>
@@ -367,10 +390,20 @@ function admOpenDetail(idx){
     <div class="adm-detail-sec-title">🚨 Red Flags</div>
     ${fl.length?fl.map(f=>{
       const isLocFlag = f.includes('location')||f.includes('Location')||f.includes('Invalid location');
-      return isLocFlag
-        ? `<div class="adm-df-red" style="background:#fdecea;border:1.5px solid #d32f2f;padding:10px 12px;border-radius:8px;margin-bottom:6px;font-weight:700">🚨 WRONG LOCATION — Record needs correction<br><span style="font-size:0.75rem;font-weight:400;color:#555">${f}</span><br><span style="font-size:0.72rem;color:#c62828;font-weight:600">The interviewer must re-open this record and select a valid location before it can be trusted.</span></div>`
-        : `<div class="adm-df-red">🚨 ${f}</div>`;
-    }).join(''):'<div class="adm-df-ok">✅ No red flags</div>'}`;
+      const isDateFlag = f.includes('date')||f.includes('Date')||f.includes('Invalid date');
+      if(isDateFlag) return `<div class="adm-df-red" style="background:#fff3e0;border:1.5px solid #f57c00;padding:10px 12px;border-radius:8px;margin-bottom:6px;font-weight:700;color:#e65100">📅 WRONG DATE — Record needs correction<br><span style="font-size:0.75rem;font-weight:400;color:#555">${f}</span><br><span style="font-size:0.72rem;color:#e65100;font-weight:600">The interviewer must re-open and set a valid date (${MIN_INTERVIEW_DATE} or later).</span></div>`;
+      if(isLocFlag) return `<div class="adm-df-red" style="background:#fdecea;border:1.5px solid #d32f2f;padding:10px 12px;border-radius:8px;margin-bottom:6px;font-weight:700">🚨 WRONG LOCATION — Record needs correction<br><span style="font-size:0.75rem;font-weight:400;color:#555">${f}</span><br><span style="font-size:0.72rem;color:#c62828;font-weight:600">The interviewer must re-open this record and select a valid location before it can be trusted.</span></div>`;
+      return `<div class="adm-df-red">🚨 ${f}</div>`;
+    }).join(''):'<div class="adm-df-ok">✅ No red flags</div>'}
+    ${r.needs_correction ? `
+    <div style="margin-top:10px;background:#ede7f6;border:1.5px solid #9c27b0;border-radius:10px;padding:11px 13px">
+      <div style="font-size:0.72rem;font-weight:800;color:#6c3483;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">✏ Flagged for Correction</div>
+      <div style="font-size:0.78rem;color:#333;line-height:1.6;margin-bottom:10px">${r.correction_note||'Interviewer notified to fix this record.'}</div>
+      <button class="adm-btn g" style="width:100%;padding:10px;font-size:.8rem" onclick="admUnflagCorrection(${idx})">✓ Clear Correction Flag</button>
+    </div>` : `
+    <div style="margin-top:14px">
+      <button class="adm-btn r" style="width:100%;padding:11px;font-size:.82rem;font-weight:800" onclick="admFlagForCorrection(${idx})">🚨 Flag for Correction — Notify Interviewer</button>
+    </div>`}`;
   document.getElementById('adm-detail-ov').classList.add('open');
 }
 function admCloseDetail(){ document.getElementById('adm-detail-ov').classList.remove('open'); }
@@ -789,3 +822,84 @@ async function admSetStudentStatus(regNumber, status){
   }
 }
 
+
+// ══════════════════════════════════════════════════════
+//  ADMIN — FLAG / UNFLAG RECORDS FOR CORRECTION
+// ══════════════════════════════════════════════════════
+
+async function admFlagForCorrection(idx) {
+  const r = _admRecs[idx];
+  if (!r) return;
+
+  // Pre-fill prompt with the first detected flag or a generic message
+  const fl = admGetFlags(r);
+  const defaultNote = fl.length > 0
+    ? fl.find(f => f.includes('location') || f.includes('Location')) || fl[0]
+    : 'Please correct the location and/or date, then re-submit this record.';
+
+  const note = prompt(
+    `Flag record for correction?\n\nInterviewer: ${r.interviewer || '?'}\nDate: ${r.interview_date || '?'}\nLocation: ${r.location || '?'}\n\nEdit the message the interviewer will see when they next open the app:`,
+    defaultNote
+  );
+  if (note === null) return; // user cancelled
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: 'Bearer ' + SUPABASE_KEY,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({ needs_correction: true, correction_note: note.trim() })
+      }
+    );
+    if (res.ok || res.status === 204) {
+      showToast('🚨 Flagged — interviewer will be prompted on next login');
+      _admRecs[idx].needs_correction = true;
+      _admRecs[idx].correction_note = note.trim();
+      admCloseDetail();
+      admRenderAll();
+    } else {
+      showToast('⚠ Could not flag record — check Supabase RLS policy', true);
+    }
+  } catch (e) {
+    showToast('⚠ Network error: ' + e.message, true);
+  }
+}
+
+async function admUnflagCorrection(idx) {
+  const r = _admRecs[idx];
+  if (!r) return;
+  if (!confirm(`Remove correction flag from this record?\n\n${r.interviewer || '?'} · ${r.interview_date || '?'} · ${r.location || '?'}\n\nThe interviewer will no longer be prompted to fix it.`)) return;
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: 'Bearer ' + SUPABASE_KEY,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({ needs_correction: false, correction_note: null })
+      }
+    );
+    if (res.ok || res.status === 204) {
+      showToast('✓ Correction flag cleared');
+      _admRecs[idx].needs_correction = false;
+      _admRecs[idx].correction_note = null;
+      admCloseDetail();
+      admRenderAll();
+    } else {
+      showToast('⚠ Could not clear flag — check Supabase RLS policy', true);
+    }
+  } catch (e) {
+    showToast('⚠ Network error: ' + e.message, true);
+  }
+}
