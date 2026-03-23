@@ -175,7 +175,7 @@ function admLoad(){
   });
 }
 
-const APPROVED_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri','Mosasa','Igare','Nyamegondo 1','Nyamegondo 2','Bomobasi','Nyakeobiri 1','Nyakeobiri','Masanga'];
+const APPROVED_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
 
 function admGetFlags(r){
   const raw=typeof r.raw_json==='string'?JSON.parse(r.raw_json||'{}'):(r.raw_json||{});
@@ -188,28 +188,6 @@ function admGetFlags(r){
   } else if(!APPROVED_LOCATIONS.includes(loc)){
     fl.push(`\u26A0 Invalid location "${loc}" — must be one of: ${APPROVED_LOCATIONS.join(', ')}`);
   }
-
-  // ── DATE FLAG ──
-  const dv = r.interview_date||'';
-  if(!dv){ fl.push('⚠ Date missing'); }
-  else if(dv < SURVEY_START_DATE){ fl.push('⚠ Wrong date "'+dv+'" — before survey start (2026-03-23). Must be corrected.'); }
-
-  // ── BLANK RECORD FLAG ──
-  const filled=[r.respondent_age,r.respondent_gender,r.house_type].filter(function(x){return x&&String(x).trim();}).length;
-  if(filled===0) fl.push('⚠ Blank record — age, gender & house type all missing. Likely incomplete.');
-  else if(filled<2) fl.push('⚠ Nearly blank — most key fields empty. Interview may be incomplete.');
-
-  // ── NAME FORMAT FLAG ──
-  const nm=(r.interviewer||'').trim();
-  if(!nm){ fl.push('⚠ Interviewer name missing'); }
-  else if(nm.split(/\s+/).filter(Boolean).length<2){ fl.push('⚠ Name "'+nm+'" incomplete — full name required (First + Last)'); }
-  else if(/[^a-zA-Z\s\-\']/.test(nm)){ fl.push('⚠ Name "'+nm+'" has unexpected characters — please verify'); }
-
-  // ── ADMISSION NUMBER FLAG ──
-  const AREG=/^B\d+\/[A-Z0-9]+\/[A-Z0-9]+\/\d{4}$/;
-  const adnum=r.reg_number||raw.reg_number||'';
-  if(!adnum||adnum==='—'){ fl.push('⚠ Admission number missing — interviewer must update profile'); }
-  else if(!AREG.test(adnum)){ fl.push('⚠ Admission "'+adnum+'" wrong format — expected e.g. B11/GLUK/S53K/2022'); }
 
   if(r.latrine==='No') fl.push('No pit latrine');
   if(r.water_treated==='No') fl.push('Water not treated');
@@ -230,12 +208,6 @@ function admGetFiltered(){
     if(_admFilter==='no-water'&&r.water_treated!=='No') return false;
     if(_admFilter==='hiv-no'&&r.hiv_heard!=='No') return false;
     if(_admFilter==='today'&&r.interview_date!==_admToday) return false;
-    if(_admFilter==='bad-data'){
-      const fl2=admGetFlags(r);
-      const hasBadDate=fl2.some(f=>f.includes('date')||f.includes('Date'));
-      const hasBadLoc=fl2.some(f=>f.includes('location')||f.includes('Location'));
-      if(!hasBadDate&&!hasBadLoc) return false;
-    }
     return true;
   });
 }
@@ -338,10 +310,7 @@ function admRenderTable(){
   tbody.innerHTML=filtered.map((r,i)=>{
     const fl=admGetFlags(r);
     const idx=_admRecs.indexOf(r);
-    const hasLocFlag  = fl.some(f=>f.includes('location')||f.includes('Location'));
-    const hasDateFlag = fl.some(f=>f.includes('date')||f.includes('Date'));
-    const hasCritical = hasLocFlag||hasDateFlag;
-    const notified    = r.needs_correction===true;
+    const hasLocFlag = fl.some(f=>f.includes('location')||f.includes('Location'));
     return `<tr onclick="admOpenDetail(${idx})" style="${hasLocFlag?'background:rgba(211,47,47,0.08);border-left:3px solid #d32f2f':''}">
       <td style="color:#aaa;font-size:.7rem">${i+1}</td>
       <td class="adm-td-name">${r.interviewer||'—'}</td>
@@ -432,55 +401,6 @@ async function admDelete(idx){
   }catch(e){
     showToast('⚠ Network error during delete',true);
   }
-}
-
-async function admNotifyInterviewer(idx){
-  const r=_admRecs[idx!==undefined?idx:_admDetailIdx];
-  if(!r){showToast('No record',true);return;}
-  const fl=admGetFlags(r);
-  const bad=fl.filter(f=>f.includes('date')||f.includes('Date')||f.includes('location')||f.includes('Location')||f.includes('Blank')||f.includes('Admission'));
-  if(!bad.length){showToast('No data issues on this record');return;}
-  if(!navigator.onLine){showToast('No internet — cannot notify',true);return;}
-  const notes=bad.join(' | ');
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-      method:'PATCH',
-      headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-      body:JSON.stringify({needs_correction:true,correction_notes:notes})
-    });
-    if(res.ok||res.status===204){
-      r.needs_correction=true;r.correction_notes=notes;
-      if(_admDetail&&_admDetail.record_id===r.record_id){_admDetail.needs_correction=true;_admDetail.correction_notes=notes;}
-      showToast('\u2705 '+(r.interviewer||'Interviewer')+' notified \u2014 will see prompt on next login');
-      admRenderAll();
-    }else{
-      showToast('\u26a0 Notify failed ('+res.status+') \u2014 add needs_correction column in Supabase first',true);
-    }
-  }catch(e){showToast('\u26a0 Network error: '+e.message,true);}
-}
-
-async function admNotifyAllBadRecords(){
-  if(!navigator.onLine){showToast('No internet — cannot notify',true);return;}
-  const bad=_admRecs.filter(r=>{
-    const fl=admGetFlags(r);
-    return fl.some(f=>f.includes('date')||f.includes('Date')||f.includes('location')||f.includes('Location'))&&!r.needs_correction;
-  });
-  if(!bad.length){showToast('\u2705 No unnotified bad records found');return;}
-  if(!confirm('Send correction notice to '+bad.length+' record(s)?\n\nInterviewers will see a blocking prompt on their next login listing exactly what to fix.')) return;
-  let ok=0,fail=0;
-  for(const r of bad){
-    const notes=admGetFlags(r).filter(f=>f.includes('date')||f.includes('Date')||f.includes('location')||f.includes('Location')).join(' | ');
-    try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-        method:'PATCH',
-        headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-        body:JSON.stringify({needs_correction:true,correction_notes:notes})
-      });
-      if(res.ok||res.status===204){r.needs_correction=true;r.correction_notes=notes;ok++;}else fail++;
-    }catch(e){fail++;}
-  }
-  showToast('\u2705 Notified '+ok+' record(s)'+(fail?' \u2014 '+fail+' failed':''));
-  admRenderAll();
 }
 
 function admExportCSV(){
