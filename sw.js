@@ -1,15 +1,14 @@
 // ═══════════════════════════════════════════════════════════
-//  Community Health Survey — Service Worker  v3.3
+//  Community Health Survey — Service Worker
 //  Great Lakes University · Nyamache Sub County Hospital
 //
-//  ONLINE:  Auto-update, force-reload ALL open PWA windows
+//  ONLINE:  Auto-update, reload once with fresh files
 //  OFFLINE: Serve from cache instantly — no disruption
 //
-//  ► Bump CACHE_VERSION to force update on ALL installed PWAs
-//  ► On update: old cache wiped, all windows reloaded automatically
+//  Bump CACHE_VERSION to push update to ALL installed PWAs
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_VERSION = 'chsa-v3.3';
+const CACHE_VERSION = 'chsa-v3.5';
 const CACHE_NAME    = CACHE_VERSION;
 
 const APP_FILES = [
@@ -22,89 +21,56 @@ const APP_FILES = [
   './survey-sync.js',
   './survey-reports.js',
   './manifest.json',
-  './version.json',
   './icon-192.png',
 ];
 
-// ── INSTALL: cache all app files immediately ──
+// ── INSTALL ──
+// skipWaiting() here means this SW activates immediately
+// even on devices that had an old SW — no waiting for tabs to close
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(APP_FILES))
-      .then(() => self.skipWaiting())   // activate immediately, no waiting
+      .then(() => self.skipWaiting())  // ← activate immediately, no waiting
   );
 });
 
-// ── ACTIVATE: wipe ALL old caches, claim clients, notify all windows ──
+// ── ACTIVATE: wipe old caches, claim all clients ──
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => {
-          console.log('[SW v3.3] Deleting old cache:', k);
-          return caches.delete(k);
-        })
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
       .then(() => {
-        // Tell every open window: new version is live.
-        // survey-core.js listens for SW_UPDATED and reloads the page
-        // after a short delay so any in-progress work can be saved.
-        return self.clients
-          .matchAll({ type: 'window', includeUncontrolled: true })
-          .then(clients => {
-            clients.forEach(client => {
-              client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
-            });
-          });
+        // Tell all open windows: new version active
+        // Pages will reload only if they are online
+        return self.clients.matchAll({type: 'window'}).then(clients => {
+          clients.forEach(c => c.postMessage({type: 'SW_UPDATED'}));
+        });
       })
   );
 });
 
-// ── FETCH strategy ──
-//   version.json  → always network (never stale)
-//   .js / .css    → network-first  (fresh code on every load when online)
-//   everything else → cache-first + background refresh
+// ── FETCH: Cache-first ──
+// Online:  serve cache instantly + update cache in background
+// Offline: serve cache only — no network attempt, no errors
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== location.origin) return;
-
-  // ── version.json: NEVER cache ──
+  // Never cache version.json — must always be fetched fresh
   if (url.pathname.endsWith('/version.json')) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .catch(() => new Response('{}', {
-          headers: { 'Content-Type': 'application/json' }
-        }))
-    );
+    event.respondWith(fetch(event.request, {cache: 'no-store'}).catch(() => new Response('{}', {headers:{'Content-Type':'application/json'}})));
     return;
   }
 
-  // ── JS / CSS: network-first so code updates are never blocked by stale cache ──
-  const isCode = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
-  if (isCode) {
-    event.respondWith(
-      fetch(event.request)
-        .then(res => {
-          if (res && res.status === 200) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return res;
-        })
-        .catch(() =>
-          caches.open(CACHE_NAME).then(cache => cache.match(event.request))
-        )
-    );
-    return;
-  }
-
-  // ── Everything else: cache-first + background refresh ──
   event.respondWith(
     caches.open(CACHE_NAME).then(cache =>
       cache.match(event.request).then(cached => {
         if (navigator.onLine) {
+          // Background refresh
           const fresh = fetch(event.request)
             .then(res => {
               if (res && res.status === 200) cache.put(event.request, res.clone());
@@ -113,35 +79,16 @@ self.addEventListener('fetch', event => {
             .catch(() => cached);
           return cached || fresh;
         }
+        // Offline — cache only
         return cached || caches.match('./index.html');
       })
     )
   );
 });
 
-// ── Messages from the page ──
+// ── Handle SKIP_WAITING from page (for old SWs) ──
 self.addEventListener('message', event => {
-  if (!event.data) return;
-
-  // Legacy: page triggers skip-waiting manually
-  if (event.data.type === 'SKIP_WAITING') {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
-  }
-
-  // Page asks what SW version is running (used by version-check in survey-core.js)
-  if (event.data.type === 'GET_VERSION') {
-    event.source?.postMessage({ type: 'SW_VERSION', version: CACHE_VERSION });
-  }
-
-  // After a corrected record is re-submitted, broadcast to all other open tabs
-  // so their admin dashboard or record list refreshes automatically
-  if (event.data.type === 'SYNC_COMPLETE') {
-    self.clients.matchAll({ type: 'window' }).then(clients => {
-      clients.forEach(c => {
-        if (c !== event.source) {
-          c.postMessage({ type: 'SYNC_COMPLETE', from: 'peer' });
-        }
-      });
-    });
   }
 });
