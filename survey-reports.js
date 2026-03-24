@@ -81,7 +81,8 @@ html,body{
   font-family:'Plus Jakarta Sans','Arial',sans-serif;
   font-size:9pt;
   color:#111;
-  background:#ccc;
+  background:linear-gradient(160deg,#0d1b2a 0%,#1a2e44 50%,#0d2233 100%);
+  min-height:100vh;
   -webkit-print-color-adjust:exact;
   print-color-adjust:exact;
 }
@@ -746,12 +747,12 @@ function buildGroupReport(records, students){
   }).join('');
 
   const grecs=[];
-  if(_pct(lat,n)<80)  grecs.push({l:'critical',t:'Priority 1: Latrine Programme',b:'Class-wide latrine coverage '+_pct(lat,n)+'% below 80% national target. '+(n-lat)+' households require immediate CLTS follow-up. Formally notify Sub-County Sanitation Officer.'});
-  if(_pct(wat,n)<80)  grecs.push({l:'critical',t:'Priority 2: Safe Water Campaign',b:'Water treatment at '+_pct(wat,n)+'% is below threshold. Mass WaterGuard distribution and community hygiene demonstrations required immediately.'});
-  if(_pct(hiv,n)<90)  grecs.push({l:'critical',t:'Priority 3: HIV/AIDS Outreach',b:'Awareness at '+_pct(hiv,n)+'% falls below UNAIDS 90% benchmark. Structured community health education with mobile VCT services is urgently required.'});
-  if(ills.length&&ills[0][1]>n*0.15) grecs.push({l:'warning',t:'Disease: '+ills[0][0],b:ills[0][0]+' is most prevalent class-wide ('+ills[0][1]+' cases, '+_pct(ills[0][1],n)+'%). Targeted prevention, early treatment and community education recommended.'});
-  if(dHH>n*0.1) grecs.push({l:'warning',t:'Mortality Investigation',b:dHH+' households ('+_pct(dHH,n)+'%) reported '+dTot+' deaths in 5 years. A verbal autopsy programme should be initiated.'});
-  grecs.push({l:'good',t:'Scheduled Follow-Up',b:'All red-flag households to receive a follow-up visit within 30 days. Full repeat survey in 6 months to measure progress on key indicators.'});
+  if(_pct(lat,n)<80)  grecs.push({l:'critical',t:'Priority 1: Latrine Construction Programme',b:'Class-wide pit latrine coverage of '+_pct(lat,n)+'% falls below the 80% national target. The '+(n-lat)+' households without latrines require immediate prioritisation under the Community-Led Total Sanitation (CLTS) programme. A formal notification should be submitted to the Sub-County Sanitation Officer.'});
+  if(_pct(wat,n)<80)  grecs.push({l:'critical',t:'Priority 2: Safe Water Campaign',b:'Water treatment coverage of '+_pct(wat,n)+'% falls below the recommended threshold. Mass distribution of WaterGuard chlorine solution and community-level hygiene demonstrations are required without delay.'});
+  if(_pct(hiv,n)<90)  grecs.push({l:'critical',t:'Priority 3: HIV/AIDS Community Outreach',b:'HIV/AIDS awareness at '+_pct(hiv,n)+'% falls below the UNAIDS 90% benchmark. A structured community health education programme with mobile Voluntary Counselling and Testing (VCT) services is urgently required to close this gap.'});
+  if(ills.length&&ills[0][1]>n*0.15) grecs.push({l:'warning',t:'Disease Burden: '+ills[0][0],b:ills[0][0]+' is the most prevalent condition class-wide, reported in '+ills[0][1]+' households ('+_pct(ills[0][1],n)+'%). Targeted prevention strategies, early treatment access, and community health education focused on this condition are strongly recommended.'});
+  if(dHH>n*0.1) grecs.push({l:'warning',t:'Mortality Investigation',b:dHH+' households ('+_pct(dHH,n)+'%) reported a combined total of '+dTot+' deaths within the past five years. A structured verbal autopsy programme should be initiated to identify cause-specific mortality and inform health resource planning.'});
+  grecs.push({l:'good',t:'Scheduled Follow-Up Visits',b:'All households identified with red flags are to receive a follow-up visit within 30 days of this report. A full repeat survey should be conducted within six months to measure progress across all key health indicators.'});
 
   // Estimate total pages: cover + 3 summary pages + per-IV detail pages
   // Each IV gets ~20 cases = ~1 page, but we pack 2 IVs per page if <12 cases each
@@ -793,11 +794,11 @@ function buildGroupReport(records, students){
   const p2 = _pg(H(2,TOTAL), F(2,TOTAL), 'cols2',
     '<div>'
     +'<h2 class="sec">Executive Summary</h2>'
-    +'<p class="bt">Aggregated findings from <strong>'+n+' household interviews</strong> conducted by <strong>'+ivs.length+' student interviewer'+(ivs.length!==1?'s':'')+
-      '</strong> ('+ivs.join(', ')+') across <strong>'+locStr+'</strong> during <strong>'+period+'</strong>. Part of the Community Health Situation Analysis programme at Great Lakes University of Kisumu, Nyamache Sub County Hospital.</p>'
-    +'<p class="bt">Class-level indicators: latrine <strong>'+_pct(lat,n)+'%</strong> · water treatment <strong>'+_pct(wat,n)+'%</strong> · HIV awareness <strong>'+_pct(hiv,n)+'%</strong>'
-      +(ills.length?' · Leading illness: <strong>'+ills[0][0]+'</strong>':'')
-      +'. <strong>'+allF+' red flag'+(allF!==1?'s':'')+' identified</strong> across all interviews.</p>'
+    +'<p class="bt">This report presents aggregated findings from <strong>'+n+' household interviews</strong> conducted by <strong>'+ivs.length+' student interviewer'+(ivs.length!==1?'s':'')+
+      '</strong> — namely '+ivs.join(', ')+' — across communities in <strong>'+locStr+'</strong> during the period <strong>'+period+'</strong>. The assessment was carried out as part of the Community Health Situation Analysis programme at Great Lakes University of Kisumu, in collaboration with Nyamache Sub County Hospital.</p>'
+    +'<p class="bt">At the class level, key health indicators were recorded as follows: pit latrine coverage <strong>'+_pct(lat,n)+'%</strong>, safe water treatment <strong>'+_pct(wat,n)+'%</strong>, and HIV/AIDS awareness <strong>'+_pct(hiv,n)+'%</strong>'
+      +(ills.length?', with <strong>'+ills[0][0]+'</strong> emerging as the most frequently reported illness across surveyed households':'')
+      +'. A total of <strong>'+allF+' red flag'+(allF!==1?'s were':' was')+' identified</strong> across all interviews, each requiring documented follow-up and targeted intervention.</p>'
     +'<div class="sr">'
       +_sb(n,'Total HHs','blu')
       +_sb(ivs.length,'Interviewers','blu')
@@ -807,8 +808,8 @@ function buildGroupReport(records, students){
       +_sb(allF,'Red Flags',allF>0?'red':'')
     +'</div>'
     +'<h2 class="sec">1. Introduction &amp; Methods</h2>'
-    +'<p class="bt">This group report presents aggregated findings of the community health situation analysis practical exercise conducted by students of Great Lakes University of Kisumu in partnership with Nyamache Sub County Hospital, Kisii County. Aligned with Kenya Health Policy 2014–2030 and SDG Goal 3: Good Health and Well-Being.</p>'
-    +'<p class="bt">Descriptive cross-sectional study using a structured 12-section questionnaire administered face-to-face to consenting adult household representatives. Data captured via the Community Health Survey PWA and synchronised to a secure cloud database.</p>'
+    +'<p class="bt">This group report consolidates the findings of the community health situation analysis practicum conducted by students of Great Lakes University of Kisumu in partnership with Nyamache Sub County Hospital, Kisii County. The assessment is conducted in alignment with Kenya Health Policy 2014–2030 and contributes directly to the objectives of Sustainable Development Goal 3: Good Health and Well-Being.</p>'
+    +'<p class="bt">A descriptive cross-sectional design was employed, utilising a structured 12-section questionnaire administered face-to-face to consenting adult household representatives. All data were captured digitally via the Community Health Survey Progressive Web Application (PWA) and synchronised in real time to a secure cloud-hosted database for central analysis.</p>'
     +'</div>'
     +'<div>'
     +'<h2 class="sec">2. Key Indicators</h2>'
@@ -853,14 +854,14 @@ function buildGroupReport(records, students){
     +'<div>'
     +'<h2 class="sec">4. Discussion</h2>'
     +'<p class="bt">'+(_pct(lat,n)<80
-      ?'Class-wide latrine coverage of '+_pct(lat,n)+'% is '+(80-_pct(lat,n))+'pts below the 80% national target — the most critical gap identified. Open defecation in '+(n-lat)+' households creates faecal-oral disease risk.'
-      :'Latrine coverage of '+_pct(lat,n)+'% meets the national target — a positive class-wide achievement.')+'</p>'
+      ?'Class-wide pit latrine coverage stands at '+_pct(lat,n)+'%, which is '+(80-_pct(lat,n))+' percentage points below the national target of 80%. This represents the most critical gap identified across the class dataset. The '+(n-lat)+' households without latrines continue to practise open defecation, posing a direct and ongoing risk of faecal-oral disease transmission — particularly for children under five years of age.'
+      :'Pit latrine coverage of '+_pct(lat,n)+'% meets the national target of 80%, which is a commendable class-wide achievement. Sustained community engagement is essential to maintain and build upon this progress.')+'</p>'
     +'<p class="bt">'+(_pct(wat,n)<80
-      ?'Water treatment at '+_pct(wat,n)+'% is below threshold — high waterborne disease risk across unprotected households. Priority intervention required.'
-      :'Water treatment at '+_pct(wat,n)+'% is satisfactory.')+'</p>'
-    +'<p class="bt">Inter-interviewer variation reflects genuine community-level heterogeneity. Areas with lower indicator scores should receive priority intervention.</p>'
+      ?'Safe water treatment coverage at '+_pct(wat,n)+'% falls below the recommended threshold. A significant proportion of households are consuming untreated water, placing them at heightened risk of waterborne illnesses including diarrhoeal disease, typhoid, and cholera. This finding demands immediate and prioritised intervention.'
+      :'Water treatment coverage of '+_pct(wat,n)+'% is satisfactory, indicating positive community uptake of safe water practices. Health education should be maintained to consolidate these gains.')+'</p>'
+    +'<p class="bt">Variation between individual interviewers in the indicator scores is expected and reflects genuine community-level differences across the surveyed locations. Areas recording lower indicator scores should be designated as priority zones for targeted health promotion and resource allocation.</p>'
     +'<h2 class="sec">5. Conclusion</h2>'
-    +'<p class="bt">This class-wide assessment provides systematic evidence on household health in Nyamache Sub County. Findings confirm preventable health risks amenable to targeted interventions. Submitted to the course coordinator, Nyamache Sub County Hospital and Kisii County Department of Health for review and action planning.</p>'
+    +'<p class="bt">This class-wide health situation analysis provides systematic, community-level evidence on household health in Nyamache Sub County. The findings confirm the presence of preventable health risks that are amenable to targeted, well-coordinated interventions. The report is hereby submitted to the course coordinator at Great Lakes University of Kisumu, to Nyamache Sub County Hospital, and to the Kisii County Department of Health for review, action planning, and integration into the sub-county health planning cycle.</p>'
     +'</div>'
     +'<div>'
     +'<h2 class="sec">6. Recommendations</h2>'
@@ -935,7 +936,7 @@ function buildGroupReport(records, students){
   // Final page: signatures
   const pSig = _pg(H(pgNum,TOTAL),F(pgNum,TOTAL),'',
     '<h2 class="sec">Submission &amp; Approval</h2>'
-    +'<p class="bt">This report is submitted on behalf of the <strong>Community Health Practical Group</strong>, Great Lakes University of Kisumu. Data was collected by '+ivs.join(', ')+' under faculty supervision and Nyamache Sub County Hospital.</p>'
+    +'<p class="bt">This report is submitted on behalf of the <strong>Community Health Practical Group</strong>, Great Lakes University of Kisumu. All household data was independently collected by '+ivs.join(', ')+', under faculty supervision at Great Lakes University of Kisumu and in collaboration with the clinical and community health team at Nyamache Sub County Hospital, Kisii County.</p>'
     +'<table class="dt" style="margin-bottom:8pt">'
     +'<thead><tr><th>Interviewer</th><th>Reg / Admission No.</th><th>Email</th><th>HHs</th></tr></thead>'
     +'<tbody>'+ivs.map(iv=>{
