@@ -70,7 +70,7 @@ async function _getStudentDetails(fullName){
 // ─────────────────────────────────────────────────────────────────
 //  SHARED CSS
 //  Letter 8.5×11in fixed-height pages.
-//  All print via browser's native Print → Save as PDF.
+//  All print via browser\u2019s native Print → Save as PDF.
 //  No double-scroll. No gaps. Fits 15-20 cases cleanly.
 // ─────────────────────────────────────────────────────────────────
 const RPT_CSS = `
@@ -498,18 +498,16 @@ function buildInterviewerReport(interviewer, records, student){
     +'</div>'
   );
 
-  // ── PAGE 2: Executive Summary + Intro + Methods ──
-  const p2 = _pg(H(2,TOTAL), F(2,TOTAL), 'cols2',
-    // LEFT COLUMN
-    '<div>'
-    +'<h2 class="sec">Executive Summary</h2>'
+  // ── PAGE 2: Executive Summary + Intro + Methods (single column, fluent prose) ──
+  const p2 = _pg(H(2,TOTAL), F(2,TOTAL), '',
+    '<h2 class="sec">Executive Summary</h2>'
     +'<p class="bt">This report presents findings from <strong>'+n+' household interview'+(n!==1?'s':'')+
       '</strong> conducted by <strong>'+fullName+'</strong> in <strong>'+locStr+
-      '</strong> during <strong>'+period+'</strong>. Part of the Community Health Situation Analysis programme at Great Lakes University of Kisumu, Nyamache Sub County Hospital.</p>'
-    +'<p class="bt">Key indicators: latrine coverage <strong>'+_pct(lat,n)+'%</strong> · water treatment <strong>'+_pct(wat,n)+'%</strong> · HIV awareness <strong>'+_pct(hiv,n)+'%</strong>. '
-      +(ills.length?'Most prevalent illness: <strong>'+ills[0][0]+'</strong> ('+ills[0][1]+' cases, '+_pct(ills[0][1],n)+'%). ':'')
-      +(dHH>0?dTot+' death'+(dTot!==1?'s':'')+' reported. ':'')
-      +'<strong>'+allF.length+' red flag'+(allF.length!==1?'s':'')+' identified.</strong></p>'
+      '</strong> during the survey period of <strong>'+period+'</strong>. The assessment was carried out as part of the Community Health Situation Analysis programme at Great Lakes University of Kisumu, in collaboration with Nyamache Sub County Hospital, Kisii County. The primary objective was to systematically document the prevailing health conditions, identify risk factors, and generate actionable evidence to inform health planning at the sub-county level.</p>'
+    +'<p class="bt">Key indicators recorded during this assessment are as follows: latrine coverage stood at <strong>'+_pct(lat,n)+'%</strong>, water treatment coverage at <strong>'+_pct(wat,n)+'%</strong>, and HIV/AIDS awareness at <strong>'+_pct(hiv,n)+'%</strong> among surveyed households. '
+      +(ills.length?'The most prevalent illness reported was <strong>'+ills[0][0]+'</strong>, affecting '+ills[0][1]+' out of '+n+' households surveyed ('+_pct(ills[0][1],n)+'%). ':'No illnesses were reported across the surveyed households. ')
+      +(dHH>0?'A total of <strong>'+dTot+' death'+(dTot!==1?'s':'')+' in the past five years</strong> were reported across '+dHH+' household'+(dHH!==1?'s':'')+', underscoring the need for mortality surveillance and verbal autopsy investigations. ':'')
+      +'Overall, <strong>'+allF.length+' red flag'+(allF.length!==1?'s were':' was')+' identified</strong> across the surveyed households, each requiring documented follow-up and intervention.</p>'
     +'<div class="sr">'
       +_sb(n,'Households','blu')
       +_sb(_pct(lat,n)+'%','Latrine',_pct(lat,n)<60?'red':_pct(lat,n)<80?'amb':'')
@@ -519,32 +517,34 @@ function buildInterviewerReport(interviewer, records, student){
       +_sb(dTot,'Deaths 5yr',dTot?'amb':'')
     +'</div>'
     +'<h2 class="sec">1. Introduction</h2>'
-    +'<p class="bt"><strong>'+fullName+'</strong> (Admission No: <strong>'+regNo+'</strong>'+(email!=='—'?' · '+email:'')+') conducted this assessment as a student health worker at Great Lakes University of Kisumu, under faculty supervision in collaboration with Nyamache Sub County Hospital health management team.</p>'
-    +'<p class="bt">Survey area: <strong>'+locStr+'</strong>, covering <strong>'+n+' household'+(n!==1?'s':'')+
-      '</strong> during <strong>'+period+'</strong>. Objectives: (i) document prevailing health conditions and disease burden; (ii) identify social and environmental health determinants; (iii) assess essential health service coverage; (iv) generate evidence-based recommendations.</p>'
-    +'</div>'
-    // RIGHT COLUMN
-    +'<div>'
+    +'<p class="bt"><strong>'+fullName+'</strong> (Admission No: <strong>'+regNo+'</strong>'+(email!=='—'?' · '+email:'')+') conducted this community health assessment as a student health worker at Great Lakes University of Kisumu, under the supervision of faculty and in collaboration with the Nyamache Sub County Hospital health management team. This work forms part of the university\u2019s practical training requirement in Community Health, designed to equip students with the skills to assess, document, and respond to community health needs in real-world settings.</p>'
+    +'<p class="bt">The survey was conducted in <strong>'+locStr+'</strong>, covering <strong>'+n+' household'+(n!==1?'s':'')+
+      '</strong> during the period <strong>'+period+'</strong>. The specific objectives of this assessment were: (i) to document the prevailing health conditions and disease burden within the surveyed community; (ii) to identify social, environmental, and behavioural health determinants; (iii) to assess coverage of essential health services including water, sanitation, and HIV/AIDS programmes; and (iv) to generate evidence-based recommendations for health improvement that can be acted upon by the sub-county health authorities.</p>'
     +'<h2 class="sec">2. Methods</h2>'
-    +'<p class="bt">Descriptive cross-sectional household survey using a structured 12-section questionnaire covering: Consent, Demography, Housing, Medical History, Maternal &amp; Child Health, Nutrition, HIV/AIDS, Sanitation, Environment &amp; Water, Cultural Practices, Health Problems, and Pests &amp; Vectors.</p>'
-    +'<p class="bt">Data captured digitally using the Community Health Survey PWA and synchronised to a secure cloud database. Verbal informed consent obtained from each respondent prior to interview. Respondents were informed of the purpose, their right to withdraw, and confidentiality of their responses.</p>'
+    +'<p class="bt">A descriptive cross-sectional household survey design was employed, using a structured 12-section questionnaire developed by the Community Health Survey programme. The questionnaire covered the following thematic areas: Consent, Demography, Housing &amp; Environment, Medical History, Maternal &amp; Child Health, Nutrition, HIV/AIDS Awareness and Testing, Sanitation, Water &amp; Environment, Cultural Practices, Community Health Problems, and Pests &amp; Vectors.</p>'
+    +'<p class="bt">Data was captured digitally using the Community Health Survey Progressive Web Application (PWA) and synchronised to a secure cloud database in real time. Verbal informed consent was obtained from each household respondent prior to the commencement of the interview. Each respondent was fully informed of the purpose of the survey, their right to decline or withdraw participation at any point, and the confidentiality of their responses. Households were selected through purposive community sampling, coordinated in collaboration with the local sub-county health office.</p>'
     +'<h2 class="sec">Socio-Demographic Profile</h2>'
     +'<div class="sr">'+_sb(n,'Households','blu')+_sb(fem,'Female','blu')+_sb(mal,'Male','blu')+_sb(aAge,'Avg Age','blu')+_sb(perm,'Permanent','')+_sb(locs.length,'Locations','blu')+'</div>'
-    +'<table class="dt"><thead><tr><th>Housing</th><th class="c">Count</th><th class="c">%</th></tr></thead>'
+    +'<table class="dt"><thead><tr><th>Housing Type</th><th class="c">Count</th><th class="c">%</th></tr></thead>'
     +'<tbody>'
     +'<tr><td class="lbl">Permanent</td><td class="c">'+perm+'</td><td class="c">'+_pct(perm,n)+'%</td></tr>'
     +'<tr><td class="lbl">Semi-permanent</td><td class="c">'+semi+'</td><td class="c">'+_pct(semi,n)+'%</td></tr>'
     +'<tr><td class="lbl">Temporary</td><td class="c">'+tmp+'</td><td class="c">'+_pct(tmp,n)+'%</td></tr>'
     +'</tbody></table>'
-    +'</div>'
   );
 
-  // ── PAGE 3: Results — WASH + HIV + Disease ──
-  const p3 = _pg(H(3,TOTAL), F(3,TOTAL), 'cols2',
-    // LEFT: WASH + HIV
-    '<div>'
-    +'<h2 class="sec">3. Results — WASH Indicators</h2>'
+  // ── PAGE 3: Results — WASH + HIV + Disease (single column, fluent prose) ──
+  const p3 = _pg(H(3,TOTAL), F(3,TOTAL), '',
+    '<h2 class="sec">3. Results — WASH Indicators</h2>'
+    +'<p class="bt">Water, Sanitation and Hygiene (WASH) indicators are among the most critical determinants of community health outcomes, particularly in rural settings. The following results were recorded across the '+n+' households surveyed in '+locStr+'.</p>'
+    +'<p class="bt"><strong>Pit Latrine Coverage:</strong> Out of '+n+' households, <strong>'+lat+'</strong> ('+ _pct(lat,n)+'%) reported having a pit latrine. '
+      +(_pct(lat,n)>=80?'This meets the national target of ≥80% latrine coverage, which is an encouraging achievement for this community. Continued efforts should focus on maintaining and improving existing sanitation infrastructure.':'This falls below the national target of ≥80%, meaning that <strong>'+(n-lat)+' household'+(n-lat!==1?'s':'')+' still practise open defecation</strong>. Open defecation is a significant public health risk, directly linked to the transmission of diarrhoeal diseases, cholera, and typhoid fever, particularly among children under five years of age. Immediate action is required under the Community-Led Total Sanitation (CLTS) programme.')
+    +'</p>'
     +_bar('Pit Latrine Coverage', lat, n)
+    +'<p class="bt"><strong>Water Treatment:</strong> Only <strong>'+wat+'</strong> out of '+n+' households ('+_pct(wat,n)+'%) reported treating their drinking water before consumption. '
+      +(_pct(wat,n)>=80?'This is above the recommended threshold, indicating strong community uptake of safe water practices.':'This is significantly below the recommended threshold of ≥80%. Untreated water is one of the leading causes of waterborne disease in Kenya, including diarrhoea, dysentery, and typhoid. The remaining <strong>'+(n-wat)+' household'+(n-wat!==1?'s':'')+
+      '</strong> require urgent access to point-of-use water treatment products such as WaterGuard chlorine solution, alongside community education on safe water storage and handling.')
+    +'</p>'
     +_bar('Water Treatment', wat, n)
     +'<table class="dt" style="margin-top:4pt">'
     +'<thead><tr><th>WASH Indicator</th><th class="c">Yes</th><th class="c">No</th><th class="c">%</th><th class="c">Target</th><th class="c">Met</th></tr></thead>'
@@ -553,6 +553,14 @@ function buildInterviewerReport(interviewer, records, student){
     +'<tr><td class="lbl">Water treatment</td><td class="c">'+wat+'</td><td class="c">'+(n-wat)+'</td><td class="c">'+_pct(wat,n)+'%</td><td class="c">&ge;80%</td><td class="c">'+S(_pct(wat,n),80)+'</td></tr>'
     +'</tbody></table>'
     +'<h2 class="sec">HIV/AIDS Indicators</h2>'
+    +'<p class="bt">HIV/AIDS awareness and testing coverage are key benchmarks under the UNAIDS 95-95-95 targets and Kenya\u2019s national HIV response strategy. The following levels of awareness and testing uptake were recorded in this survey.</p>'
+    +'<p class="bt"><strong>HIV/AIDS Awareness:</strong> <strong>'+hiv+'</strong> out of '+n+' respondents ('+_pct(hiv,n)+'%) reported having heard of HIV/AIDS. '
+      +(_pct(hiv,n)>=90?'This meets the UNAIDS 90% awareness benchmark, which is commendable.':'This falls below the UNAIDS 90% target. The <strong>'+(n-hiv)+' respondent'+(n-hiv!==1?'s':'')+' who '+( (n-hiv)===1?'has':'have')+' never heard of HIV/AIDS</strong> represent a particularly vulnerable group who are unable to protect themselves or access testing and treatment services. Targeted outreach by Community Health Workers is urgently required.')
+    +'</p>'
+    +'<p class="bt"><strong>HIV Testing:</strong> <strong>'+tst+'</strong> out of '+n+' respondents ('+_pct(tst,n)+'%) reported having ever been tested for HIV. '
+      +(_pct(tst,n)>=95?'Testing coverage meets the UNAIDS 95% target.':'Testing coverage of '+_pct(tst,n)+'% falls short of the 95% target. The <strong>'+(n-tst)+' untested respondent'+(n-tst!==1?'s':'')+
+      '</strong> should be actively linked to voluntary counselling and testing (VCT) services at Nyamache Sub County Hospital, where testing is free and confidential.')
+    +'</p>'
     +_bar('HIV/AIDS Awareness', hiv, n)
     +_bar('Ever Tested for HIV', tst, n)
     +'<table class="dt" style="margin-top:4pt">'
@@ -561,15 +569,14 @@ function buildInterviewerReport(interviewer, records, student){
     +'<tr><td class="lbl">HIV awareness</td><td class="c">'+hiv+'</td><td class="c">'+(n-hiv)+'</td><td class="c">'+_pct(hiv,n)+'%</td><td class="c">&ge;90%</td><td class="c">'+S(_pct(hiv,n),90)+'</td></tr>'
     +'<tr><td class="lbl">Ever tested</td><td class="c">'+tst+'</td><td class="c">'+(n-tst)+'</td><td class="c">'+_pct(tst,n)+'%</td><td class="c">&ge;95%</td><td class="c">'+S(_pct(tst,n),95)+'</td></tr>'
     +'</tbody></table>'
-    +'</div>'
-    // RIGHT: Disease + Flags
-    +'<div>'
     +'<h2 class="sec">Disease Burden</h2>'
     +(ills.length
-      ?'<table class="dt"><thead><tr><th>Illness / Condition</th><th class="c">Cases</th><th class="c">% HHs</th><th class="c">Rank</th></tr></thead>'
+      ?'<p class="bt">The following illnesses and health conditions were reported by respondents as having affected household members in the six months preceding this survey. It should be noted that these figures are based on self-reported data and do not constitute clinical diagnoses.</p>'
+        +'<table class="dt"><thead><tr><th>Illness / Condition</th><th class="c">Cases</th><th class="c">% HHs</th><th class="c">Rank</th></tr></thead>'
         +'<tbody>'+ills.map(([k,v],i)=>'<tr><td class="lbl">'+k+'</td><td class="c">'+v+'</td><td class="c">'+_pct(v,n)+'%</td><td class="c">#'+(i+1)+'</td></tr>').join('')+'</tbody></table>'
-      :'<p class="note">No illness data recorded across all surveyed households.</p>')
-    +(dHH>0?_fl('warning','Mortality Reported',dHH+' household'+(dHH!==1?'s':'')+' reported '+dTot+' death'+(dTot!==1?'s':'')+' in past 5 years. Verbal autopsy investigation recommended.'):'')
+        +(ills.length?'<p class="bt">The most prevalent condition reported was <strong>'+ills[0][0]+'</strong>, affecting '+ills[0][1]+' household'+(ills[0][1]!==1?'s':'')+' ('+_pct(ills[0][1],n)+'%). '+(ills[0][0]==='Malaria'?'Malaria remains the leading cause of morbidity in Kisii County and is directly associated with stagnant water, inadequate bed net usage, and poor housing. Vector control interventions are urgently needed.':ills[0][0].includes('Diarrh')||ills[0][0].includes('diarrh')?'The prevalence of diarrhoeal disease is closely linked to the low water treatment coverage identified above. Improving household water safety practices would be expected to reduce this burden significantly.':'This finding highlights a need for targeted community health education and improved access to treatment at the nearest health facility.')+'</p>':'')
+      :'<p class="note">No illness data was recorded across the surveyed households during this assessment period.</p>')
+    +(dHH>0?_fl('warning','Mortality Reported',dHH+' household'+(dHH!==1?'s':'')+' reported a total of '+dTot+' death'+(dTot!==1?'s':'')+' in the past five years. While the cause of death has not been clinically verified, verbal autopsy investigations are strongly recommended to determine cause-specific mortality and inform targeted interventions.'):'')
     +'<h2 class="sec">Red Flags Identified</h2>'
     +(allF.length
       ?allF.slice(0,10).map(({r,f})=>'<div class="fc"><div class="ft">&#9888; '+f+'</div>'
@@ -638,36 +645,36 @@ function buildInterviewerReport(interviewer, records, student){
     +'</div>'
   );
 
-  // Declaration + signatures — appended to last page's content
-  // Rebuild last page with declaration below the two columns
+  // Declaration + signatures — last page, single column, full fluent prose
   const pLastFull = '<div class="pg">'
     +H(lastPg,TOTAL)
-    +'<div class="pg-body cols2">'
-    +'<div>'
+    +'<div class="pg-body">'
     +'<h2 class="sec">5. Discussion</h2>'
-    +'<p class="bt">'+(_pct(lat,n)<80
-      ?'Latrine coverage of '+_pct(lat,n)+'% falls '+(80-_pct(lat,n))+'pts below the 80% national target. Open defecation in '+(n-lat)+' household'+(n-lat!==1?'s':'')+' creates direct faecal-oral disease transmission risk.'
-      :'Latrine coverage of '+_pct(lat,n)+'% meets the national target — commendable. Sustain through continued community engagement.')+'</p>'
-    +'<p class="bt">'+(_pct(wat,n)<80
-      ?'Water treatment at '+_pct(wat,n)+'% requires urgent WaterGuard distribution and hygiene promotion.'
-      :'Water treatment at '+_pct(wat,n)+'% is satisfactory.')+'</p>'
-    +'<p class="bt">'+(_pct(hiv,n)<90
-      ?'HIV awareness at '+_pct(hiv,n)+'% below UNAIDS 90% target. '+(n-hiv)+' respondent'+(n-hiv!==1?'s':'')+' unaware — immediate outreach required.'
-      :'HIV awareness at '+_pct(hiv,n)+'% meets the benchmark.')+'</p>'
-    +(ills.length?'<p class="bt">'+ills[0][0]+' is most prevalent ('+ills[0][1]+' cases, '+_pct(ills[0][1],n)+'%).</p>':'')
+    +'<p class="bt">The findings of this assessment reflect health conditions that are broadly consistent with patterns documented across rural communities in Kisii County and sub-Saharan Africa more widely. Each of the key indicators recorded during this survey is discussed below in relation to national targets and established public health evidence.</p>'
+    +'<p class="bt"><strong>Sanitation:</strong> '+(_pct(lat,n)<80
+      ?'Latrine coverage of <strong>'+_pct(lat,n)+'%</strong> falls <strong>'+(80-_pct(lat,n))+' percentage points below</strong> the national target of 80%. The <strong>'+(n-lat)+' household'+(n-lat!==1?'s':'')+' without pit latrines</strong> represent a direct and ongoing risk of faecal-oral disease transmission. In densely settled communities, open defecation is one of the most significant contributors to child mortality through diarrhoeal disease, cholera, and soil-transmitted helminth infections. This finding requires urgent follow-up under the Community-Led Total Sanitation (CLTS) programme.'
+      :'Latrine coverage of <strong>'+_pct(lat,n)+'%</strong> meets the national target of 80%. This is a commendable achievement that reflects positive community behaviour change. Continued engagement is necessary to maintain and improve upon this coverage, particularly ensuring that latrines are functional, hygienic, and accessible to all household members including the elderly and persons with disabilities.')+'</p>'
+    +'<p class="bt"><strong>Water Safety:</strong> '+(_pct(wat,n)<80
+      ?'Water treatment coverage of <strong>'+_pct(wat,n)+'%</strong> is critically below the recommended threshold. The majority of households are consuming untreated water, exposing themselves to a range of preventable waterborne illnesses. This finding is particularly alarming given '+(ills.some(([k])=>k.toLowerCase().includes('diarrh'))?'the prevalence of diarrhoeal disease identified in this survey, which is directly linked to unsafe drinking water practices.':'the known relationship between untreated water and diarrhoeal disease, which remains a leading cause of child mortality in Kenya.')+' Urgent distribution of WaterGuard chlorine solution and community education on safe water handling is strongly recommended.'
+      :'Water treatment coverage of <strong>'+_pct(wat,n)+'%</strong> is satisfactory, demonstrating good community uptake of safe water practices. Health education should be maintained to sustain this coverage and address any remaining gaps.')+'</p>'
+    +'<p class="bt"><strong>HIV/AIDS:</strong> '+(_pct(hiv,n)<90
+      ?'HIV/AIDS awareness at <strong>'+_pct(hiv,n)+'%</strong> falls below the UNAIDS 90% target. The <strong>'+(n-hiv)+' respondent'+(n-hiv!==1?'s':'')+' who '+((n-hiv)===1?'has':'have')+' never heard of HIV/AIDS</strong> cannot be expected to adopt protective behaviours, seek testing, or access treatment. Targeted door-to-door outreach by Community Health Workers and mobile VCT campaigns are necessary to close this awareness gap.'
+      :'HIV/AIDS awareness at <strong>'+_pct(hiv,n)+'%</strong> meets the UNAIDS benchmark, which is an encouraging result. The focus should now shift to ensuring that awareness translates into testing uptake and, for those who test positive, timely enrolment onto antiretroviral therapy.')+'</p>'
+    +(ills.length?'<p class="bt"><strong>Disease Burden:</strong> <strong>'+ills[0][0]+'</strong> emerged as the most prevalent health condition, reported in <strong>'+ills[0][1]+' household'+(ills[0][1]!==1?'s':'')+' ('+_pct(ills[0][1],n)+'%)</strong>. '+(ills[0][0]==='Malaria'?'Malaria remains the leading cause of morbidity in Kisii County. The risk is heightened by inadequate use of insecticide-treated bed nets (ITNs), poor housing structures that allow mosquito entry, and the presence of stagnant water near homesteads. Targeted vector control and ITN distribution are recommended.':ills[0][0].includes('Cough')||ills[0][0].includes('Cold')?'Respiratory conditions such as coughs and colds are often associated with poor housing, indoor cooking with solid fuels, and inadequate ventilation. These findings point to the need for both housing improvement and health education targeting respiratory hygiene.':'This warrants targeted preventive health education and improved access to treatment at the nearest health facility.')+'</p>':'')
+    +(dHH>0?'<p class="bt"><strong>Mortality:</strong> A total of <strong>'+dTot+' death'+(dTot!==1?'s':'')+' over the past five years</strong> were reported across '+dHH+' household'+(dHH!==1?'s':'')+'. These deaths have not been clinically verified, but their occurrence highlights the need for systematic verbal autopsy investigations to determine cause-specific mortality. Understanding the leading causes of death in this community is essential for directing preventive interventions and health resource allocation at the sub-county level.</p>':'')
     +'<h2 class="sec">6. Conclusion</h2>'
-    +'<p class="bt">Systematic evidence on '+n+' household'+(n!==1?'s':'')+' in '+locStr+'. '
-      +(_pct(lat,n)<60||_pct(wat,n)<60?'Significant gaps require urgent intervention.':'Acceptable indicators with targeted areas for improvement.')
-      +(allF.length?' '+allF.length+' red flag'+(allF.length!==1?'s':'')+' requiring documented follow-up.':'')
-      +' Submitted to the course coordinator and Nyamache Sub County Hospital for review and action planning.</p>'
-    +'</div>'
-    +'<div><h2 class="sec">7. Recommendations</h2>'
+    +'<p class="bt">This assessment by <strong>'+fullName+'</strong> (Admission No: '+regNo+') provides systematic, community-level evidence on the health situation of <strong>'+n+' household'+(n!==1?'s':'')+' in '+locStr+'</strong>, Nyamache Sub County. The data gathered through this structured household survey offers a clear picture of the major health challenges facing this community, including gaps in water treatment, sanitation infrastructure, and HIV/AIDS awareness and testing coverage.</p>'
+    +'<p class="bt">'+(_pct(lat,n)<60||_pct(wat,n)<60
+      ?'The findings reveal significant health coverage gaps that pose an immediate and serious risk to the wellbeing of community members. These gaps require urgent intervention from the sub-county health authorities, including community mobilisation, resource allocation, and targeted health promotion activities.'
+      :'While key indicators are within acceptable ranges in several areas, the findings reveal targeted gaps that — if left unaddressed — have the potential to deteriorate. A proactive, preventive approach is recommended to maintain and improve current health coverage levels.')
+    +(allF.length?' In total, <strong>'+allF.length+' red flag'+(allF.length!==1?'s were':' was')+' identified</strong> across the surveyed households, each of which requires documented follow-up, referral, or targeted intervention to prevent further deterioration.':'')
+    +' This report is submitted to the course coordinator at Great Lakes University of Kisumu and to the Nyamache Sub County Hospital health management team for review, integration into the sub-county health planning cycle, and action as appropriate.</p>'
+    +'<h2 class="sec">7. Recommendations</h2>'
     +recomList.map(rc=>_fl(rc.l,rc.t,rc.b)).join('')
-    +'</div>'
     +'</div>'
     +'<div style="padding:0 0.7in">'
     +'<h2 class="sec">Declaration &amp; Signatures</h2>'
-    +'<p class="bt">I, <strong>'+fullName+'</strong> (Admission No: '+regNo+'), declare that data in this report was collected personally, accurately, and in accordance with the ethical guidelines of Great Lakes University of Kisumu. All respondents provided verbal informed consent.</p>'
+    +'<p class="bt">I, <strong>'+fullName+'</strong> (Admission No: '+regNo+'), hereby declare that the data presented in this report was collected personally, accurately, and in accordance with the ethical guidelines and academic standards of Great Lakes University of Kisumu. Verbal informed consent was obtained from all respondents prior to the commencement of each interview, and the confidentiality of all responses has been strictly maintained throughout this process.</p>'
     +_sigs([
       [fullName, regNo+(email!=='—'?' · '+email:'')+' · Student, GLU Kisumu'],
       ['Course Supervisor','Faculty · Community Health · GLU Kisumu'],
@@ -1258,7 +1265,7 @@ ${rptMeta([['Interviewer',name],['Date',r.interview_date||now],['Location',loc],
 
   <!-- INTRODUCTION -->
   <h2>1. Introduction</h2>
-  <p>This household visit was conducted as part of the Great Lakes University community health situation analysis programme at Nyamache Sub County Hospital, Kisii County. The programme aims to assess the prevailing health conditions, identify risk factors, and generate actionable recommendations for improving community health outcomes in line with Kenya's Health Policy 2014–2030 and the Sustainable Development Goals (SDGs), particularly SDG 3 (Good Health and Well-Being).</p>
+  <p>This household visit was conducted as part of the Great Lakes University community health situation analysis programme at Nyamache Sub County Hospital, Kisii County. The programme aims to assess the prevailing health conditions, identify risk factors, and generate actionable recommendations for improving community health outcomes in line with Kenya\u2019s Health Policy 2014–2030 and the Sustainable Development Goals (SDGs), particularly SDG 3 (Good Health and Well-Being).</p>
   <p>Consent was obtained from the respondent prior to commencing the interview. ${r.consent_given==='Yes'?'The respondent willingly agreed to participate and was informed of their right to withdraw.':'The interview status requires verification.'} The respondent is the <strong>${r.a_pos||'household member'}</strong>, aged <strong>${r.a_age||'?'} years</strong>, ${r.a_gender||''}, ${r.a_marital||''}, with an education level of <strong>${r.a_edu||'not specified'}</strong> and occupation of <strong>${r.a_occ||'not specified'}</strong>.</p>
 
   <!-- METHODS -->
@@ -1326,7 +1333,7 @@ ${rptMeta([['Interviewer',name],['Date',r.interview_date||now],['Location',loc],
   <!-- DISCUSSION -->
   <h2>4. Discussion</h2>
   <p>${keyFinding}</p>
-  <p>The household's overall health situation reflects patterns common to rural sub-Saharan Africa: ${r.b_type==='Temporary'?'substandard housing increases exposure to environmental hazards and vector-borne diseases; ':''}${r.h_treat==='No'?'lack of water treatment is a well-documented driver of diarrhoeal diseases, which remain a leading cause of mortality in children under five in Kenya; ':''}${r.g_latrine==='No'?'open defecation contributes to faecal-oral disease transmission cycles, particularly affecting children; ':''}${illnesses.includes('Malaria')?'malaria remains the leading cause of morbidity in Kisii County and requires targeted vector control; ':''}the data aligns with the Kenya Demographic Health Survey (KDHS) findings for rural Kisii County.</p>
+  <p>The household\u2019s overall health situation reflects patterns common to rural sub-Saharan Africa: ${r.b_type==='Temporary'?'substandard housing increases exposure to environmental hazards and vector-borne diseases; ':''}${r.h_treat==='No'?'lack of water treatment is a well-documented driver of diarrhoeal diseases, which remain a leading cause of mortality in children under five in Kenya; ':''}${r.g_latrine==='No'?'open defecation contributes to faecal-oral disease transmission cycles, particularly affecting children; ':''}${illnesses.includes('Malaria')?'malaria remains the leading cause of morbidity in Kisii County and requires targeted vector control; ':''}the data aligns with the Kenya Demographic Health Survey (KDHS) findings for rural Kisii County.</p>
   ${flags.length===0&&concerns.length===0?'<p>This household demonstrates positive health practices. The absence of red flags suggests that targeted health education efforts in this community may be yielding results. However, continued surveillance and routine household visits remain essential.</p>':''}
   ${r.i_circ==='Female'||r.i_circ==='Both'?'<p>Female Genital Mutilation (FGM) was reported. This is a human rights violation associated with serious health complications including haemorrhage, infection, obstetric fistula, and psychological trauma. The case must be handled with sensitivity and referred to the appropriate gender-based violence response team.</p>':''}
 
