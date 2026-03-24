@@ -163,8 +163,7 @@ function admLoad(){
     _admSaveCache(_admRecs);
     admSetConn('ok');
     admRenderAll();
-    admRenderStudents();
-    admAutoCleanStaleNotifications();
+    admRenderStudents();       // update students tab too
   })
   .catch(function(e){
     if(!cached || !cached.length){
@@ -177,7 +176,7 @@ function admLoad(){
   });
 }
 
-const APPROVED_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri','Mosasa','Igare','Nyamegondo 1','Nyamegondo 2','Bomobasi','Nyakeobiri 1','Nyakeobiri','Masanga'];
+const APPROVED_LOCATIONS = ['Nyamebondo 1','Riakerongo','Nyakweri 1','Nyakweri 2','Nyamebondo 2','Masanga','Kiombacha','Nyakeobiri 1','Nyakeobiri 2','Kenyoro','Bomobasi','Igare','Mosasa'];
 
 function admGetFlags(r){
   const raw=typeof r.raw_json==='string'?JSON.parse(r.raw_json||'{}'):(r.raw_json||{});
@@ -464,73 +463,6 @@ async function admNotifyAllBadRecords(){
     }catch(e){fail++;}
   }
   showToast('✅ Notified '+ok+' record(s)'+(fail?' — '+fail+' failed':''));
-  admRenderAll();
-}
-
-// ── Reset ALL needs_correction flags in Supabase ──
-async function admResetAllNotifications(){
-  if(!navigator.onLine){showToast('No internet',true);return;}
-  if(!confirm('Reset ALL correction flags?\n\nThis clears every needs_correction flag in Supabase. You can then re-notify only the real ones using Notify All.')) return;
-  const flagged=_admRecs.filter(r=>r.needs_correction);
-  if(!flagged.length){showToast('No flags to clear');return;}
-  let ok=0;
-  for(const r of flagged){
-    try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-        method:'PATCH',
-        headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-        body:JSON.stringify({needs_correction:false,correction_notes:null})
-      });
-      if(res.ok||res.status===204){r.needs_correction=false;r.correction_notes=null;ok++;}
-    }catch(e){}
-  }
-  showToast('🧹 Cleared '+ok+' flag(s) — now press Notify All to re-send only real ones');
-  admRenderAll();
-}
-
-// ── Silently clear stale flags (notes not about date/location) ──
-async function admAutoCleanStaleNotifications(){
-  if(!navigator.onLine) return;
-  const stale=_admRecs.filter(r=>{
-    if(!r.needs_correction) return false;
-    const notes=(r.correction_notes||'').toLowerCase();
-    return !notes.includes('date')&&!notes.includes('location');
-  });
-  if(!stale.length) return;
-  for(const r of stale){
-    try{
-      await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-        method:'PATCH',
-        headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-        body:JSON.stringify({needs_correction:false,correction_notes:null})
-      });
-      r.needs_correction=false; r.correction_notes=null;
-    }catch(e){}
-  }
-}
-
-// ── Clear stale manual button ──
-async function admClearStaleNotifications(){
-  if(!navigator.onLine){showToast('No internet',true);return;}
-  const stale=_admRecs.filter(r=>{
-    if(!r.needs_correction) return false;
-    const notes=(r.correction_notes||'').toLowerCase();
-    return !notes.includes('date')&&!notes.includes('location');
-  });
-  if(!stale.length){showToast('✅ No stale notifications found');return;}
-  if(!confirm('Clear '+stale.length+' stale flag(s) unrelated to date/location?')) return;
-  let ok=0;
-  for(const r of stale){
-    try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
-        method:'PATCH',
-        headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-        body:JSON.stringify({needs_correction:false,correction_notes:null})
-      });
-      if(res.ok||res.status===204){r.needs_correction=false;r.correction_notes=null;ok++;}
-    }catch(e){}
-  }
-  showToast('🧹 Cleared '+ok+' stale flag(s)');
   admRenderAll();
 }
 

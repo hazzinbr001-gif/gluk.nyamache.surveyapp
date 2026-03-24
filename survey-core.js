@@ -451,7 +451,7 @@ function ruleConsentBlock(){
 }
 
 // ── RULE: Interview location must be one of the 5 approved locations ──
-const VALID_LOCATIONS = ['Riakerongo','Rusinga Sub-location','Nyakweri 1','Nyakweri 2','Nyakiobiri'];
+const VALID_LOCATIONS = ['Nyamebondo 1','Riakerongo','Nyakweri 1','Nyakweri 2','Nyamebondo 2','Masanga','Kiombacha','Nyakeobiri 1','Nyakeobiri 2','Kenyoro','Bomobasi','Igare','Mosasa'];
 function ruleLocation(){
   const loc = gvRadio('interview_location');
   const grp = document.querySelector('[name="interview_location"]')?.closest('.form-group');
@@ -459,7 +459,7 @@ function ruleLocation(){
   if(!loc){
     showFieldMsg(grp,'\u26A0 Location required — select one of the 6 approved areas before you can submit this record','warn');
   } else if(!VALID_LOCATIONS.includes(loc)){
-    showFieldMsg(grp,`\u{1F6AB} "${loc}" is NOT an approved location. This record cannot be submitted. Go back to Consent and change the location to one of: Riakerongo, Rusinga Sub-location, Nyakweri 1, Nyakweri 2, or Nyakiobiri`,'warn');
+    showFieldMsg(grp,`\u{1F6AB} "${loc}" is NOT an approved location. This record cannot be submitted. Go back to Consent and select one of the approved locations: Nyamebondo 1, Riakerongo, Nyakweri 1, Nyakweri 2, Nyamebondo 2, Masanga, Kiombacha, Nyakeobiri 1, Nyakeobiri 2, Kenyoro, Bomobasi, Igare, Mosasa`,'warn');
   } else {
     clearFieldMsg(grp);
   }
@@ -1322,7 +1322,7 @@ async function showFinish(){
     const _badLoc = _loc || 'none selected';
     showBlockedModal(
       '\u{1F6AB} Invalid Location — Cannot Submit',
-      `This record has location: "${_badLoc}"\n\nYou must go back to the Consent section (Page 1) and select one of the 5 approved locations:\n\n• Riakerongo\n• Rusinga Sub-location\n• Nyakweri 1\n• Nyakweri 2\n• Nyakiobiri\n\nThe record will NOT be uploaded until this is corrected.`,
+      `This record has location: "${_badLoc}"\n\nYou must go back to the Consent section (Page 1) and select one of the 5 approved locations:\n\n• Nyamebondo 1\n• Riakerongo\n• Nyakweri 1\n• Nyakweri 2\n• Nyamebondo 2\n• Masanga\n• Kiombacha\n• Nyakeobiri 1\n• Nyakeobiri 2\n• Kenyoro\n• Bomobasi\n• Igare\n• Mosasa\n\nThe record will NOT be uploaded until this is corrected.`,
       'Go Back & Fix'
     );
     return;
@@ -1862,11 +1862,19 @@ ${fg(q('Q1','Interview Date','req')+`<input class="form-input" type="date" name=
 
 ${fg(q('Q2','Interview Location','req')+`
 <div class="chips" style="margin-bottom:8px">
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyamebondo_1" value="Nyamebondo 1"><label for="loc_nyamebondo_1">📍 Nyamebondo 1</label></div>
   <div class="chip"><input type="radio" name="interview_location" id="loc_riakerongo" value="Riakerongo"><label for="loc_riakerongo">📍 Riakerongo</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_rusinga" value="Rusinga Sub-location"><label for="loc_rusinga">📍 Rusinga Sub-location</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri1" value="Nyakweri 1"><label for="loc_nyakweri1">📍 Nyakweri 1</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri2" value="Nyakweri 2"><label for="loc_nyakweri2">📍 Nyakweri 2</label></div>
-  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakiobiri" value="Nyakiobiri"><label for="loc_nyakiobiri">📍 Nyakiobiri</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri_1" value="Nyakweri 1"><label for="loc_nyakweri_1">📍 Nyakweri 1</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakweri_2" value="Nyakweri 2"><label for="loc_nyakweri_2">📍 Nyakweri 2</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyamebondo_2" value="Nyamebondo 2"><label for="loc_nyamebondo_2">📍 Nyamebondo 2</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_masanga" value="Masanga"><label for="loc_masanga">📍 Masanga</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_kiombacha" value="Kiombacha"><label for="loc_kiombacha">📍 Kiombacha</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakeobiri_1" value="Nyakeobiri 1"><label for="loc_nyakeobiri_1">📍 Nyakeobiri 1</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_nyakeobiri_2" value="Nyakeobiri 2"><label for="loc_nyakeobiri_2">📍 Nyakeobiri 2</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_kenyoro" value="Kenyoro"><label for="loc_kenyoro">📍 Kenyoro</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_bomobasi" value="Bomobasi"><label for="loc_bomobasi">📍 Bomobasi</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_igare" value="Igare"><label for="loc_igare">📍 Igare</label></div>
+  <div class="chip"><input type="radio" name="interview_location" id="loc_mosasa" value="Mosasa"><label for="loc_mosasa">📍 Mosasa</label></div>
 </div>
 <p class="info-note">Select the location where this interview is taking place</p>`)}
 
@@ -2255,23 +2263,24 @@ async function checkCorrectionNotifications(){
       {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
     );
     if(!res.ok) return;
-    var all = await res.json();
-    // DEBUG — open browser console to see raw Supabase data
-    console.log('[CORRECTION DEBUG] raw records from Supabase:', JSON.stringify(all));
-    if(!Array.isArray(all)||!all.length) return;
+    var flagged = await res.json();
+    if(!Array.isArray(flagged)||!flagged.length) return;
+    // Exact name match — ilike can be too loose and pull other people's records
     var nameLower = name.trim().toLowerCase();
-    var flagged = [];
-    for(var i=0;i<all.length;i++){
-      var r = all[i];
-      console.log('[CORRECTION DEBUG] record',i,'interviewer:',r.interviewer,'notes:',r.correction_notes);
-      if(!r.interviewer || r.interviewer.trim().toLowerCase() !== nameLower) continue;
-      var notes = (r.correction_notes || '').trim();
-      if(!notes) continue;
-      var notesLower = notes.toLowerCase();
-      if(!notesLower.includes('date') && !notesLower.includes('location')) continue;
-      flagged.push(r);
-    }
-    console.log('[CORRECTION DEBUG] after filter, showing', flagged.length, 'records');
+    flagged = flagged.filter(function(r){
+      return r.interviewer && r.interviewer.trim().toLowerCase() === nameLower;
+    });
+    if(!flagged.length) return;
+    // Only show date/location correction notes — ignore any old or unrelated flags
+    flagged = flagged.map(function(r){
+      var relevantNotes = (r.correction_notes||'').split('|').map(function(n){ return n.trim(); }).filter(function(n){
+        return n && (
+          n.toLowerCase().includes('date') ||
+          n.toLowerCase().includes('location')
+        );
+      }).join(' | ');
+      return Object.assign({}, r, {correction_notes: relevantNotes});
+    }).filter(function(r){ return r.correction_notes; });
     if(!flagged.length) return;
     showCorrectionPrompt(flagged);
   }catch(e){
