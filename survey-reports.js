@@ -77,7 +77,11 @@ const RPT_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{
+html{
+  background:linear-gradient(160deg,#0d1b2a 0%,#1a2e44 50%,#0d2233 100%) !important;
+  min-height:100%;
+}
+body{
   font-family:'Plus Jakarta Sans','Arial',sans-serif;
   font-size:9pt;
   color:#111;
@@ -407,7 +411,8 @@ function _doc(title, pages){
     +'<meta name="viewport" content="width=device-width,initial-scale=1">'
     +'<title>'+title+'</title>'
     +'<style>'+RPT_CSS+'</style>'
-    +'</head><body>'
+    +'<style>html,body{background:linear-gradient(160deg,#0d1b2a 0%,#1a2e44 50%,#0d2233 100%)!important;}</style>'
+    +'</head><body style="background:linear-gradient(160deg,#0d1b2a 0%,#1a2e44 50%,#0d2233 100%);padding:0.25in 0;">'
     +pages
     +'</body></html>';
 }
