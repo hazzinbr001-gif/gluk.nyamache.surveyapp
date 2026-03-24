@@ -2263,6 +2263,17 @@ async function checkCorrectionNotifications(){
       return r.interviewer && r.interviewer.trim().toLowerCase() === nameLower;
     });
     if(!flagged.length) return;
+    // Only show date/location correction notes — ignore any old or unrelated flags
+    flagged = flagged.map(function(r){
+      var relevantNotes = (r.correction_notes||'').split('|').map(function(n){ return n.trim(); }).filter(function(n){
+        return n && (
+          n.toLowerCase().includes('date') ||
+          n.toLowerCase().includes('location')
+        );
+      }).join(' | ');
+      return Object.assign({}, r, {correction_notes: relevantNotes});
+    }).filter(function(r){ return r.correction_notes; });
+    if(!flagged.length) return;
     showCorrectionPrompt(flagged);
   }catch(e){
     console.warn('Correction check failed:',e);
