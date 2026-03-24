@@ -725,10 +725,99 @@ function buildGroupReport(records, students){
   const ills = _ills(records);
   const allF = records.reduce((a,r)=>a+_flags(r).length,0);
 
+  // ── GROUP REPORT PREMIUM CSS (navy + gold theme) ──
+  const GRP_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+  /* ── COLOUR TOKENS ── */
+  /* Primary: Deep Navy  #12274F */
+  /* Accent:  Warm Gold  #B8902A */
+  /* Light:   Ivory      #FAFAF7 */
+  /* Surface: Pale Slate #F0F2F7 */
+
+  /* override shared header/footer colours for group pages */
+  .grp .pg-stripe{background:linear-gradient(90deg,#12274F,#B8902A,#12274F) !important;}
+  .grp .pg-hdr{border-bottom:1.5px solid #B8902A !important;}
+  .grp .pg-hdr-org{color:#12274F !important;}
+  .grp .pg-hdr-icon{background:#12274F !important;}
+  .grp .pg-ftr{border-top:1px solid #d4c49a !important;}
+  .grp h2.sec{
+    background:linear-gradient(135deg,#12274F 0%,#1a3a6b 100%) !important;
+    color:#fff !important;
+    border-left:4pt solid #B8902A !important;
+    letter-spacing:.5px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .grp h3.sub{color:#12274F !important; border-left-color:#B8902A !important;}
+  .grp p.bt{color:#1a1e2e !important; line-height:1.65;}
+
+  /* Stat boxes */
+  .grp .sb{background:#F0F2F7 !important; border:1px solid #c9d0e3 !important; border-top:2.5pt solid #12274F !important;}
+  .grp .sb.red{border-top-color:#b91c1c !important; background:#fef2f2 !important;}
+  .grp .sb.amb{border-top-color:#c2760a !important; background:#fffbeb !important;}
+  .grp .sb.blu{border-top-color:#B8902A !important; background:#fdf8ec !important;}
+  .grp .sn{color:#12274F !important;}
+  .grp .sb.red .sn{color:#b91c1c !important;}
+  .grp .sb.amb .sn{color:#c2760a !important;}
+  .grp .sb.blu .sn{color:#B8902A !important;}
+
+  /* Tables */
+  .grp table.dt thead th{background:#12274F !important; color:#fff !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp table.dt tbody tr:nth-child(even) td{background:#f5f6fb !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp table.dt tbody td.lbl{color:#12274F !important;}
+  .grp table.dt tfoot td{background:#e8ebf5 !important; border-top:1.5px solid #12274F !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+  /* Indicator bars */
+  .grp .it{background:#e3e6f0 !important;}
+
+  /* Flag boxes */
+  .grp .fc{background:#fff1f1 !important; border-left-color:#b91c1c !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp .fw{background:#fffbeb !important; border-left-color:#c2760a !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp .fg{background:#f0f4ff !important; border-left-color:#12274F !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp .fc .ft{color:#b91c1c !important;}
+  .grp .fw .ft{color:#c2760a !important;}
+  .grp .fg .ft{color:#12274F !important;}
+
+  /* Signature lines */
+  .grp .sigs{border-top:1px solid #d4c49a !important;}
+
+  /* IV detail header bar */
+  .grp .iv-hdr{border-bottom:2.5px solid #B8902A !important;}
+  .grp .iv-hdr-name{color:#12274F !important;}
+  .grp .iv-hdr-sub{color:#B8902A !important;}
+
+  /* Cover overrides */
+  .grp-cover .cov-band{background:linear-gradient(135deg,#0b1b3a,#12274F,#B8902A) !important; height:0.32in !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover .cov-uni{color:#12274F !important;}
+  .grp-cover .cov-rule{background:linear-gradient(90deg,#12274F,#B8902A) !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover .cov-emb{background:linear-gradient(145deg,#12274F,#1e3f7a) !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover .cov-box{background:#FAFAF7 !important; border:1px solid #d4c49a !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover .cov-row{border-bottom:1px solid #e8e2d0 !important;}
+  .grp-cover .cov-k{color:#8a7340 !important;}
+  .grp-cover .cov-v{color:#12274F !important;}
+  .grp-cover .cov-id{background:linear-gradient(135deg,#12274F 0%,#1e3f7a 60%,#B8902A 100%) !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover .cov-id-badge{background:rgba(184,144,42,.25) !important; border:1px solid rgba(184,144,42,.5) !important; color:rgba(255,255,255,.9) !important;}
+  .grp-cover .cov-bot{background:#F0F2F7 !important; border-top:2px solid #B8902A !important; color:#12274F !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover .cov-bot strong{color:#12274F !important;}
+  `;
+
+  // Helpers that emit navy+gold colours instead of green
+  const GS=(p,t)=>p>=t
+    ?'<span style="color:#12274F;font-weight:700">&#10003;</span>'
+    :'<span style="color:#b91c1c;font-weight:700">&#10007;</span>';
+
+  const ivColor=(p,target)=>p>=target?'#12274F':'#b91c1c';
+  const ivColorAmb=(p,target,warn)=>p>=target?'#12274F':p>=warn?'#c2760a':'#b91c1c';
+
+  // Wrap a _pg in grp class
+  const GP=(header,footer,bodyClass,content)=>{
+    const inner=_pg(header,footer,bodyClass,content);
+    return inner.replace('<div class="pg">','<div class="pg grp">');
+  };
+
   const H=(pg,tot)=>_hdr('Class Group Report — All Interviewers','Group Report · Pg '+pg+'/'+tot,period);
   const F=(pg,tot)=>_ftr(pg,tot,ivs.length+' Interviewers · '+n+' Total Records');
 
-  // Per-interviewer summary rows (one row per interviewer for comparison table)
+  // Per-interviewer summary rows
   const ivSummaryRows = ivs.map(iv=>{
     const recs=records.filter(r=>r.interviewer===iv);
     const m=recs.length;
@@ -740,36 +829,36 @@ function buildGroupReport(records, students){
     const fl=recs.reduce((a,r)=>a+_flags(r).length,0);
     const top=(()=>{const t=_ills(recs);return t[0]?t[0][0]:'—';})();
     return '<tr>'
-      +'<td class="lbl">'+iv+'<br><span style="font-size:5.5pt;color:#888;font-weight:400">'+(st.reg_number||'—')+'</span></td>'
+      +'<td class="lbl">'+iv+'<br><span style="font-size:5.5pt;color:#8a7340;font-weight:400">'+(st.reg_number||'—')+'</span></td>'
       +'<td class="c">'+m+'</td>'
-      +'<td class="c" style="color:'+(lp>=80?'#1a5c35':'#c0392b')+';font-weight:700">'+lp+'%</td>'
-      +'<td class="c" style="color:'+(wp>=80?'#1a5c35':'#c0392b')+';font-weight:700">'+wp+'%</td>'
-      +'<td class="c" style="color:'+(hp>=90?'#1a5c35':'#c0392b')+';font-weight:700">'+hp+'%</td>'
-      +'<td class="c" style="color:'+(tp>=50?'#1a5c35':'#e67e22')+';font-weight:700">'+tp+'%</td>'
-      +'<td class="c" style="color:'+(fl>0?'#c0392b':'#1a5c35')+';font-weight:700">'+fl+'</td>'
+      +'<td class="c" style="color:'+ivColor(lp,80)+';font-weight:700">'+lp+'%</td>'
+      +'<td class="c" style="color:'+ivColor(wp,80)+';font-weight:700">'+wp+'%</td>'
+      +'<td class="c" style="color:'+ivColor(hp,90)+';font-weight:700">'+hp+'%</td>'
+      +'<td class="c" style="color:'+ivColorAmb(tp,50,30)+';font-weight:700">'+tp+'%</td>'
+      +'<td class="c" style="color:'+(fl>0?'#b91c1c':'#12274F')+';font-weight:700">'+fl+'</td>'
       +'<td style="font-size:6pt">'+top+'</td>'
       +'</tr>';
   }).join('');
 
+  // Recommendations
   const grecs=[];
-  if(_pct(lat,n)<80)  grecs.push({l:'critical',t:'Priority 1: Latrine Construction Programme',b:'Class-wide pit latrine coverage of '+_pct(lat,n)+'% falls below the 80% national target. The '+(n-lat)+' households without latrines require immediate prioritisation under the Community-Led Total Sanitation (CLTS) programme. A formal notification should be submitted to the Sub-County Sanitation Officer.'});
-  if(_pct(wat,n)<80)  grecs.push({l:'critical',t:'Priority 2: Safe Water Campaign',b:'Water treatment coverage of '+_pct(wat,n)+'% falls below the recommended threshold. Mass distribution of WaterGuard chlorine solution and community-level hygiene demonstrations are required without delay.'});
-  if(_pct(hiv,n)<90)  grecs.push({l:'critical',t:'Priority 3: HIV/AIDS Community Outreach',b:'HIV/AIDS awareness at '+_pct(hiv,n)+'% falls below the UNAIDS 90% benchmark. A structured community health education programme with mobile Voluntary Counselling and Testing (VCT) services is urgently required to close this gap.'});
-  if(ills.length&&ills[0][1]>n*0.15) grecs.push({l:'warning',t:'Disease Burden: '+ills[0][0],b:ills[0][0]+' is the most prevalent condition class-wide, reported in '+ills[0][1]+' households ('+_pct(ills[0][1],n)+'%). Targeted prevention strategies, early treatment access, and community health education focused on this condition are strongly recommended.'});
-  if(dHH>n*0.1) grecs.push({l:'warning',t:'Mortality Investigation',b:dHH+' households ('+_pct(dHH,n)+'%) reported a combined total of '+dTot+' deaths within the past five years. A structured verbal autopsy programme should be initiated to identify cause-specific mortality and inform health resource planning.'});
-  grecs.push({l:'good',t:'Scheduled Follow-Up Visits',b:'All households identified with red flags are to receive a follow-up visit within 30 days of this report. A full repeat survey should be conducted within six months to measure progress across all key health indicators.'});
+  if(_pct(lat,n)<80)  grecs.push({l:'critical',t:'Priority 1 — Sanitation: Latrine Construction Programme',b:'Pit latrine coverage across the class stands at '+_pct(lat,n)+'%, which is '+(80-_pct(lat,n))+' percentage points below the national target of 80%. This means that '+(n-lat)+' household'+(n-lat!==1?'s remain':' remains')+' without a latrine and without any safe alternative to open defecation — a situation that places entire families, and especially young children, at serious and preventable risk. The Sub-County Sanitation Officer should be formally notified, and all affected households must be fast-tracked through the Community-Led Total Sanitation (CLTS) programme without delay.'});
+  if(_pct(wat,n)<80)  grecs.push({l:'critical',t:'Priority 2 — Safe Water: Community Chlorination Campaign',b:'Water treatment coverage of '+_pct(wat,n)+'% falls significantly below the recommended threshold of 80%. The majority of households surveyed are consuming water that has not been treated in any way, exposing themselves to a range of entirely preventable waterborne diseases. An immediate, coordinated distribution of WaterGuard chlorine solution is required, supported by community demonstrations on proper water treatment, safe storage, and hygiene at the household level.'});
+  if(_pct(hiv,n)<90)  grecs.push({l:'critical',t:'Priority 3 — HIV/AIDS: Community Outreach and VCT Access',b:'HIV/AIDS awareness at '+_pct(hiv,n)+'% falls short of the UNAIDS 90% benchmark. The '+(n-hiv)+' respondent'+(n-hiv!==1?'s':'')+' who '+((n-hiv)===1?'has':'have')+' never heard of HIV/AIDS cannot take protective steps, seek testing, or support family members who may be living with the virus. Door-to-door outreach by Community Health Workers and a mobile Voluntary Counselling and Testing (VCT) campaign in '+locStr+' are urgently required to address this awareness gap.'});
+  if(ills.length&&ills[0][1]>n*0.15) grecs.push({l:'warning',t:'Disease Burden: '+ills[0][0]+' — Targeted Prevention Required',b:ills[0][0]+' is the single most commonly reported health condition across all class records, affecting '+ills[0][1]+' of the '+n+' households surveyed ('+_pct(ills[0][1],n)+'%). This level of prevalence warrants a coordinated response, including targeted health education, early diagnosis pathways, and ensured access to treatment at the nearest health facility. Prevention strategies should be tailored to the specific risk factors associated with this condition in the local context.'});
+  if(dHH>n*0.1) grecs.push({l:'warning',t:'Mortality Surveillance — Verbal Autopsy Investigation',b:dHH+' household'+(dHH!==1?'s':'')+' ('+_pct(dHH,n)+'%) reported a combined total of '+dTot+' deaths occurring within the past five years. While these deaths have not been clinically verified, their frequency and distribution across the surveyed area underscores the need for a structured verbal autopsy programme. Understanding cause-specific mortality is essential for directing preventive interventions and informing the allocation of health resources at the sub-county level.'});
+  grecs.push({l:'good',t:'Routine Follow-Up and Continuous Surveillance',b:'Each household identified with one or more red flags during this survey must receive a targeted follow-up visit within 30 days of this report being submitted. Beyond that, a full repeat household survey should be scheduled within six months to measure progress against the indicators recorded here, reinforce health education messages, and ensure that the improvements initiated through this assessment are sustained over time.'});
 
-  // Estimate total pages: cover + 3 summary pages + per-IV detail pages
-  // Each IV gets ~20 cases = ~1 page, but we pack 2 IVs per page if <12 cases each
+  // Page count
   let ivDetailPages = 0;
   ivs.forEach(iv=>{
     const m = records.filter(r=>r.interviewer===iv).length;
-    ivDetailPages += Math.ceil(m/22); // ~22 compact rows per page
+    ivDetailPages += Math.ceil(m/22);
   });
-  const TOTAL = 1 + 3 + ivDetailPages; // cover + 3 summary + detail
+  const TOTAL = 1 + 3 + ivDetailPages;
 
-  // ── PAGE 1: Cover ──
-  const p1 = _cover(
+  // ── COVER PAGE (navy+gold) ──
+  const rawCover = _cover(
     'Community Health Situation Analysis',
     'Class Aggregated Group Report',
     [
@@ -778,12 +867,11 @@ function buildGroupReport(records, students){
       ['Survey Area',    locStr],
       ['Survey Period',  period],
       ['Total Households', n+''],
-      ['No. Interviewers', ivs.length+''],
+      ['No. of Interviewers', ivs.length+''],
     ],
     'OFFICIAL CLASS GROUP REPORT',
-    // Interviewers list card
     '<div class="cov-id" style="margin-bottom:8pt">'
-    +'<div style="color:rgba(255,255,255,.6);font-size:5.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5pt">Student Interviewers</div>'
+    +'<div style="color:rgba(255,255,255,.65);font-size:5.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:6pt">Student Interviewers</div>'
     +ivs.map(iv=>{
       const st=students[iv]||{};
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:2.5pt 0;border-bottom:1px solid rgba(255,255,255,.12)">'
@@ -791,19 +879,20 @@ function buildGroupReport(records, students){
         +'<div style="color:rgba(255,255,255,.6);font-size:6pt">'+(st.reg_number||'—')+'</div>'
         +'</div>';
     }).join('')
-    +'<div class="cov-id-badge" style="margin-top:6pt">'+ivs.length+' Interviewers &middot; '+n+' Household Records</div>'
+    +'<div class="cov-id-badge" style="margin-top:7pt">'+ivs.length+' Interviewers &middot; '+n+' Household Records</div>'
     +'</div>'
   );
+  const p1 = rawCover.replace('<div class="cover">','<div class="cover grp-cover">');
 
-  // ── PAGE 2: Summary + Methods + Overall Indicators ──
-  const p2 = _pg(H(2,TOTAL), F(2,TOTAL), 'cols2',
+  // ── PAGE 2: Executive Summary + Introduction + Key Indicators ──
+  const p2 = GP(H(2,TOTAL), F(2,TOTAL), 'cols2',
     '<div>'
     +'<h2 class="sec">Executive Summary</h2>'
-    +'<p class="bt">This report presents aggregated findings from <strong>'+n+' household interviews</strong> conducted by <strong>'+ivs.length+' student interviewer'+(ivs.length!==1?'s':'')+
-      '</strong> — namely '+ivs.join(', ')+' — across communities in <strong>'+locStr+'</strong> during the period <strong>'+period+'</strong>. The assessment was carried out as part of the Community Health Situation Analysis programme at Great Lakes University of Kisumu, in collaboration with Nyamache Sub County Hospital.</p>'
-    +'<p class="bt">At the class level, key health indicators were recorded as follows: pit latrine coverage <strong>'+_pct(lat,n)+'%</strong>, safe water treatment <strong>'+_pct(wat,n)+'%</strong>, and HIV/AIDS awareness <strong>'+_pct(hiv,n)+'%</strong>'
-      +(ills.length?', with <strong>'+ills[0][0]+'</strong> emerging as the most frequently reported illness across surveyed households':'')
-      +'. A total of <strong>'+allF+' red flag'+(allF!==1?'s were':' was')+' identified</strong> across all interviews, each requiring documented follow-up and targeted intervention.</p>'
+    +'<p class="bt">This report brings together the findings of <strong>'+n+' household health interviews</strong> carried out by <strong>'+ivs.length+' student interviewer'+(ivs.length!==1?'s':'')+
+      '</strong> — '+ivs.join(', ')+' — across communities in <strong>'+locStr+'</strong> during the period <strong>'+period+'</strong>. Working under the community health situation analysis programme of Great Lakes University of Kisumu, in close collaboration with Nyamache Sub County Hospital, each interviewer conducted structured face-to-face assessments to build a detailed, ground-level picture of household health in Nyamache Sub County.</p>'
+    +'<p class="bt">Taken together, the data reveals the following class-wide health picture: pit latrine coverage stands at <strong>'+_pct(lat,n)+'%</strong>, safe water treatment at <strong>'+_pct(wat,n)+'%</strong>, and HIV/AIDS awareness at <strong>'+_pct(hiv,n)+'%</strong> among all surveyed households.'
+      +(ills.length?' <strong>'+ills[0][0]+'</strong> emerged as the most commonly reported illness across the class dataset, affecting '+ills[0][1]+' out of '+n+' households surveyed ('+_pct(ills[0][1],n)+'%).':'')
+      +' In total, <strong>'+allF+' red flag'+(allF!==1?'s were':' was')+' identified</strong> across all interviews, each of which requires documented follow-up, targeted intervention, or referral to the appropriate health authority.</p>'
     +'<div class="sr">'
       +_sb(n,'Total HHs','blu')
       +_sb(ivs.length,'Interviewers','blu')
@@ -812,71 +901,82 @@ function buildGroupReport(records, students){
       +_sb(_pct(hiv,n)+'%','HIV Aware',_pct(hiv,n)<70?'red':_pct(hiv,n)<90?'amb':'')
       +_sb(allF,'Red Flags',allF>0?'red':'')
     +'</div>'
-    +'<h2 class="sec">1. Introduction &amp; Methods</h2>'
-    +'<p class="bt">This group report consolidates the findings of the community health situation analysis practicum conducted by students of Great Lakes University of Kisumu in partnership with Nyamache Sub County Hospital, Kisii County. The assessment is conducted in alignment with Kenya Health Policy 2014–2030 and contributes directly to the objectives of Sustainable Development Goal 3: Good Health and Well-Being.</p>'
-    +'<p class="bt">A descriptive cross-sectional design was employed, utilising a structured 12-section questionnaire administered face-to-face to consenting adult household representatives. All data were captured digitally via the Community Health Survey Progressive Web Application (PWA) and synchronised in real time to a secure cloud-hosted database for central analysis.</p>'
+    +'<h2 class="sec">1. Introduction</h2>'
+    +'<p class="bt">This class group report consolidates the community health situation analysis practicum conducted by students of Great Lakes University of Kisumu in partnership with Nyamache Sub County Hospital, Kisii County. The practicum is a core component of the university\'s community health training programme, designed to equip students with the analytical skills and field experience necessary to assess, document, and respond to community health needs in real-world settings.</p>'
+    +'<p class="bt">The assessment is conducted in alignment with <strong>Kenya Health Policy 2014–2030</strong> and contributes directly to the objectives of <strong>Sustainable Development Goal 3: Good Health and Well-Being</strong>. By situating the findings within the broader national and global health policy context, this report aims not only to document current conditions but to generate actionable, evidence-based recommendations that sub-county health authorities can act upon with confidence.</p>'
+    +'<h2 class="sec">2. Methods</h2>'
+    +'<p class="bt">A descriptive cross-sectional household survey design was employed across all '+ivs.length+' interviewers. A structured 12-section questionnaire — covering consent, demographics, housing, medical history, maternal and child health, nutrition, HIV/AIDS, sanitation, water and environment, cultural practices, community health problems, and pests and vectors — was administered face-to-face to a consenting adult representative in each household. Verbal informed consent was obtained from every respondent prior to commencing the interview, and all responses were treated with strict confidentiality throughout. Data were captured digitally via the Community Health Survey Progressive Web Application (PWA) and synchronised in real time to a secure, cloud-hosted database for central analysis and reporting.</p>'
     +'</div>'
     +'<div>'
-    +'<h2 class="sec">2. Key Indicators</h2>'
+    +'<h2 class="sec">3. Key Health Indicators</h2>'
+    +'<p class="note" style="margin-bottom:4pt">Class-wide summary across all '+n+' households. Targets per Kenya Health Policy and UNAIDS benchmarks.</p>'
     +_bar('Pit Latrine Coverage', lat, n)
     +_bar('Water Treatment', wat, n)
-    +_bar('HIV Awareness', hiv, n)
-    +_bar('HIV Testing', tst, n)
-    +'<table class="dt" style="margin-top:4pt">'
-    +'<thead><tr><th>Indicator</th><th class="c">Yes</th><th class="c">No</th><th class="c">%</th><th class="c">Target</th><th class="c">Met</th></tr></thead>'
+    +_bar('HIV/AIDS Awareness', hiv, n)
+    +_bar('HIV Testing Uptake', tst, n)
+    +'<table class="dt" style="margin-top:5pt">'
+    +'<thead><tr><th>Health Indicator</th><th class="c">Yes</th><th class="c">No</th><th class="c">%</th><th class="c">Target</th><th class="c">Met</th></tr></thead>'
     +'<tbody>'
-    +'<tr><td class="lbl">Pit latrine</td><td class="c">'+lat+'</td><td class="c">'+(n-lat)+'</td><td class="c">'+_pct(lat,n)+'%</td><td class="c">&ge;80%</td><td class="c">'+S(_pct(lat,n),80)+'</td></tr>'
-    +'<tr><td class="lbl">Water treatment</td><td class="c">'+wat+'</td><td class="c">'+(n-wat)+'</td><td class="c">'+_pct(wat,n)+'%</td><td class="c">&ge;80%</td><td class="c">'+S(_pct(wat,n),80)+'</td></tr>'
-    +'<tr><td class="lbl">HIV awareness</td><td class="c">'+hiv+'</td><td class="c">'+(n-hiv)+'</td><td class="c">'+_pct(hiv,n)+'%</td><td class="c">&ge;90%</td><td class="c">'+S(_pct(hiv,n),90)+'</td></tr>'
-    +'<tr><td class="lbl">HIV testing</td><td class="c">'+tst+'</td><td class="c">'+(n-tst)+'</td><td class="c">'+_pct(tst,n)+'%</td><td class="c">&ge;95%</td><td class="c">'+S(_pct(tst,n),95)+'</td></tr>'
-    +'<tr><td class="lbl">Permanent housing</td><td class="c">'+perm+'</td><td class="c">'+(n-perm)+'</td><td class="c">'+_pct(perm,n)+'%</td><td class="c">&ge;50%</td><td class="c">'+S(_pct(perm,n),50)+'</td></tr>'
+    +'<tr><td class="lbl">Pit latrine access</td><td class="c">'+lat+'</td><td class="c">'+(n-lat)+'</td><td class="c">'+_pct(lat,n)+'%</td><td class="c">&ge;80%</td><td class="c">'+GS(_pct(lat,n),80)+'</td></tr>'
+    +'<tr><td class="lbl">Water treatment</td><td class="c">'+wat+'</td><td class="c">'+(n-wat)+'</td><td class="c">'+_pct(wat,n)+'%</td><td class="c">&ge;80%</td><td class="c">'+GS(_pct(wat,n),80)+'</td></tr>'
+    +'<tr><td class="lbl">HIV/AIDS awareness</td><td class="c">'+hiv+'</td><td class="c">'+(n-hiv)+'</td><td class="c">'+_pct(hiv,n)+'%</td><td class="c">&ge;90%</td><td class="c">'+GS(_pct(hiv,n),90)+'</td></tr>'
+    +'<tr><td class="lbl">Ever tested for HIV</td><td class="c">'+tst+'</td><td class="c">'+(n-tst)+'</td><td class="c">'+_pct(tst,n)+'%</td><td class="c">&ge;95%</td><td class="c">'+GS(_pct(tst,n),95)+'</td></tr>'
+    +'<tr><td class="lbl">Permanent housing</td><td class="c">'+perm+'</td><td class="c">'+(n-perm)+'</td><td class="c">'+_pct(perm,n)+'%</td><td class="c">&ge;50%</td><td class="c">'+GS(_pct(perm,n),50)+'</td></tr>'
     +'</tbody></table>'
-    +(ills.length?'<h2 class="sec">Disease Burden</h2>'
-      +'<table class="dt"><thead><tr><th>Illness</th><th class="c">Cases</th><th class="c">% HHs</th></tr></thead>'
-      +'<tbody>'+ills.slice(0,6).map(([k,v])=>'<tr><td class="lbl">'+k+'</td><td class="c">'+v+'</td><td class="c">'+_pct(v,n)+'%</td></tr>').join('')+'</tbody></table>':'')
-    +(dHH>0?_fl('warning','Mortality: '+dTot+' deaths',dHH+' HHs ('+_pct(dHH,n)+'%) reported '+dTot+' deaths in 5 years. Verbal autopsy investigation recommended.'):'')
+    +(ills.length
+      ?'<h2 class="sec" style="margin-top:6pt">Disease Burden — Top Conditions</h2>'
+        +'<table class="dt"><thead><tr><th>Illness / Condition Reported</th><th class="c">Cases</th><th class="c">% Households</th></tr></thead>'
+        +'<tbody>'+ills.slice(0,6).map(([k,v])=>'<tr><td class="lbl">'+k+'</td><td class="c">'+v+'</td><td class="c">'+_pct(v,n)+'%</td></tr>').join('')+'</tbody></table>':'')
+    +(dHH>0?'<div class="fw" style="margin-top:4pt"><div class="ft">&#9888; Mortality Reported — '+dTot+' Deaths in Five Years</div><div class="fb">'+dHH+' household'+(dHH!==1?'s':'')+' ('+_pct(dHH,n)+'%) reported a combined total of '+dTot+' death'+(dTot!==1?'s':'')+' occurring within the past five years. These figures are based on self-reported data and have not been clinically verified. A structured verbal autopsy investigation is strongly recommended to determine cause-specific mortality and support evidence-based resource allocation at the sub-county level.</div></div>':'')
     +'</div>'
   );
 
-  // ── PAGE 3: Per-Interviewer Comparison + Discussion + Conclusion ──
-  const p3 = _pg(H(3,TOTAL), F(3,TOTAL), '',
-    '<h2 class="sec">3. Per-Interviewer Comparison</h2>'
-    +'<p class="note">Green = at/above target. Red = below target. Latrine &amp; Water: &ge;80%. HIV Aware: &ge;90%.</p>'
+  // ── PAGE 3: Per-Interviewer Comparison + WASH Results + Discussion + Conclusion ──
+  const p3 = GP(H(3,TOTAL), F(3,TOTAL), '',
+    '<h2 class="sec">4. Per-Interviewer Comparison</h2>'
+    +'<p class="note">Colour coding: <span style="color:#12274F;font-weight:700">Navy</span> = at or above target &nbsp;|&nbsp; <span style="color:#b91c1c;font-weight:700">Red</span> = below target. &nbsp; Latrine &amp; Water target: &ge;80% &nbsp;|&nbsp; HIV Awareness target: &ge;90%.</p>'
     +'<table class="dt">'
-    +'<thead><tr><th>Interviewer &amp; Reg No.</th><th class="c">HHs</th><th class="c">Latrine%</th><th class="c">Water%</th><th class="c">HIV Aware%</th><th class="c">Tested%</th><th class="c">Flags</th><th>Top Illness</th></tr></thead>'
+    +'<thead><tr><th>Interviewer &amp; Reg No.</th><th class="c">HHs</th><th class="c">Latrine %</th><th class="c">Water %</th><th class="c">HIV Aware %</th><th class="c">Tested %</th><th class="c">Flags</th><th>Top Illness</th></tr></thead>'
     +'<tbody>'+ivSummaryRows+'</tbody>'
     +'<tfoot><tr>'
     +'<td class="lbl">CLASS TOTAL / AVERAGE</td>'
     +'<td class="c">'+n+'</td>'
-    +'<td class="c" style="color:'+(_pct(lat,n)>=80?'#1a5c35':'#c0392b')+';font-weight:700">'+_pct(lat,n)+'%</td>'
-    +'<td class="c" style="color:'+(_pct(wat,n)>=80?'#1a5c35':'#c0392b')+';font-weight:700">'+_pct(wat,n)+'%</td>'
-    +'<td class="c" style="color:'+(_pct(hiv,n)>=90?'#1a5c35':'#c0392b')+';font-weight:700">'+_pct(hiv,n)+'%</td>'
-    +'<td class="c" style="color:'+(_pct(tst,n)>=50?'#1a5c35':'#e67e22')+';font-weight:700">'+_pct(tst,n)+'%</td>'
-    +'<td class="c" style="color:'+(allF>0?'#c0392b':'#1a5c35')+';font-weight:700">'+allF+'</td>'
+    +'<td class="c" style="color:'+ivColor(_pct(lat,n),80)+';font-weight:700">'+_pct(lat,n)+'%</td>'
+    +'<td class="c" style="color:'+ivColor(_pct(wat,n),80)+';font-weight:700">'+_pct(wat,n)+'%</td>'
+    +'<td class="c" style="color:'+ivColor(_pct(hiv,n),90)+';font-weight:700">'+_pct(hiv,n)+'%</td>'
+    +'<td class="c" style="color:'+ivColorAmb(_pct(tst,n),50,30)+';font-weight:700">'+_pct(tst,n)+'%</td>'
+    +'<td class="c" style="color:'+(allF>0?'#b91c1c':'#12274F')+';font-weight:700">'+allF+'</td>'
     +'<td class="lbl">'+(ills[0]?ills[0][0]:'—')+'</td>'
     +'</tr></tfoot></table>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-top:4pt">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-top:5pt">'
     +'<div>'
-    +'<h2 class="sec">4. Discussion</h2>'
-    +'<p class="bt">'+(_pct(lat,n)<80
-      ?'Class-wide pit latrine coverage stands at '+_pct(lat,n)+'%, which is '+(80-_pct(lat,n))+' percentage points below the national target of 80%. This represents the most critical gap identified across the class dataset. The '+(n-lat)+' households without latrines continue to practise open defecation, posing a direct and ongoing risk of faecal-oral disease transmission — particularly for children under five years of age.'
-      :'Pit latrine coverage of '+_pct(lat,n)+'% meets the national target of 80%, which is a commendable class-wide achievement. Sustained community engagement is essential to maintain and build upon this progress.')+'</p>'
-    +'<p class="bt">'+(_pct(wat,n)<80
-      ?'Safe water treatment coverage at '+_pct(wat,n)+'% falls below the recommended threshold. A significant proportion of households are consuming untreated water, placing them at heightened risk of waterborne illnesses including diarrhoeal disease, typhoid, and cholera. This finding demands immediate and prioritised intervention.'
-      :'Water treatment coverage of '+_pct(wat,n)+'% is satisfactory, indicating positive community uptake of safe water practices. Health education should be maintained to consolidate these gains.')+'</p>'
-    +'<p class="bt">Variation between individual interviewers in the indicator scores is expected and reflects genuine community-level differences across the surveyed locations. Areas recording lower indicator scores should be designated as priority zones for targeted health promotion and resource allocation.</p>'
-    +'<h2 class="sec">5. Conclusion</h2>'
-    +'<p class="bt">This class-wide health situation analysis provides systematic, community-level evidence on household health in Nyamache Sub County. The findings confirm the presence of preventable health risks that are amenable to targeted, well-coordinated interventions. The report is hereby submitted to the course coordinator at Great Lakes University of Kisumu, to Nyamache Sub County Hospital, and to the Kisii County Department of Health for review, action planning, and integration into the sub-county health planning cycle.</p>'
+    +'<h2 class="sec">5. Discussion</h2>'
+    +'<p class="bt">The findings presented in this report reflect health conditions that are broadly consistent with patterns documented across rural communities in Kisii County and comparable sub-Saharan African settings. Each of the key indicators is discussed below in relation to national targets and the public health evidence base.</p>'
+    +'<p class="bt"><strong>Sanitation:</strong> '+(_pct(lat,n)<80
+      ?'At <strong>'+_pct(lat,n)+'%</strong>, class-wide pit latrine coverage falls <strong>'+(80-_pct(lat,n))+' percentage points below</strong> the national target of 80%. The <strong>'+(n-lat)+' household'+(n-lat!==1?'s':'')+' without latrines</strong> represent a direct, ongoing risk of faecal-oral disease transmission — a risk that falls most heavily on children under five, who are most vulnerable to the diarrhoeal diseases, cholera, and soil-transmitted helminthiases that follow from open defecation. This finding demands immediate escalation and coordinated action under the Community-Led Total Sanitation (CLTS) programme.'
+      :'Latrine coverage of <strong>'+_pct(lat,n)+'%</strong> meets the national 80% target — a commendable class-wide result that reflects genuine progress in community sanitation behaviour. The focus must now shift to ensuring that all existing latrines are functional and hygienic, and that coverage continues to grow until universal access is achieved.')
+    +'</p>'
+    +'<p class="bt"><strong>Water Safety:</strong> '+(_pct(wat,n)<80
+      ?'Water treatment coverage of <strong>'+_pct(wat,n)+'%</strong> falls below the recommended threshold. The households consuming untreated water are exposed to a range of preventable waterborne illnesses. '+(ills.some(([k])=>k.toLowerCase().includes('diarrh'))?'The prevalence of diarrhoeal disease identified in this survey is directly and causally linked to this finding, underscoring the urgency of intervention.':'This situation demands immediate distribution of point-of-use treatment products and community-level education on safe water practices.')+' The most cost-effective response is the rapid, supervised distribution of WaterGuard chlorine solution, paired with education on correct usage and safe water storage.'
+      :'Water treatment coverage of <strong>'+_pct(wat,n)+'%</strong> is satisfactory, indicating that safe water practices have gained meaningful traction in this community. Sustained health education is essential to maintain and further consolidate these gains.')
+    +'</p>'
+    +'<p class="bt">Differences in indicator scores between individual interviewers reflect genuine community-level variation across the surveyed locations, rather than methodological inconsistency. Areas recording lower scores should be designated as priority zones for targeted health promotion and resource deployment by the sub-county health authority.</p>'
+    +'<h2 class="sec">6. Conclusion</h2>'
+    +'<p class="bt">This class-wide assessment provides systematic, community-level evidence on the health situation of <strong>'+n+' households in '+locStr+'</strong>, Nyamache Sub County. The data gathered through this structured survey paints a clear picture of the primary health challenges facing these communities and identifies the specific areas where coordinated, evidence-based interventions are most urgently needed.</p>'
+    +'<p class="bt">'+(_pct(lat,n)<60||_pct(wat,n)<60
+      ?'The findings reveal coverage gaps of a magnitude that pose an immediate and serious risk to community wellbeing. Swift, well-resourced intervention — in coordination with sub-county health authorities and relevant government programmes — is essential.'
+      :'While a number of indicators fall within acceptable ranges, the findings point to targeted gaps that, if left unaddressed, carry the potential to deteriorate. A proactive, preventive approach will be far more cost-effective than responding to preventable disease outbreaks after the fact.')
+    +(allF?' In total, <strong>'+allF+' red flag'+(allF!==1?'s were':' was')+' identified</strong> across the surveyed households — each one representing a real family requiring real follow-up, referral, or targeted support.':'')
+    +' This report is submitted to the course coordinator at Great Lakes University of Kisumu and to the Nyamache Sub County Hospital health management team for review, integration into the sub-county health planning cycle, and action as appropriate.</p>'
     +'</div>'
     +'<div>'
-    +'<h2 class="sec">6. Recommendations</h2>'
+    +'<h2 class="sec">7. Recommendations</h2>'
     +grecs.map(rc=>_fl(rc.l,rc.t,rc.b)).join('')
     +'</div>'
     +'</div>'
   );
 
   // ── PAGE 4+: Per-Interviewer Detail Sections ──
-  // Each interviewer gets their own section with case table
   let pgNum = 4;
   const detailPages = [];
 
@@ -885,7 +985,7 @@ function buildGroupReport(records, students){
     const m    = recs.length;
     const st   = students[iv]||{};
     const chunks = [];
-    const chunkSz = 22; // compact rows
+    const chunkSz = 22;
     for(let ci=0; ci<recs.length; ci+=chunkSz){
       chunks.push(recs.slice(ci,ci+chunkSz));
     }
@@ -906,19 +1006,19 @@ function buildGroupReport(records, students){
           +'<td>'+(rec.location||'—')+'</td>'
           +'<td class="c">'+(rec.respondent_age||'?')+'/'+(rec.respondent_gender||'?').charAt(0)+'</td>'
           +'<td>'+(rec.house_type||'—')+'</td>'
-          +'<td class="c" style="color:'+(rec.latrine==='Yes'?'#1a5c35':'#c0392b')+';font-weight:700">'+(rec.latrine==='Yes'?'Y':'N')+'</td>'
-          +'<td class="c" style="color:'+(rec.water_treated==='Yes'?'#1a5c35':'#c0392b')+';font-weight:700">'+(rec.water_treated==='Yes'?'Y':'N')+'</td>'
-          +'<td class="c" style="color:'+(rec.hiv_heard==='Yes'?'#1a5c35':'#c0392b')+';font-weight:700">'+(rec.hiv_heard==='Yes'?'Y':'N')+'</td>'
+          +'<td class="c" style="color:'+(rec.latrine==='Yes'?'#12274F':'#b91c1c')+';font-weight:700">'+(rec.latrine==='Yes'?'Y':'N')+'</td>'
+          +'<td class="c" style="color:'+(rec.water_treated==='Yes'?'#12274F':'#b91c1c')+';font-weight:700">'+(rec.water_treated==='Yes'?'Y':'N')+'</td>'
+          +'<td class="c" style="color:'+(rec.hiv_heard==='Yes'?'#12274F':'#b91c1c')+';font-weight:700">'+(rec.hiv_heard==='Yes'?'Y':'N')+'</td>'
           +'<td style="font-size:5.5pt">'+(rec.illnesses||'None')+'</td>'
-          +'<td class="c" style="color:'+(f.length?'#c0392b':'#1a5c35')+';font-weight:700">'+(f.length||'&#10003;')+'</td>'
+          +'<td class="c" style="color:'+(f.length?'#b91c1c':'#12274F')+';font-weight:700">'+(f.length||'&#10003;')+'</td>'
           +'</tr>';
       }).join('');
 
-      detailPages.push(_pg(H(pgNum,TOTAL),F(pgNum,TOTAL),'',
+      detailPages.push(GP(H(pgNum,TOTAL),F(pgNum,TOTAL),'',
         (isFirst
-          ? '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 4pt;border-bottom:2px solid #1a5c35;margin-bottom:5pt">'
-            +'<div><div style="font-size:8.5pt;font-weight:800;color:#0f1f18">'+iv+'</div>'
-            +'<div style="font-size:6pt;color:#1a5c35;font-weight:700">'+(st.reg_number||'—')+(st.email&&st.email!=='—'?' &middot; '+st.email:'')+'</div></div>'
+          ? '<div class="iv-hdr" style="display:flex;justify-content:space-between;align-items:center;padding:0 0 4pt;border-bottom:2.5px solid #B8902A;margin-bottom:5pt">'
+            +'<div><div class="iv-hdr-name" style="font-size:8.5pt;font-weight:800;color:#12274F">'+iv+'</div>'
+            +'<div class="iv-hdr-sub" style="font-size:6pt;color:#B8902A;font-weight:700">'+(st.reg_number||'—')+(st.email&&st.email!=='—'?' &middot; '+st.email:'')+'</div></div>'
             +'<div style="display:flex;gap:3pt">'
             +_sb(m,'HHs','blu')
             +_sb(_pct(ivLat,m)+'%','Latrine',_pct(ivLat,m)<80?'red':'')
@@ -926,8 +1026,8 @@ function buildGroupReport(records, students){
             +_sb(_pct(ivHiv,m)+'%','HIV',_pct(ivHiv,m)<90?'red':'')
             +_sb(ivFlags,'Flags',ivFlags?'red':'')
             +'</div></div>'
-            +(ivIll.length?'<p class="note" style="margin-bottom:4pt">Top illness: '+ivIll[0][0]+' ('+ivIll[0][1]+' cases). Cases 1–'+Math.min(chunkSz,m)+' of '+m+'</p>':'<p class="note" style="margin-bottom:4pt">Cases 1–'+Math.min(chunkSz,m)+' of '+m+'</p>')
-          : '<p class="note" style="margin-bottom:4pt">'+iv+' ('+( st.reg_number||'—')+') — Cases '+(ci*chunkSz+1)+'–'+Math.min((ci+1)*chunkSz,m)+' of '+m+' (continued)</p>')
+            +(ivIll.length?'<p class="note" style="margin-bottom:4pt">Top illness: <strong>'+ivIll[0][0]+'</strong> ('+ivIll[0][1]+' cases). Showing cases 1–'+Math.min(chunkSz,m)+' of '+m+'.</p>':'<p class="note" style="margin-bottom:4pt">Showing cases 1–'+Math.min(chunkSz,m)+' of '+m+'.</p>')
+          : '<p class="note" style="margin-bottom:4pt">'+iv+' &nbsp;('+( st.reg_number||'—')+') &nbsp;— Cases '+(ci*chunkSz+1)+'–'+Math.min((ci+1)*chunkSz,m)+' of '+m+' (continued)</p>')
         +'<table class="dt"><thead><tr>'
         +'<th class="c">#</th><th>Date</th><th>Location</th><th class="c">Age/Sex</th>'
         +'<th>House</th><th class="c">Lat</th><th class="c">Water</th><th class="c">HIV</th>'
@@ -938,12 +1038,13 @@ function buildGroupReport(records, students){
     });
   });
 
-  // Final page: signatures
-  const pSig = _pg(H(pgNum,TOTAL),F(pgNum,TOTAL),'',
-    '<h2 class="sec">Submission &amp; Approval</h2>'
-    +'<p class="bt">This report is submitted on behalf of the <strong>Community Health Practical Group</strong>, Great Lakes University of Kisumu. All household data was independently collected by '+ivs.join(', ')+', under faculty supervision at Great Lakes University of Kisumu and in collaboration with the clinical and community health team at Nyamache Sub County Hospital, Kisii County.</p>'
+  // ── FINAL PAGE: Submission + Signatures ──
+  const pSig = GP(H(pgNum,TOTAL),F(pgNum,TOTAL),'',
+    '<h2 class="sec">8. Submission &amp; Approval</h2>'
+    +'<p class="bt">This report is submitted on behalf of the <strong>Community Health Practical Group</strong>, Great Lakes University of Kisumu. All household data was independently collected by '+ivs.join(', ')+', under faculty supervision at Great Lakes University of Kisumu and in close collaboration with the clinical and community health team at Nyamache Sub County Hospital, Kisii County. Each interviewer worked in accordance with the ethical guidelines and academic standards of the university, obtaining verbal informed consent from every respondent and maintaining strict confidentiality throughout the data collection process.</p>'
+    +'<p class="bt">The findings presented in this report are submitted in fulfilment of the community health situation analysis practical requirements of Great Lakes University of Kisumu. It is respectfully requested that the course coordinator, the hospital health management team, and the Kisii County Department of Health consider these findings as a basis for targeted health action in the communities surveyed.</p>'
     +'<table class="dt" style="margin-bottom:8pt">'
-    +'<thead><tr><th>Interviewer</th><th>Reg / Admission No.</th><th>Email</th><th>HHs</th></tr></thead>'
+    +'<thead><tr><th>Interviewer</th><th>Admission / Reg No.</th><th>Email Address</th><th class="c">HHs Interviewed</th></tr></thead>'
     +'<tbody>'+ivs.map(iv=>{
       const st=students[iv]||{};
       return '<tr><td class="lbl">'+iv+'</td><td class="c">'+(st.reg_number||'—')+'</td><td>'+(st.email&&st.email!=='—'?st.email:'—')+'</td><td class="c">'+records.filter(r=>r.interviewer===iv).length+'</td></tr>';
@@ -953,10 +1054,12 @@ function buildGroupReport(records, students){
       ['Course Coordinator','Faculty · Community Health · GLU Kisumu'],
       ['Sub-County Health Officer','Nyamache Sub County Hospital, Kisii County'],
     ])
-    +'<p class="note" style="margin-top:8pt;text-align:center">Generated '+now+' · Community Health Survey System v2.0 · Great Lakes University of Kisumu · © 2026 HazzinBR</p>'
+    +'<p class="note" style="margin-top:8pt;text-align:center">Generated '+now+' &nbsp;&middot;&nbsp; Community Health Survey System v2.0 &nbsp;&middot;&nbsp; Great Lakes University of Kisumu &nbsp;&middot;&nbsp; &copy; 2026 HazzinBR</p>'
   );
 
-  return _doc('Group_Report_'+now.replace(/\s+/g,'_'), p1+p2+p3+detailPages.join('')+pSig);
+  // Build doc with injected group CSS
+  const rawDoc = _doc('Group_Report_'+now.replace(/\s+/g,'_'), p1+p2+p3+detailPages.join('')+pSig);
+  return rawDoc.replace('</style>\n<style>html,body', GRP_CSS+'</style>\n<style>html,body');
 }
 
 
