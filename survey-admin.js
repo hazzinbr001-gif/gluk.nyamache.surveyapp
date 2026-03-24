@@ -164,6 +164,7 @@ function admLoad(){
     admSetConn('ok');
     admRenderAll();
     admRenderStudents();       // update students tab too
+    admAutoCleanStaleNotifications(); // silently wipe stale correction flags from Supabase
   })
   .catch(function(e){
     if(!cached || !cached.length){
@@ -466,33 +467,25 @@ async function admNotifyAllBadRecords(){
   admRenderAll();
 }
 
-// ── Clear stale/invalid correction flags from Supabase ──
-// Wipes needs_correction on any record whose correction_notes
-// does NOT relate to date or location (e.g. old "Admission number" notes)
-async function admClearStaleNotifications(){
-  if(!navigator.onLine){showToast('No internet',true);return;}
+// ── Silently clear correction flags unrelated to date/location ──
+async function admAutoCleanStaleNotifications(){
+  if(!navigator.onLine) return;
   const stale=_admRecs.filter(r=>{
     if(!r.needs_correction) return false;
     const notes=(r.correction_notes||'').toLowerCase();
-    const hasDate=notes.includes('date');
-    const hasLoc=notes.includes('location');
-    return !hasDate&&!hasLoc; // stale = flagged but not for date/location
+    return !notes.includes('date')&&!notes.includes('location');
   });
-  if(!stale.length){showToast('✅ No stale notifications found');return;}
-  if(!confirm('Clear '+stale.length+' stale notification(s)?\n\nThese have correction_notes unrelated to date/location (e.g. old admission flags) and will be cleared so interviewers stop seeing them.')) return;
-  let ok=0,fail=0;
+  if(!stale.length) return;
   for(const r of stale){
     try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
+      await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}?record_id=eq.${encodeURIComponent(r.record_id)}`,{
         method:'PATCH',
         headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
         body:JSON.stringify({needs_correction:false,correction_notes:null})
       });
-      if(res.ok||res.status===204){r.needs_correction=false;r.correction_notes=null;ok++;}else fail++;
-    }catch(e){fail++;}
+      r.needs_correction=false; r.correction_notes=null;
+    }catch(e){}
   }
-  showToast('🧹 Cleared '+ok+' stale notification(s)'+(fail?' — '+fail+' failed':''));
-  admRenderAll();
 }
 
 function admExportCSV(){

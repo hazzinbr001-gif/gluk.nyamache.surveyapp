@@ -2246,33 +2246,25 @@ async function checkCorrectionNotifications(){
   try{
     var name = localStorage.getItem('chsa_user_name');
     if(!name) return;
+    var nameLower = name.trim().toLowerCase();
     var nameEncoded = encodeURIComponent(name.trim());
-    var res = await fetch(
-      SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
+    // Query only records flagged for this interviewer where notes mention date OR location
+    // Using Supabase OR filter so stale unrelated flags (e.g. admission) never return
+    var url = SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
       '?needs_correction=eq.true'+
       '&interviewer=ilike.'+nameEncoded+
-      '&select=record_id,interview_date,location,correction_notes,interviewer',
-      {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
-    );
+      '&or=(correction_notes.ilike.*date*,correction_notes.ilike.*location*)'+
+      '&select=record_id,interview_date,location,correction_notes,interviewer';
+    var res = await fetch(url, {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
     if(!res.ok) return;
     var flagged = await res.json();
     if(!Array.isArray(flagged)||!flagged.length) return;
-    // Exact name match — ilike can be too loose and pull other people's records
-    var nameLower = name.trim().toLowerCase();
+    // Extra client-side guard: exact name + must have date/location in notes
     flagged = flagged.filter(function(r){
-      return r.interviewer && r.interviewer.trim().toLowerCase() === nameLower;
+      if(!r.interviewer || r.interviewer.trim().toLowerCase() !== nameLower) return false;
+      var notes = (r.correction_notes||'').toLowerCase();
+      return notes.includes('date') || notes.includes('location');
     });
-    if(!flagged.length) return;
-    // Only show date/location correction notes — ignore any old or unrelated flags
-    flagged = flagged.map(function(r){
-      var relevantNotes = (r.correction_notes||'').split('|').map(function(n){ return n.trim(); }).filter(function(n){
-        return n && (
-          n.toLowerCase().includes('date') ||
-          n.toLowerCase().includes('location')
-        );
-      }).join(' | ');
-      return Object.assign({}, r, {correction_notes: relevantNotes});
-    }).filter(function(r){ return r.correction_notes; });
     if(!flagged.length) return;
     showCorrectionPrompt(flagged);
   }catch(e){
