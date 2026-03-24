@@ -2246,7 +2246,6 @@ async function checkCorrectionNotifications(){
   try{
     var name = localStorage.getItem('chsa_user_name');
     if(!name) return;
-    var nameLower = name.trim().toLowerCase();
     var nameEncoded = encodeURIComponent(name.trim());
     var res = await fetch(
       SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
@@ -2257,21 +2256,22 @@ async function checkCorrectionNotifications(){
     );
     if(!res.ok) return;
     var all = await res.json();
+    // DEBUG — open browser console to see raw Supabase data
+    console.log('[CORRECTION DEBUG] raw records from Supabase:', JSON.stringify(all));
     if(!Array.isArray(all)||!all.length) return;
-
+    var nameLower = name.trim().toLowerCase();
     var flagged = [];
     for(var i=0;i<all.length;i++){
       var r = all[i];
-      // Must match this interviewer exactly
+      console.log('[CORRECTION DEBUG] record',i,'interviewer:',r.interviewer,'notes:',r.correction_notes);
       if(!r.interviewer || r.interviewer.trim().toLowerCase() !== nameLower) continue;
-      // correction_notes must exist and must contain date or location — anything else is stale/irrelevant
       var notes = (r.correction_notes || '').trim();
       if(!notes) continue;
       var notesLower = notes.toLowerCase();
       if(!notesLower.includes('date') && !notesLower.includes('location')) continue;
       flagged.push(r);
     }
-
+    console.log('[CORRECTION DEBUG] after filter, showing', flagged.length, 'records');
     if(!flagged.length) return;
     showCorrectionPrompt(flagged);
   }catch(e){
@@ -2284,7 +2284,7 @@ function showCorrectionPrompt(records){
   var items = records.map(function(r){
     return '<div style="background:#fff3f3;border:1px solid #e57373;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.78rem;line-height:1.6">'+
       '<strong>📅 '+(r.interview_date||'Unknown date')+' &nbsp;·&nbsp; 📍 '+(r.location||'Unknown location')+'</strong><br>'+
-      '<span style="color:#c62828">'+(r.correction_notes)+'</span>'+
+      '<span style="color:#c62828">'+(r.correction_notes||'Admin has flagged this record — please re-open and correct it.')+'</span>'+
     '</div>';
   }).join('');
   var el = document.createElement('div');
