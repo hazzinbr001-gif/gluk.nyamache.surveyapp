@@ -2246,17 +2246,23 @@ async function checkCorrectionNotifications(){
   try{
     var name = localStorage.getItem('chsa_user_name');
     if(!name) return;
-    var nameEncoded = encodeURIComponent(name);
+    var nameEncoded = encodeURIComponent(name.trim());
     var res = await fetch(
       SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
       '?needs_correction=eq.true'+
       '&interviewer=ilike.'+nameEncoded+
-      '&select=record_id,interview_date,location,correction_notes',
+      '&select=record_id,interview_date,location,correction_notes,interviewer',
       {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
     );
     if(!res.ok) return;
     var flagged = await res.json();
     if(!Array.isArray(flagged)||!flagged.length) return;
+    // Exact name match — ilike can be too loose and pull other people's records
+    var nameLower = name.trim().toLowerCase();
+    flagged = flagged.filter(function(r){
+      return r.interviewer && r.interviewer.trim().toLowerCase() === nameLower;
+    });
+    if(!flagged.length) return;
     showCorrectionPrompt(flagged);
   }catch(e){
     console.warn('Correction check failed:',e);
