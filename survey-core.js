@@ -2248,23 +2248,30 @@ async function checkCorrectionNotifications(){
     if(!name) return;
     var nameLower = name.trim().toLowerCase();
     var nameEncoded = encodeURIComponent(name.trim());
-    // Query only records flagged for this interviewer where notes mention date OR location
-    // Using Supabase OR filter so stale unrelated flags (e.g. admission) never return
-    var url = SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
+    var res = await fetch(
+      SUPABASE_URL+'/rest/v1/'+SYNC_TABLE+
       '?needs_correction=eq.true'+
       '&interviewer=ilike.'+nameEncoded+
-      '&or=(correction_notes.ilike.*date*,correction_notes.ilike.*location*)'+
-      '&select=record_id,interview_date,location,correction_notes,interviewer';
-    var res = await fetch(url, {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+      '&select=record_id,interview_date,location,correction_notes,interviewer',
+      {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}}
+    );
     if(!res.ok) return;
-    var flagged = await res.json();
-    if(!Array.isArray(flagged)||!flagged.length) return;
-    // Extra client-side guard: exact name + must have date/location in notes
-    flagged = flagged.filter(function(r){
-      if(!r.interviewer || r.interviewer.trim().toLowerCase() !== nameLower) return false;
-      var notes = (r.correction_notes||'').toLowerCase();
-      return notes.includes('date') || notes.includes('location');
-    });
+    var all = await res.json();
+    if(!Array.isArray(all)||!all.length) return;
+
+    var flagged = [];
+    for(var i=0;i<all.length;i++){
+      var r = all[i];
+      // Must match this interviewer exactly
+      if(!r.interviewer || r.interviewer.trim().toLowerCase() !== nameLower) continue;
+      // correction_notes must exist and must contain date or location — anything else is stale/irrelevant
+      var notes = (r.correction_notes || '').trim();
+      if(!notes) continue;
+      var notesLower = notes.toLowerCase();
+      if(!notesLower.includes('date') && !notesLower.includes('location')) continue;
+      flagged.push(r);
+    }
+
     if(!flagged.length) return;
     showCorrectionPrompt(flagged);
   }catch(e){
@@ -2277,7 +2284,7 @@ function showCorrectionPrompt(records){
   var items = records.map(function(r){
     return '<div style="background:#fff3f3;border:1px solid #e57373;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.78rem;line-height:1.6">'+
       '<strong>📅 '+(r.interview_date||'Unknown date')+' &nbsp;·&nbsp; 📍 '+(r.location||'Unknown location')+'</strong><br>'+
-      '<span style="color:#c62828">'+(r.correction_notes||'Admin has flagged this record — please re-open and correct it.')+'</span>'+
+      '<span style="color:#c62828">'+(r.correction_notes)+'</span>'+
     '</div>';
   }).join('');
   var el = document.createElement('div');
