@@ -785,6 +785,10 @@ function buildGroupReport(records, students){
   .grp .iv-hdr-name{color:#12274F !important;}
   .grp .iv-hdr-sub{color:#B8902A !important;}
 
+  /* Parchment page background for all group pages */
+  .grp{background:#FDF8EC !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .grp-cover{background:#FDF8EC !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
   /* Cover overrides */
   .grp-cover .cov-band{background:linear-gradient(135deg,#0b1b3a,#12274F,#B8902A) !important; height:0.32in !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .grp-cover .cov-uni{color:#12274F !important;}
