@@ -292,6 +292,8 @@ table.dt tfoot td{
     page-break-after:always!important;
   }
   .cover:last-child,.pg:last-child{page-break-after:auto!important;}
+  /* Group report — parchment background must survive print */
+  .pg.grp,.cover.grp-cover{background:#FDF8EC!important;}
 }
 @page{size:letter portrait;margin:0;}
 `;
@@ -785,9 +787,23 @@ function buildGroupReport(records, students){
   .grp .iv-hdr-name{color:#12274F !important;}
   .grp .iv-hdr-sub{color:#B8902A !important;}
 
-  /* Parchment page background for all group pages */
+  /* Parchment page background for all group pages — screen + print */
   .grp{background:#FDF8EC !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .grp-cover{background:#FDF8EC !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* Absolute-positioned layer guarantees background survives PDF export */
+  .grp::before,.grp-cover::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:#FDF8EC;
+    z-index:0;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .grp>*,.grp-cover>*{position:relative;z-index:1;}
+  @media print{
+    .grp,.grp-cover{background:#FDF8EC !important; -webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+    .grp::before,.grp-cover::before{background:#FDF8EC !important; -webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  }
 
   /* Cover overrides */
   .grp-cover .cov-band{background:linear-gradient(135deg,#0b1b3a,#12274F,#B8902A) !important; height:0.32in !important; -webkit-print-color-adjust:exact;print-color-adjust:exact;}
